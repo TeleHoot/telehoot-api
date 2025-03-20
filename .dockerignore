@@ -1,0 +1,14 @@
+venv/
+.github/
+.gitattributes
+.gitignore
+example.env
+README.MD
+.pre-commit-config.yaml
+.idea/
+__pycache__
+*.pyc
+.coverage
+LICENSE
+.ruff_cache/
+.pytest_cache/

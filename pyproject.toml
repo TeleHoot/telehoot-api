@@ -1,0 +1,26 @@
+[project]
+name = "telehoot-api"
+version = "0.1.0"
+description = "Api for TeleHoot"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.15.1",
+    "asyncpg>=0.30.0",
+    "fastapi[standard]>=0.115.11",
+    "greenlet>=3.1.1",
+    "pydantic-settings>=2.8.1",
+    "sqlalchemy>=2.0.39",
+    "uuid-v7>=1.0.0",
+    "uvicorn>=0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.2.0",
+    "pyright[nodejs]>=1.1.397",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.25.3",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.11.1",
+]
