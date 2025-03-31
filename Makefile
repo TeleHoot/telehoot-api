@@ -8,6 +8,7 @@ MAKEFLAGS += --no-print-directory
 # Variables
 DOCKER_COMPOSE = docker-compose
 DOCKER_COMPOSE_PROD = docker-compose -f docker-compose.prod.yml
+DOCKER_COMPOSE_TEST = docker-compose -f docker-compose.tests.yml
 ALEMBIC = alembic
 UV = uv
 PRE_COMMIT = pre-commit
@@ -19,31 +20,41 @@ PYRIGHT = pyright
 # Help command
 help:
 	@echo "Available commands:"
+	@echo ""
 	@echo "== Development Environment =="
-	@echo "  up                 - Start the development environment using docker-compose"
-	@echo "  down               - Stop the development environment"
-	@echo "  dev                - Start the development environment and the app"
+	@echo "  up                 - Start development containers (Docker)"
+	@echo "  down               - Stop and remove development containers"
+	@echo "  dev                - Full dev setup: start containers, run migrations, and launch app"
+	@echo ""
 	@echo "== Production Environment =="
-	@echo "  prod               - Start the production environment using docker-compose.prod.yml"
-	@echo "  down-prod          - Stop the production environment"
-	@echo "== Database =="
-	@echo "  migrate            - Run database migrations"
-	@echo "== Dependencies =="
-	@echo "  install-deps       - Install dependencies using uv"
-	@echo "== Code Quality =="
-	@echo "  check              - Run pre-commit checks"
-	@echo "  check-install      - Install pre-commit hooks"
-	@echo "  lint               - Perform linting on all files using ruff"
-	@echo "  format             - Format all files using ruff format"
-	@echo "  type-check         - Run static type checking using pyright"
-	@echo "  test               - Test the app (runs lint and format first)"
-	@echo "== Application =="
-	@echo "  start              - Start the app using uvicorn"
-	@echo "== Project Initialization =="
-	@echo "  uinit              - Initialize the project on Unix systems (install dependencies, create .env file)"
-	@echo "  winit              - Initialize the project on Windows systems (install dependencies, create .env file)"
-	@echo "  create-env-unix    - Create .env file from example.env on Unix systems"
-	@echo "  create-env-windows - Create .env file from example.env on Windows systems"
+	@echo "  prod               - Deploy production containers"
+	@echo "  down-prod          - Stop and remove production containers"
+	@echo ""
+	@echo "== Database Management =="
+	@echo "  migrate            - Apply database migrations and seed data"
+	@echo ""
+	@echo "== Dependency Management =="
+	@echo "  install-deps       - Install all Python dependencies (prod + dev)"
+	@echo ""
+	@echo "== Code Quality & Testing =="
+	@echo "  check              - Run all pre-commit checks"
+	@echo "  pre-commit-install - Install git hook scripts for pre-commit"
+	@echo "  lint               - Check code style with Ruff (with auto-fix)"
+	@echo "  format             - Format code with Ruff formatter"
+	@echo "  type-check         - Static type checking with Pyright"
+	@echo "  pytest             - Run tests in Docker containers"
+	@echo "  test               - Local test suite (lint + format + type-check + pytest)"
+	@echo "  test-docker        - Docker-based test suite"
+	@echo ""
+	@echo "== Application Control =="
+	@echo "  start              - Run FastAPI server with hot reload"
+	@echo ""
+	@echo "== Project Setup =="
+	@echo "  uinit              - Unix setup: install deps + create .env"
+	@echo "  winit              - Windows setup: install deps + create .env"
+	@echo "  create-env-unix    - Create .env from example (Unix)"
+	@echo "  create-env-windows - Create .env from example (Windows)"
+	@echo ""
 	@echo "== Miscellaneous =="
 	@echo "  help               - Show this help message"
 
@@ -91,9 +102,16 @@ format:
 type-check:
 	$(UV) run $(PYRIGHT)
 
+# Run tests using pytest
+pytest:
+	$(DOCKER_COMPOSE_TEST) up --build --abort-on-container-exit
+	$(DOCKER_COMPOSE_TEST) down
+
 # Test the app (runs lint, format, and type-check first)
 test: lint format type-check
-	$(UV) run $(PYTEST) -v --durations=0 --cov .
+	$(UV) run $(PYTEST) -v --durations=0 .
+
+test-docker: lint format type-check pytest
 
 # Start the app using uvicorn
 start:
@@ -128,4 +146,4 @@ winit: install-deps create-env-windows
 # Start the development environment and the app
 dev: up migrate start
 
-.PHONY: help up down up-prod down-prod migrate install-deps pre-commit pre-commit-install lint format type-check test start create-env-unix create-env-windows init-unix init-windows dev
+.PHONY: help up down up-prod down-prod migrate install-deps pre-commit pre-commit-install lint format type-check pytest test test-docker start create-env-unix create-env-windows init-unix init-windows dev

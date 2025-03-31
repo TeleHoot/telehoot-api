@@ -1,0 +1,31 @@
+FROM python:3.13-slim
+
+ENV USER=uv-user \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_PROJECT_ENVIRONMENT=/usr/local \
+    UV_PYTHON_DOWNLOADS=never
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+ENV APP_DIR=/home/$USER/src
+WORKDIR $APP_DIR
+
+RUN --mount=type=cache,target=/home/$USER/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --dev
+
+COPY . $APP_DIR
+
+RUN --mount=type=cache,target=/home/$USER/.cache/uv \
+    uv sync --frozen --dev
+
+ENV PYTHONPATH=$APP_DIR
+
+CMD ["pytest", "-v", "--durations=0", "--cov", "--cov-report=xml"]
