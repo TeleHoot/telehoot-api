@@ -1,0 +1,31 @@
+services:
+  tests_app:
+    container_name: app_for_tests
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.tests
+    environment:
+      DEBUG: "True"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_HOST: "tests_db"
+    depends_on:
+      tests_db:
+        condition: service_healthy
+
+  tests_db:
+    container_name: db_for_tests
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "$POSTGRES_DB", "-U", "$POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: deploy/Dockerfile.prod
+      dockerfile: docker/Dockerfile.prod
     ports:
       - target: 8000
         published: 8000
