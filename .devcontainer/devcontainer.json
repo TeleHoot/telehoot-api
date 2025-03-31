@@ -1,0 +1,32 @@
+{
+	"name": "Bochka Dev Server",
+	"dockerComposeFile": "./.devcontainer/docker-compose.dev.yml",
+	"service": "devcontainer",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"features": {
+		"ghcr.io/va-h/devcontainers-features/uv:1": {},
+        "ghcr.io/jungaretti/features/make:1": {}
+	},
+	"postCreateCommand": "./.devcontainer/postCreateCommand.sh",
+	"forwardPorts": [8000, 8080, 5432],
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"python.analysis.typeCheckingMode": "strict",
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true
+			},
+			"extensions": [
+				"tamasfe.even-better-toml",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-python.autopep8",
+				"ms-azuretools.vscode-docker"
+			]
+		}
+	},
+	"remoteEnv": {
+		"UV_LINK_MODE": "copy"
+	},
+	"shutdownAction": "stopCompose"
+}
