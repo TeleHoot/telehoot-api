@@ -1,6 +1,8 @@
 from . import (
     config,
     db,
+    error_handlers,
+    exceptions,
     logger,
     middlewares,
     models,
@@ -13,6 +15,8 @@ from . import (
 __all__ = [
     "config",
     "db",
+    "error_handlers",
+    "exceptions",
     "logger",
     "middlewares",
     "models",

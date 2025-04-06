@@ -13,7 +13,7 @@ REPOSITORY_LOG_FILE = LOG_DIR / "repository.log"
 SERVICE_LOG_FILE = LOG_DIR / "service.log"
 API_LOG_FILE = LOG_DIR / "api.log"
 
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"  # noqa: Typo,
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
 
 def setup_logger(name: str, log_file: Path, level: int = logging.INFO) -> logging.Logger:

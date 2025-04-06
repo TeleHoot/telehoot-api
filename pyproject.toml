@@ -27,10 +27,10 @@ dev = [
 ]
 
 [tool.ruff]
-# Set the maximum line length to 79.
+# Set the maximum line length to 99.
 line-length = 99
 
-# Assume Python 3.11
+# Assume Python 3.13
 target-version = "py313"
 
 # Exclude a variety of commonly ignored directories.

@@ -1,23 +1,29 @@
 from pydantic import MongoDsn
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from src.core import settings
 
 
 class MongoDBSettings(BaseSettings):
-    MONGO_HOST: str = "localhost"
-    MONGO_USER: str = "mongo"
-    MONGO_PORT: int = 27017
-    MONGO_PASSWORD: str = "mongo"
-    MONGO_DB: str = "admin"
+    HOST: str = "localhost"
+    USER: str = "mongo"
+    PORT: int = 27017
+    PASSWORD: str = "mongo"
+    DB: str = "admin"
+
+    model_config = SettingsConfigDict(
+        env_file=settings.env_config.ENV_FILE_PATH, extra="ignore", env_prefix="MONGO_"
+    )
 
     @property
     def DSN(self) -> MongoDsn:
         return MongoDsn.build(
             scheme="mongodb",
-            username=self.MONGO_USER,
-            password=self.MONGO_PASSWORD,
-            host=self.MONGO_HOST,
-            port=self.MONGO_PORT,
-            path=self.MONGO_DB,
+            username=self.USER,
+            password=self.PASSWORD,
+            host=self.HOST,
+            port=self.PORT,
+            path=self.DB,
         )
 
     @property

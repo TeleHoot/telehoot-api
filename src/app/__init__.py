@@ -20,8 +20,7 @@ def create_app() -> FastAPI:
 
     core.middlewares.register_middlewares(app)
 
-    core.services.error_handlers.register_error_handlers(app)
-    core.repositories.error_handlers.register_error_handlers(app)
+    core.error_handlers.register_error_handlers(app)
 
     app.include_router(api.v1.router, prefix=settings.API_PREFIX)
 

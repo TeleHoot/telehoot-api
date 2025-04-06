@@ -1,23 +1,29 @@
 from pydantic import PostgresDsn
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from src.core import settings
 
 
 class PostgreSQLSettings(BaseSettings):
-    POSTGRES_HOST: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PORT: int = 5432
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "postgres"
+    HOST: str = "localhost"
+    USER: str = "postgres"
+    PORT: int = 5432
+    PASSWORD: str = "postgres"
+    DB: str = "postgres"
+
+    model_config = SettingsConfigDict(
+        env_file=settings.env_config.ENV_FILE_PATH, extra="ignore", env_prefix="POSTGRES_"
+    )
 
     @property
     def DSN(self) -> PostgresDsn:
         return PostgresDsn.build(
             scheme="postgresql+asyncpg",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_HOST,
-            port=self.POSTGRES_PORT,
-            path=self.POSTGRES_DB,
+            username=self.USER,
+            password=self.PASSWORD,
+            host=self.HOST,
+            port=self.PORT,
+            path=self.DB,
         )
 
     @property

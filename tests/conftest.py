@@ -32,7 +32,11 @@ async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest.fixture(scope="function")
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
+async def anonim_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
+    """
+    Yields:
+        AsyncClient: Non-authenticated client
+    """
     app.dependency_overrides[db_manager.get_session] = lambda: db_session
 
     async with AsyncClient(

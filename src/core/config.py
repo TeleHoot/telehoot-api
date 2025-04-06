@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     CSRF_COOKIE_NAME: str = "csrftoken"
-    CSRF_EXPIRE_TIME: int = 86400 * 7  # 7 дней
+    CSRF_EXPIRE_TIME: int = 86400 * 7
 
     DOMAIN: str = "example.site"
 
