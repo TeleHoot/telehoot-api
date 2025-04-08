@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from typing import TypeVar
 
@@ -5,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import exceptions, logger, models, repositories
+from src.core import exceptions, models, repositories
 
 ModelType = TypeVar("ModelType", bound=models.Base)
 
@@ -13,19 +14,26 @@ ModelType = TypeVar("ModelType", bound=models.Base)
 class BaseCRUD(repositories.abstract.Abstract[ModelType]):
     def __init__(self, model: type[ModelType]):
         self.model = model
+        self.logger = logging.getLogger(f"repositories.{model.__name__.lower()}")
+
+    def _base_context(self, operation: str) -> dict:
+        return {
+            "model": self.model.__name__,
+            "table": self.model.__tablename__,
+            "operation": operation,
+        }
 
     async def create(self, session: AsyncSession, data: dict) -> ModelType:
-        logger.repository_logger.info(f"Creating a new {self.model.__name__}: {data}")
+        context = self._base_context("create")
+        self.logger.debug("Starting database operation", extra={**context, "data": data})
+
         try:
             instance = self.model(**data)
             session.add(instance)
             await session.flush()
             await session.refresh(instance)
         except IntegrityError as e:
-            logger.repository_logger.error(
-                f"Constraint violation creating {self.model.__name__}, data {data}. Error: {e}",
-                exc_info=True,
-            )
+            self.logger.exception("Database integrity error", extra={**context, "error": str(e)})
             if "duplicate" in (err_info := str(e)):
                 raise exceptions.DuplicateError(
                     self.__class__.__name__, self.model.__tablename__, err_info
@@ -34,20 +42,23 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
                 self.__class__.__name__, self.model.__tablename__, err_info
             ) from e
         except Exception as e:
-            logger.repository_logger.critical(
-                f"Database error: {e}",
-                exc_info=True,
+            self.logger.critical(
+                "Unexpected database error", extra={**context, "error": str(e)}, exc_info=True
             )
             raise exceptions.DatabaseError(
                 self.__class__.__name__,
                 str(e),
             ) from e
 
-        logger.repository_logger.info(f"Successfully created {self.model.__name__}: {instance}")
+        self.logger.info(
+            "Successfully created entity", extra={**context, "entity_id": instance.id}
+        )
         return instance
 
     async def create_many(self, session: AsyncSession, data_list: list[dict]) -> list[ModelType]:
-        logger.repository_logger.info(f"Creating multiple {self.model.__name__} entities")
+        context = {**self._base_context("create_many"), "count": len(data_list)}
+        self.logger.debug("Starting bulk create operation", extra=context)
+
         try:
             instances = [self.model(**data) for data in data_list]
             session.add_all(instances)
@@ -55,6 +66,9 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
             for instance in instances:
                 await session.refresh(instance)
         except IntegrityError as e:
+            self.logger.exception(
+                "Bulk create integrity error", extra={**context, "error": str(e)}
+            )
             if "duplicate" in repr(e):
                 raise exceptions.DuplicateError(
                     self.__class__.__name__, self.model.__tablename__, str(e)
@@ -63,12 +77,17 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
                 self.__class__.__name__, self.model.__tablename__, str(e)
             ) from e
         except Exception as e:
+            self.logger.critical(
+                "Unexpected bulk create error", extra={**context, "error": str(e)}, exc_info=True
+            )
             raise exceptions.DatabaseError(
                 self.__class__.__name__,
                 str(e),
             ) from e
-        logger.repository_logger.info(
-            f"Successfully created multiple {self.model.__name__} entities",
+
+        self.logger.info(
+            "Successfully created multiple entities",
+            extra={**context, "created_count": len(instances)},
         )
         return instances
 
@@ -77,28 +96,22 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
         session: AsyncSession,
         entity_id: int | str,
     ) -> ModelType | None:
-        logger.repository_logger.info(f"Fetching {self.model.__name__} by ID: {entity_id}")
+        context = {**self._base_context("read_by_id"), "entity_id": entity_id}
+        self.logger.debug("Starting read operation", extra=context)
 
         try:
             entity = await session.get(self.model, entity_id)
+            if entity:
+                self.logger.info("Entity found", extra={**context, "exists": True})
+            else:
+                self.logger.info("Entity not found", extra={**context, "exists": False})
+            return entity
         except Exception as e:
-            logger.repository_logger.critical(
-                f"Database error: {e}",
-                exc_info=True,
-            )
+            self.logger.exception("Read operation failed", extra={**context, "error": str(e)})
             raise exceptions.DatabaseError(
                 self.__class__.__name__,
                 str(e),
             ) from e
-
-        if entity:
-            logger.repository_logger.info(f"Found {self.model.__name__} with ID: {entity_id}")
-        else:
-            logger.repository_logger.warning(
-                f"No {self.model.__name__} found with ID: {entity_id}"
-            )
-
-        return entity
 
     async def read_all(
         self,
@@ -106,27 +119,24 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
         page: int = 1,
         limit: int = 10,
     ) -> Sequence[ModelType]:
-        logger.repository_logger.info(
-            f"Fetching all {self.model.__name__} entities. Page: {page}, Limit: {limit}",
-        )
+        context = {**self._base_context("read_all"), "page": page, "limit": limit}
+        self.logger.debug("Starting read all operation", extra=context)
 
         try:
             result = await session.scalars(
                 select(self.model).offset((page - 1) * limit).limit(limit),
             )
             entities = result.all()
-        except Exception as e:
-            logger.repository_logger.critical(
-                f"Database error: {e}",
-                exc_info=True,
+            self.logger.info(
+                "Read all operation completed", extra={**context, "result_count": len(entities)}
             )
+            return entities
+        except Exception as e:
+            self.logger.exception("Read all operation failed", extra={**context, "error": str(e)})
             raise exceptions.DatabaseError(
                 self.__class__.__name__,
                 str(e),
             ) from e
-
-        logger.repository_logger.info(f"Fetched {len(entities)} {self.model.__name__} entities")
-        return entities
 
     async def update_by_id(
         self,
@@ -134,9 +144,8 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
         entity_id: int | str,
         data: dict,
     ) -> ModelType | None:
-        logger.repository_logger.info(
-            f"Updating {self.model.__name__} with ID: {entity_id}, Data: {data}",
-        )
+        context = {**self._base_context("update"), "entity_id": entity_id, "update_data": data}
+        self.logger.debug("Starting update operation", extra={**context, "update_data": data})
 
         try:
             instance = await self.read_by_id(session, entity_id)
@@ -145,11 +154,12 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
                     setattr(instance, key, value)
                 await session.flush()
                 await session.refresh(instance)
+                self.logger.info("Update operation successful", extra={**context, "updated": True})
+            else:
+                self.logger.warning("Update target not found", extra={**context, "updated": False})
+            return instance
         except Exception as e:
-            logger.repository_logger.error(
-                f"Error updating {self.model.__name__} with ID: {entity_id}, Error: {e}",
-                exc_info=True,
-            )
+            self.logger.exception("Update operation failed", extra={**context, "error": str(e)})
             raise exceptions.EntityUpdateError(
                 self.__class__.__name__,
                 self.model.__tablename__,
@@ -157,31 +167,21 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
                 str(e),
             ) from e
 
-        if instance:
-            logger.repository_logger.info(
-                f"Successfully updated {self.model.__name__} with ID: {entity_id}",
-            )
-        else:
-            logger.repository_logger.warning(
-                f"No {self.model.__name__} updated for ID: {entity_id}",
-            )
-        return instance
-
     async def delete_by_id(self, session: AsyncSession, entity_id: int | str) -> bool:
-        logger.repository_logger.info(f"Deleting {self.model.__name__} with ID: {entity_id}")
+        context = {**self._base_context("delete"), "entity_id": entity_id}
+        self.logger.debug("Starting delete operation", extra=context)
 
         try:
             instance = await self.read_by_id(session, entity_id)
             if instance:
                 await session.delete(instance)
                 await session.flush()
+                self.logger.info("Delete operation successful", extra={**context, "deleted": True})
                 return True
+            self.logger.warning("Delete target not found", extra={**context, "deleted": False})
             return False
         except Exception as e:
-            logger.repository_logger.error(
-                f"Error deleting {self.model.__name__} with ID: {entity_id}, Error: {e}",
-                exc_info=True,
-            )
+            self.logger.exception("Delete operation failed", extra={**context, "error": str(e)})
             raise exceptions.EntityDeleteError(
                 self.__class__.__name__,
                 self.model.__tablename__,

@@ -1,3 +1,5 @@
+import logging.config
+
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
@@ -17,6 +19,8 @@ def create_app() -> FastAPI:
         redoc_url=settings.REDOC_URL,
         default_response_class=ORJSONResponse,
     )
+
+    logging.config.dictConfig(core.logger.setup_logger())
 
     core.middlewares.register_middlewares(app)
 

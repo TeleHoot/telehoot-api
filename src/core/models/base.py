@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, MetaData, func
+from sqlalchemy import UUID, DateTime, MetaData, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from uuid_v7.base import uuid7
 
 
 class Base(DeclarativeBase):
@@ -25,6 +26,8 @@ class Base(DeclarativeBase):
             "ck": "ck_%(table_name)s_%(constraint_name)s",
         },
     )
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
