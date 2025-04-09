@@ -5,10 +5,7 @@ from src.core import config
 settings = config.get_settings()
 
 
-def setup_logger(level: int = logging.INFO) -> dict:
-    if level is None:
-        level = settings.LOGGER.LEVEL
-
+def setup_logger() -> dict:
     return {
         "version": 1,
         "disable_existing_loggers": False,
