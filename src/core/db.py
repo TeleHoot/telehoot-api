@@ -1,6 +1,8 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+from beanie import init_beanie
+from motor.motor_asyncio import AsyncIOMotorClient
 from sqlalchemy import AsyncAdaptedQueuePool, NullPool
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -43,3 +45,12 @@ class DatabaseManager:
 
 def get_db_manager():
     return DatabaseManager()
+
+
+async def init_mongo(settings: config.Settings, aggregator) -> None:
+    client = AsyncIOMotorClient(settings.MONGO.URL)
+    await init_beanie(
+        database=getattr(client, settings.MONGO.INITDB_DATABASE),
+        document_models=aggregator(),
+        multiprocessing_mode=True,
+    )

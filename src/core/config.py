@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     ALLOW_HOSTS: list[str] = ["*"]
 
     POSTGRES: settings.PostgreSQLSettings = settings.PostgreSQLSettings()
+    MONGO: settings.MongoDBSettings = settings.MongoDBSettings()
 
     API_PREFIX: str = "/api"
 
