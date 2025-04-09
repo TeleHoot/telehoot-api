@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import (
 from src.core import config, utils
 
 
-@utils.Singleton
+@utils.decorators.Singleton
 class DatabaseManager:
     def __init__(self):
         self.settings = config.get_settings()

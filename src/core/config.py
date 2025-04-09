@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from src.core import settings, utils
 
 
-@utils.Singleton
+@utils.decorators.Singleton
 class Settings(BaseSettings):
     APP_TITLE: str = "TeleHootAPI"
     APP_DESCRIPTION: str = "API for TeleHoot"

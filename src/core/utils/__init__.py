@@ -1,5 +1,3 @@
-from .singleton import Singleton
+from . import decorators
 
-__all__ = [
-    "Singleton",
-]
+__all__ = ["decorators"]

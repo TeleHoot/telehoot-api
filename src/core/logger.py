@@ -1,5 +1,3 @@
-import logging
-
 from src.core import config
 
 settings = config.get_settings()
