@@ -1,4 +1,4 @@
-from pydantic import PostgresDsn
+from pydantic import PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core import settings
@@ -15,6 +15,7 @@ class PostgreSQLSettings(BaseSettings):
         env_file=settings.env_config.ENV_FILE_PATH, extra="ignore", env_prefix="POSTGRES_"
     )
 
+    @computed_field
     @property
     def DSN(self) -> PostgresDsn:
         return PostgresDsn.build(
@@ -26,6 +27,7 @@ class PostgreSQLSettings(BaseSettings):
             path=self.DB,
         )
 
+    @computed_field
     @property
     def URL(self) -> str:
         return str(self.DSN)

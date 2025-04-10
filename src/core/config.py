@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from src.core import settings, utils
 
 
-@utils.Singleton
+@utils.decorators.Singleton
 class Settings(BaseSettings):
     APP_TITLE: str = "TeleHootAPI"
     APP_DESCRIPTION: str = "API for TeleHoot"
@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     REDOC_URL: str | None = "/redoc"
 
     DEBUG: bool = False
+    LOGGER: settings.LoggerSettings = settings.LoggerSettings()
 
     CSRF_COOKIE_NAME: str = "csrftoken"
     CSRF_EXPIRE_TIME: int = 86400 * 7
@@ -25,6 +26,7 @@ class Settings(BaseSettings):
     ALLOW_HOSTS: list[str] = ["*"]
 
     POSTGRES: settings.PostgreSQLSettings = settings.PostgreSQLSettings()
+    MONGO: settings.MongoDBSettings = settings.MongoDBSettings()
 
     API_PREFIX: str = "/api"
 
