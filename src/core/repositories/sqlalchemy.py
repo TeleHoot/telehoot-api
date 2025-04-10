@@ -17,11 +17,10 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
         self.model = model
         self.logger = logging.getLogger(f"repositories.{model.__name__.lower()}")
 
-    def repo_operation_context(self, operation: str) -> dict:
+    def repo_operation_context(self) -> dict:
         return {
             "model": self.model.__name__,
             "table": self.model.__tablename__,
-            "operation": operation,
         }
 
     @log_operation
