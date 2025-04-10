@@ -15,10 +15,10 @@ def create_app() -> FastAPI:
         try:
             await core.db.init_mongo(settings, gather_documents)
             yield
-        except Exception as e:
-            logging.exception(f"Failed to initialize MongoDB: {e}")
-            # Still yield to allow the application to shut down gracefully
+        except Exception:
+            logging.exception("Failed to initialize MongoDB")
             yield
+
     app = FastAPI(
         debug=settings.DEBUG,
         title=settings.APP_TITLE,

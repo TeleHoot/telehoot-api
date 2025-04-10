@@ -6,7 +6,7 @@ from src.app.api.v1 import dependencies
 router = APIRouter(prefix="/public", tags=["public"])
 
 
-@router.post("/healthcheck")
+@router.get("/healthcheck")
 async def healthcheck():
     return 1
 

@@ -1,7 +1,9 @@
-from collections.abc import AsyncGenerator
+import logging
+from collections.abc import AsyncGenerator, Callable, Sequence
 from contextlib import asynccontextmanager
+from typing import TypeVar
 
-from beanie import init_beanie
+from beanie import Document, init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from sqlalchemy import AsyncAdaptedQueuePool, NullPool
 from sqlalchemy.ext.asyncio import (
@@ -12,6 +14,8 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from src.core import config, utils
+
+T = TypeVar("T")
 
 
 @utils.decorators.Singleton
@@ -49,29 +53,21 @@ def get_db_manager():
     return DatabaseManager()
 
 
-from collections.abc import Callable, Sequence
-from typing import TypeVar
-
-T = TypeVar("T")
-
-
-async def init_mongo(settings: config.Settings, aggregator: Callable[[], Sequence[type[T]]]) -> None:
+async def init_mongo(
+    settings: config.Settings, aggregator: Callable[[], Sequence[type[Document]]]
+) -> None:
     """Initialize MongoDB connection with Beanie ODM.
-    
+
     Args:
         settings: Application settings containing MongoDB configuration
         aggregator: Function that returns a sequence of document model classes
-        
-    Raises:
-        ConnectionFailure: If connection to MongoDB fails
-        ConfigurationError: If MongoDB is misconfigured
     """
     try:
         client = AsyncIOMotorClient(
             settings.MONGO.URL,
-            serverSelectionTimeoutMS=5000  # 5 second timeout for server selection
+            serverSelectionTimeoutMS=5000,
         )
-        # Verify connection is working
+
         await client.admin.command("ping")
 
         await init_beanie(
@@ -79,7 +75,6 @@ async def init_mongo(settings: config.Settings, aggregator: Callable[[], Sequenc
             document_models=aggregator(),
             multiprocessing_mode=True,
         )
-    except Exception as e:
-        # Log the specific error but re-raise to allow the application to handle it
-        logging.error(f"Failed to initialize MongoDB: {e}")
+    except Exception:
+        logging.exception("Failed to initialize MongoDB")
         raise
