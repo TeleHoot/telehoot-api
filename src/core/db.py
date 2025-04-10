@@ -52,7 +52,8 @@ def get_db_manager():
 from collections.abc import Callable, Sequence
 from typing import TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 async def init_mongo(settings: config.Settings, aggregator: Callable[[], Sequence[type[T]]]) -> None:
     """Initialize MongoDB connection with Beanie ODM.
@@ -67,12 +68,12 @@ async def init_mongo(settings: config.Settings, aggregator: Callable[[], Sequenc
     """
     try:
         client = AsyncIOMotorClient(
-            settings.MONGO.URL, 
+            settings.MONGO.URL,
             serverSelectionTimeoutMS=5000  # 5 second timeout for server selection
         )
         # Verify connection is working
-        await client.admin.command('ping')
-        
+        await client.admin.command("ping")
+
         await init_beanie(
             database=getattr(client, settings.MONGO.INITDB_DATABASE),
             document_models=aggregator(),
