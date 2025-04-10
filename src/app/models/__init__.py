@@ -9,7 +9,7 @@ from beanie import Document
 from .questions import Question
 from .user import User
 
-__all__ = ["Question", "gather_documents", "User",]
+__all__ = ["Question", "User", "gather_documents"]
 
 
 def gather_documents() -> Sequence[type[Document]]:
