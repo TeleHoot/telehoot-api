@@ -4,6 +4,8 @@ import logging
 from collections.abc import Callable, Sized
 from typing import Any
 
+from src import core
+
 
 def log_operation(func: Callable) -> Callable:  # noqa: C901
     """
@@ -26,16 +28,24 @@ def log_operation(func: Callable) -> Callable:  # noqa: C901
         context: dict[str, Any] = {}
         layer = "service"
 
+        # To not get Pyright error: Cannot access attribute "logger" for class "Abstract[Unknown]"
+        tmp_self = self
+
         try:
-            if hasattr(self, "repo_operation_context"):
-                context_method = self.repo_operation_context
-                if callable(context_method):
-                    repo_context = context_method()
+            if isinstance(tmp_self, core.repositories.abstract.Abstract):
+                layer = "repository"
+                if hasattr(self, "repo_operation_context") and callable(
+                    self.repo_operation_context
+                ):
+                    repo_context = self.repo_operation_context()
                     if isinstance(repo_context, dict):
                         context.update(repo_context)
-                        layer = "repository"
         except Exception as e:  # noqa: BLE001
-            self.logger.warning("Failed to get repo context", extra=repr(e))
+            self.logger.warning(
+                "Failed to get repository context",
+                extra={"exception": e.__class__.__name__},
+                exc_info=True,
+            )
 
         context.update({
             "class_name": self.__class__.__name__,
@@ -71,7 +81,7 @@ def log_operation(func: Callable) -> Callable:  # noqa: C901
             return result
         except Exception as e:
             context.update({"exception": e.__class__.__name__})
-            self.logger.exception("Operation failed", extra=context, exc_info=e)
+            self.logger.exception("Operation failed", extra=context)
             raise
 
     return wrapper
