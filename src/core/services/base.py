@@ -15,7 +15,7 @@ TUpdate = TypeVar("TUpdate", bound=BaseModel)
 class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
     def __init__(
         self,
-        repo: repositories.sqlalchemy.BaseCRUD,
+        repo: repositories.abstract.AbstractCRUD,
         create_schema: type[TCreate],
         read_schema: type[TRead],
         update_schema: type[TUpdate],

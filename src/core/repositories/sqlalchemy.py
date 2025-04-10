@@ -12,7 +12,7 @@ from src.core.utils.decorators import log_operation
 ModelType = TypeVar("ModelType", bound=models.Base)
 
 
-class BaseCRUD(repositories.abstract.Abstract[ModelType]):
+class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
     def __init__(self, model: type[ModelType]):
         self.model = model
         self.logger = logging.getLogger(f"repositories.{model.__name__.lower()}")
