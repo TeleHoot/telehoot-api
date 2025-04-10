@@ -49,10 +49,36 @@ def get_db_manager():
     return DatabaseManager()
 
 
-async def init_mongo(settings: config.Settings, aggregator) -> None:
-    client = AsyncIOMotorClient(settings.MONGO.URL)
-    await init_beanie(
-        database=getattr(client, settings.MONGO.INITDB_DATABASE),
-        document_models=aggregator(),
-        multiprocessing_mode=True,
-    )
+from collections.abc import Callable, Sequence
+from typing import TypeVar
+
+T = TypeVar('T')
+
+async def init_mongo(settings: config.Settings, aggregator: Callable[[], Sequence[type[T]]]) -> None:
+    """Initialize MongoDB connection with Beanie ODM.
+    
+    Args:
+        settings: Application settings containing MongoDB configuration
+        aggregator: Function that returns a sequence of document model classes
+        
+    Raises:
+        ConnectionFailure: If connection to MongoDB fails
+        ConfigurationError: If MongoDB is misconfigured
+    """
+    try:
+        client = AsyncIOMotorClient(
+            settings.MONGO.URL, 
+            serverSelectionTimeoutMS=5000  # 5 second timeout for server selection
+        )
+        # Verify connection is working
+        await client.admin.command('ping')
+        
+        await init_beanie(
+            database=getattr(client, settings.MONGO.INITDB_DATABASE),
+            document_models=aggregator(),
+            multiprocessing_mode=True,
+        )
+    except Exception as e:
+        # Log the specific error but re-raise to allow the application to handle it
+        logging.error(f"Failed to initialize MongoDB: {e}")
+        raise

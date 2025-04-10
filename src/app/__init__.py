@@ -12,9 +12,13 @@ settings = core.config.get_settings()
 
 def create_app() -> FastAPI:
     async def lifespan(application: FastAPI):
-        await core.db.init_mongo(settings, gather_documents)
-        yield
-
+        try:
+            await core.db.init_mongo(settings, gather_documents)
+            yield
+        except Exception as e:
+            logging.error(f"Failed to initialize MongoDB: {e}")
+            # Still yield to allow the application to shut down gracefully
+            yield
     app = FastAPI(
         debug=settings.DEBUG,
         title=settings.APP_TITLE,
