@@ -1,4 +1,3 @@
-import logging
 from collections.abc import AsyncGenerator, Callable, Sequence
 from contextlib import asynccontextmanager
 from typing import TypeVar
@@ -75,6 +74,7 @@ async def init_mongo(
             document_models=aggregator(),
             multiprocessing_mode=True,
         )
-    except Exception:
-        logging.exception("Failed to initialize MongoDB")
+    except Exception as e:
+        print(e)  # noqa: T201
+        # set logger in future
         raise

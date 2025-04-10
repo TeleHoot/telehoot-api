@@ -15,8 +15,9 @@ def create_app() -> FastAPI:
         try:
             await core.db.init_mongo(settings, gather_documents)
             yield
-        except Exception:
-            logging.exception("Failed to initialize MongoDB")
+        except Exception as e:  # noqa: BLE001
+            print(e)  # noqa: T201
+            # set logger in future
             yield
 
     app = FastAPI(
