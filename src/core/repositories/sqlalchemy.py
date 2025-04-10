@@ -16,9 +16,7 @@ class BaseCRUD(repositories.abstract.Abstract[ModelType]):
     def __init__(self, model: type[ModelType]):
         self.model = model
         self.logger = logging.getLogger(f"repositories.{model.__name__.lower()}")
-
-    def repo_operation_context(self) -> dict:
-        return {
+        self.context = {
             "model": self.model.__name__,
             "table": self.model.__tablename__,
         }
