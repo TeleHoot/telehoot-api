@@ -4,7 +4,7 @@ from typing import TypeVar, cast
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import exceptions, models, repositories
+from src.core import models, repositories, services
 from src.core.utils.decorators import log_operation
 
 TCreate = TypeVar("TCreate", bound=BaseModel)
@@ -24,6 +24,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
         self.create_schema = create_schema
         self.read_schema = read_schema
         self.update_schema = update_schema
+        self.context = {}
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
     @log_operation
@@ -49,7 +50,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
     async def read_by_id(self, session: AsyncSession, entity_id: int | str) -> TRead:
         entity = await self.repo.read_by_id(session, entity_id)
         if not entity:
-            raise exceptions.EntityNotFoundError(
+            raise services.exceptions.EntityNotFoundError(
                 self.__class__.__name__,
                 f"entity_id: {entity_id}",
             )
@@ -73,7 +74,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
         updated_entity = await self.repo.update_by_id(session, entity_id, data)
 
         if not updated_entity:
-            raise exceptions.EntityNotFoundError(
+            raise services.exceptions.EntityNotFoundError(
                 self.__class__.__name__,
                 f"entity_id: {entity_id}",
             )
@@ -84,7 +85,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
     async def delete_by_id(self, session: AsyncSession, entity_id: int | str) -> bool:
         is_deleted = await self.repo.delete_by_id(session, entity_id)
         if not is_deleted:
-            raise exceptions.EntityNotFoundError(
+            raise services.exceptions.EntityNotFoundError(
                 self.__class__.__name__,
                 f"entity_id: {entity_id}",
             )
