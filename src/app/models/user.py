@@ -1,10 +1,10 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.core.models import Base
+from src import core
 
 
-class User(Base):
+class User(core.models.sqlalchemy.Base):
     __tablename__ = "users"
     repr_cols = ("id", "name")
 

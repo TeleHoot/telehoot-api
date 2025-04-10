@@ -1,9 +1,9 @@
 from beanie import DocumentWithSoftDelete
 
-from src.core.models import BaseMixin
+from src import core
 
 
-class Question(DocumentWithSoftDelete, BaseMixin):
+class Question(DocumentWithSoftDelete, core.models.mongo.BaseMixin):
     quiz_id: str
     order: int
     title: str
