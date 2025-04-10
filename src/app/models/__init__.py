@@ -7,8 +7,9 @@ from beanie import Document
 # All database models must be imported here to be able to
 # initialize them on startup.
 from .questions import Question
+from .user import User
 
-__all__ = ["Question", "gather_documents"]
+__all__ = ["Question", "gather_documents", "User",]
 
 
 def gather_documents() -> Sequence[type[Document]]:

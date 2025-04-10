@@ -1,3 +1,5 @@
+import logging.config
+
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
@@ -23,6 +25,8 @@ def create_app() -> FastAPI:
         default_response_class=ORJSONResponse,
         lifespan=lifespan,  # type: ignore[valid-type]
     )
+
+    logging.config.dictConfig(core.logger.setup_logger())
 
     core.middlewares.register_middlewares(app)
 

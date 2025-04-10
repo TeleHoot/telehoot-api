@@ -12,6 +12,7 @@ import yaml
 from alembic import context
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import sessionmaker
+import src.app.models # !needed for alembic to detect models
 
 # This is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

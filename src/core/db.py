@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import (
 from src.core import config, utils
 
 
-@utils.Singleton
+@utils.decorators.Singleton
 class DatabaseManager:
     def __init__(self):
         self.settings = config.get_settings()
@@ -30,7 +30,9 @@ class DatabaseManager:
         )
 
     def _create_session_factory(self) -> async_sessionmaker[AsyncSession]:
-        return async_sessionmaker(bind=self.engine, class_=AsyncSession, expire_on_commit=False)
+        return async_sessionmaker(
+            bind=self.engine, class_=AsyncSession, expire_on_commit=False, autobegin=False
+        )
 
     async def get_session(self) -> AsyncGenerator[AsyncSession]:
         async with self.session_factory.begin() as session:
