@@ -24,7 +24,7 @@ async def setup_db_schema() -> AsyncGenerator[None]:
 
 @pytest.fixture(scope="function")
 async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
-    async with db_manager.get_session().begin() as session:
+    async with db_manager.session_factory.begin() as session:
         try:
             yield session
         finally:

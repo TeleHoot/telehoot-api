@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import db, models, repositories
+from src.core import models, repositories
 from src.core.utils.decorators import log_operation
 
 ModelType = TypeVar("ModelType", bound=models.sqlalchemy.Base)
@@ -22,9 +22,8 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
         }
 
     @log_operation
-    async def create(self, uow: db.MultiDBUnitOfWork, data: dict) -> ModelType:
+    async def create(self, session: AsyncSession, data: dict) -> ModelType:
         try:
-            session = uow.get_sql_session()
             instance = self.model(**data)
             session.add(instance)
             await session.flush()
