@@ -4,7 +4,7 @@ from typing import TypeVar, cast
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import models, repositories, services
+from src.core import db, models, repositories, services
 from src.core.utils.decorators import log_operation
 
 TCreate = TypeVar("TCreate", bound=BaseModel)
@@ -28,9 +28,9 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
     @log_operation
-    async def create(self, session: AsyncSession, create_schema: TCreate) -> TRead:
+    async def create(self, uow: db.MultiDBUnitOfWork, create_schema: TCreate) -> TRead:
         data = self._prepare_data(create_schema.model_dump(exclude_unset=True))
-        entity = await self.repo.create(session, data)
+        entity = await self.repo.create(uow, data)
         return self._validate_data(entity)
 
     @log_operation

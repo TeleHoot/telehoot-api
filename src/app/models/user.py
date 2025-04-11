@@ -6,6 +6,7 @@ from src import core
 
 class User(core.models.sqlalchemy.Base):
     __tablename__ = "users"
-    repr_cols = ("id", "name")
+    repr_cols = ("id", "name", "balance")
 
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    balance: Mapped[float] = mapped_column(default=0.0)

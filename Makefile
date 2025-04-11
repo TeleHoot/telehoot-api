@@ -114,9 +114,11 @@ test: lint format type-check
 
 test-docker: lint format type-check pytest
 
-# Start the app using uvicorn
+
+
+# Change the start command to use Uvicorn directly
 start:
-	$(UV) run $(GUNICORN) src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --reload
+	$(UV) run $(UVICORN) src.main:app --host 127.0.0.1 --port 8000 --reload
 
 # Create .env file from example.env on Unix systems
 create-env-unix:

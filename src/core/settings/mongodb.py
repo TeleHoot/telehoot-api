@@ -29,4 +29,4 @@ class MongoDBSettings(BaseSettings):
     @computed_field
     @property
     def URL(self) -> str:
-        return str(self.DSN)
+        return str(self.DSN) + "?replicaSet=rs0&authSource=admin"

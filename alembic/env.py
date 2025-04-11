@@ -6,18 +6,19 @@ import logging
 
 from sqlalchemy import engine_from_config, pool, inspect, Integer, Column, String, TIMESTAMP, text
 from alembic import context  # type: ignore
-import src.core as core
 import os
 import yaml
 from alembic import context
 from sqlalchemy import MetaData, Table
 from sqlalchemy.orm import sessionmaker
 import src.app.models # !needed for alembic to detect models
+from src.core.config import get_settings
+from src.core.models.sqlalchemy import Base
 
 # This is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 alembic_config = context.config
-settings = core.config.get_settings()
+settings = get_settings()
 
 section = alembic_config.config_ini_section
 alembic_config.set_section_option(section, "DATABASE_URL", settings.POSTGRES.URL)
@@ -35,7 +36,9 @@ logger.setLevel(logging.INFO)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = core.models.sqlalchemy.Base.metadata
+
+target_metadata = Base.metadata
+
 
 def run_migrations_offline() -> None:
     """

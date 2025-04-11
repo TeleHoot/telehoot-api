@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core import settings, utils
@@ -34,7 +32,7 @@ class Settings(BaseSettings):
     USER_ROLE: str = "USER"
     ADMIN_ROLE: str = "ADMIN"
 
-    model_config = SettingsConfigDict(env_file=Path(__file__).parents[2] / ".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=settings.env_config.ENV_FILE_PATH, extra="ignore")
 
 
 def get_settings():
