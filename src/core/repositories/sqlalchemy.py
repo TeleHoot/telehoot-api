@@ -86,7 +86,7 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
             ) from e
 
     @log_operation
-    async def read_all(
+    async def read_many(
         self,
         session: AsyncSession,
         page: int = 1,
@@ -95,7 +95,7 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
         try:
             query = select(self.model)
 
-            if issubclass(self.model, models.SoftDeleteMixin):
+            if issubclass(self.model, models.mixins.SoftDelete):
                 query = query.where(self.model.deleted_at.is_(None))
 
             query = query.offset((page - 1) * limit).limit(limit)
@@ -142,7 +142,7 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
                 return False
 
             # Soft delete
-            if issubclass(self.model, models.SoftDeleteMixin):
+            if issubclass(self.model, models.mixins.SoftDelete):
                 if instance.deleted_at is None:
                     instance.deleted_at = func.timezone("UTC", func.now())
                     await session.flush()

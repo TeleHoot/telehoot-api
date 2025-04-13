@@ -32,13 +32,11 @@ class Base(DeclarativeBase):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.timezone("UTC", func.now()),
-        nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.timezone("UTC", func.now()),
         onupdate=func.timezone("UTC", func.now()),
-        nullable=False,
     )
 
     repr_cols_num = 3

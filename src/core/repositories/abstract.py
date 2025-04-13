@@ -25,7 +25,7 @@ class AbstractCRUD[ModelType](ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def read_all(
+    async def read_many(
         self,
         session: AsyncSession,
         page: int = 1,
