@@ -1,5 +1,5 @@
 import logging
-from typing import TypeVar, cast
+from typing import TypeVar
 
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -97,4 +97,4 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
         return data
 
     def _validate_data(self, entity: models.Base) -> TRead:
-        return cast(TRead, self.read_schema.model_validate(entity))
+        return self.read_schema.model_validate(entity)
