@@ -9,9 +9,9 @@ from src.app import models, repositories, schemas
 
 class Organizations(
     core.services.BaseCRUD[
-        schemas.OrganizationCreate,
-        schemas.OrganizationRead,
-        schemas.OrganizationUpdate,
+        schemas.organizations.Create,
+        schemas.organizations.Read,
+        schemas.organizations.Update,
         models.Organization,
     ]
 ):
@@ -20,9 +20,9 @@ class Organizations(
         self.s3 = core.repositories.S3()
         super().__init__(
             self.repo,
-            create_schema=schemas.OrganizationCreate,
-            read_schema=schemas.OrganizationRead,
-            update_schema=schemas.OrganizationUpdate,
+            create_schema=schemas.organizations.Create,
+            read_schema=schemas.organizations.Read,
+            update_schema=schemas.organizations.Update,
         )
 
     async def upload_image(
@@ -31,7 +31,7 @@ class Organizations(
         organization_id: UUID,
         file: UploadFile,
         background_tasks: BackgroundTasks,
-    ) -> schemas.OrganizationRead:
+    ) -> schemas.organizations.Read:
         organization = await self.repo.read_by_id(session, organization_id)
 
         s3_path = self.s3.generate_upload_path_with_file_name()
@@ -51,7 +51,7 @@ class Organizations(
         session: AsyncSession,
         organization_id: UUID,
         background_tasks: BackgroundTasks,
-    ) -> schemas.OrganizationRead:
+    ) -> schemas.organizations.Read:
         organization = await self.read_by_id(session, organization_id)
 
         if not organization.image_path:
@@ -63,7 +63,7 @@ class Organizations(
 
         return self._validate_data(updated_org)
 
-    def _validate_data(self, entity: models.Organization) -> schemas.OrganizationRead:
+    def _validate_data(self, entity: models.Organization) -> schemas.organizations.Read:
         data = entity.__dict__
 
         if hasattr(entity, "image_path") and entity.image_path:

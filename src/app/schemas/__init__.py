@@ -1,14 +1,6 @@
-from .organization import (
-    OrganizationCreate,
-    OrganizationRead,
-    OrganizationUpdate,
-)
-from .user import UserCreate, UserRead
+from . import organizations, users
 
 __all__ = [
-    "OrganizationCreate",
-    "OrganizationRead",
-    "OrganizationUpdate",
-    "UserCreate",
-    "UserRead",
+    "organizations",
+    "users",
 ]

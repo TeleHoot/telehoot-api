@@ -2,9 +2,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from minio import Minio, S3Error
 from urllib3 import ProxyManager
 
-from minio import Minio, S3Error
 from src.core.config import get_settings
 from src.core.repositories.exceptions import S3ObjectDoesntExistError
 
