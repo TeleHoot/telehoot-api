@@ -1,12 +1,17 @@
+from .organization import (
+    OrganizationBase,
+    OrganizationCreate,
+    OrganizationRead,
+    OrganizationUpdate,
+)
 from .user import UserBase, UserCreate, UserRead
-from .organization import OrganizationBase, OrganizationCreate, OrganizationRead, OrganizationUpdate
 
 __all__ = [
+    "OrganizationBase",
+    "OrganizationCreate",
+    "OrganizationRead",
+    "OrganizationUpdate",
     "UserBase",
     "UserCreate",
     "UserRead",
-    "OrganizationRead",
-    "OrganizationUpdate",
-    "OrganizationCreate",
-    "OrganizationBase",
 ]

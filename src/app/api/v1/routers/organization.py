@@ -1,11 +1,13 @@
-from fastapi import APIRouter
-from fastapi.params import Query
 from uuid import UUID
 
+from fastapi import APIRouter
+
+from src import core
 from src.app import schemas
 from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/organization", tags=["organization"])
+settings = core.config.get_settings()
 
 
 @router.post("/", response_model=schemas.OrganizationRead)
@@ -39,10 +41,9 @@ async def read_organization(
 async def read_organizations(
     session: dependencies.DBSession,
     service: dependencies.OrganizationService,
-    page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100),
+    filter_query: dependencies.LimitPageQuery,
 ):
-    return await service.read_all(session, page=page, limit=limit)
+    return await service.read_all(session, page=filter_query.page, limit=filter_query.limit)
 
 
 @router.patch("/{organization_id}", response_model=schemas.OrganizationRead)

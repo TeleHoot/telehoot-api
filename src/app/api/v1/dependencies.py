@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
+from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
@@ -15,3 +16,5 @@ DBSession = Annotated[AsyncSession, Depends(db_manager.get_session)]
 
 UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
+
+LimitPageQuery = Annotated[core.schemas.query_filter.FilterParams, Query()]
