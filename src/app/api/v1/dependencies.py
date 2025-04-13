@@ -17,4 +17,4 @@ DBSession = Annotated[AsyncSession, Depends(db_manager.get_session)]
 UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
 
-LimitPageQuery = Annotated[core.schemas.query_filter.FilterParams, Query()]
+PageLimitQuery = Annotated[core.schemas.query_filter.FilterParams, Query()]

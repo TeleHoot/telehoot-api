@@ -2,7 +2,7 @@ import logging
 from collections.abc import Sequence
 from typing import TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -93,9 +93,14 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
         limit: int = 10,
     ) -> Sequence[ModelType]:
         try:
-            result = await session.scalars(
-                select(self.model).offset((page - 1) * limit).limit(limit),
-            )
+            query = select(self.model)
+
+            if issubclass(self.model, models.SoftDeleteMixin):
+                query = query.where(self.model.deleted_at.is_(None))
+
+            query = query.offset((page - 1) * limit).limit(limit)
+
+            result = await session.scalars(query)
             return result.all()
         except Exception as e:
             raise repositories.exceptions.DatabaseError(
@@ -132,12 +137,22 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
     async def delete_by_id(self, session: AsyncSession, entity_id: int | str) -> bool:
         try:
             instance = await self.read_by_id(session, entity_id)
-            if instance:
-                await session.delete(instance)
-                await session.flush()
+            if not instance:
+                self.logger.warning("Delete target not found", extra={"deleted": False})
+                return False
+
+            # Soft delete
+            if issubclass(self.model, models.SoftDeleteMixin):
+                if instance.deleted_at is None:
+                    instance.deleted_at = func.timezone("UTC", func.now())
+                    await session.flush()
                 return True
-            self.logger.warning("Delete target not found", extra={"deleted": False})
-            return False
+
+            # Hard delete
+            await session.delete(instance)
+            await session.flush()
+            return True
+
         except Exception as e:
             raise repositories.exceptions.EntityDeleteError(
                 self.__class__.__name__,

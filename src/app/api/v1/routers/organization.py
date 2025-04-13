@@ -39,7 +39,7 @@ async def read_organization(
 async def read_organizations(
     session: dependencies.DBSession,
     service: dependencies.OrganizationService,
-    filter_query: dependencies.LimitPageQuery,
+    filter_query: dependencies.PageLimitQuery,
 ):
     return await service.read_all(session, page=filter_query.page, limit=filter_query.limit)
 
