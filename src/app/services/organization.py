@@ -2,7 +2,11 @@ from src import core
 from src.app import repositories, schemas
 
 
-class Organizations(core.services.BaseCRUD[schemas.OrganizationCreate, schemas.OrganizationRead, schemas.OrganizationUpdate]):
+class Organizations(
+    core.services.BaseCRUD[
+        schemas.OrganizationCreate, schemas.OrganizationRead, schemas.OrganizationUpdate
+    ]
+):
     def __init__(self):
         self.repo = repositories.Organizations()
         super().__init__(

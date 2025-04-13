@@ -1,7 +1,7 @@
-from .user import Users
 from .organization import Organizations
+from .user import Users
 
 __all__ = [
-    "Users",
     "Organizations",
+    "Users",
 ]
