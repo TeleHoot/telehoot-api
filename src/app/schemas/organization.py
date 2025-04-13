@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class OrganizationBase(BaseModel):
@@ -23,5 +23,6 @@ class OrganizationRead(OrganizationBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+    image_url: HttpUrl | None = None
 
     model_config = ConfigDict(from_attributes=True)

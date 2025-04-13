@@ -1,8 +1,10 @@
 from src import core
-from src.app import repositories, schemas
+from src.app import models, repositories, schemas
 
 
-class Users(core.services.BaseCRUD[schemas.UserCreate, schemas.UserRead, schemas.UserCreate]):
+class Users(
+    core.services.BaseCRUD[schemas.UserCreate, schemas.UserRead, schemas.UserCreate, models.User]
+):
     def __init__(self):
         self.repo = repositories.Users()
         super().__init__(

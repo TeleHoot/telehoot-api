@@ -73,3 +73,7 @@ class EntityDeleteError(RepositoryError):
             f"{repo_name} repository failed to delete entity in '{table_name}' "
             f"with ID: {identifier}. Detail: {message}",
         )
+
+
+class S3ObjectDoesntExistError(Exception):
+    pass

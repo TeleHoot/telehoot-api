@@ -10,9 +10,10 @@ from src.core.utils.decorators import log_operation
 TCreate = TypeVar("TCreate", bound=BaseModel)
 TRead = TypeVar("TRead", bound=BaseModel)
 TUpdate = TypeVar("TUpdate", bound=BaseModel)
+TEntity = TypeVar("TEntity", bound=models.Base)
 
 
-class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
+class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity: models.Base]:
     def __init__(
         self,
         repo: repositories.abstract.AbstractCRUD,
@@ -98,5 +99,5 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
     def _prepare_data(data: dict) -> dict:
         return data
 
-    def _validate_data(self, entity: models.Base) -> TRead:
+    def _validate_data(self, entity: TEntity) -> TRead:
         return self.read_schema.model_validate(entity)
