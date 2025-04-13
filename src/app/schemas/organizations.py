@@ -5,21 +5,21 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
-class OrganizationBase(BaseModel):
+class Base(BaseModel):
     name: Annotated[str, Field(max_length=64)]
     description: Annotated[str, Field(max_length=500)]
 
 
-class OrganizationCreate(OrganizationBase):
+class Create(Base):
     pass
 
 
-class OrganizationUpdate(BaseModel):
+class Update(BaseModel):
     name: Annotated[str | None, Field(max_length=64)] = None
     description: Annotated[str | None, Field(max_length=500)] = None
 
 
-class OrganizationRead(OrganizationBase):
+class Read(Base):
     id: UUID
     created_at: datetime
     updated_at: datetime

@@ -4,15 +4,15 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class UserBase(BaseModel):
+class Base(BaseModel):
     name: Annotated[str, Field(min_length=3, max_length=255)]
 
 
-class UserCreate(UserBase):
+class Create(Base):
     pass
 
 
-class UserRead(UserBase):
+class Read(Base):
     id: UUID
 
     model_config = ConfigDict(from_attributes=True)

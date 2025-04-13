@@ -9,16 +9,16 @@ from src.app.api.v1 import dependencies
 router = APIRouter(prefix="/organization", tags=["organization"])
 
 
-@router.post("/", response_model=schemas.OrganizationRead)
+@router.post("/", response_model=schemas.organizations.Read)
 async def create_organization(
-    organization_create: schemas.OrganizationCreate,
+    organization_create: schemas.organizations.Create,
     session: dependencies.DBSession,
     service: dependencies.OrganizationService,
 ):
     return await service.create(session, organization_create)
 
 
-@router.get("/{organization_id}", response_model=schemas.OrganizationRead)
+@router.get("/{organization_id}", response_model=schemas.organizations.Read)
 async def read_organization(
     organization_id: UUID,
     session: dependencies.DBSession,
@@ -27,7 +27,7 @@ async def read_organization(
     return await service.read_by_id(session, organization_id)
 
 
-@router.get("/", response_model=list[schemas.OrganizationRead])
+@router.get("/", response_model=list[schemas.organizations.Read])
 async def read_organizations(
     session: dependencies.DBSession,
     service: dependencies.OrganizationService,
@@ -36,10 +36,10 @@ async def read_organizations(
     return await service.read_many(session, page=filter_query.page, limit=filter_query.limit)
 
 
-@router.patch("/{organization_id}", response_model=schemas.OrganizationRead)
+@router.patch("/{organization_id}", response_model=schemas.organizations.Read)
 async def update_organization(
     organization_id: UUID,
-    organization_update: schemas.OrganizationUpdate,
+    organization_update: schemas.organizations.Update,
     session: dependencies.DBSession,
     service: dependencies.OrganizationService,
 ):
@@ -55,7 +55,7 @@ async def delete_organization(
     return await service.delete_by_id(session, organization_id)
 
 
-@router.post("/{organization_id}/image", response_model=schemas.OrganizationRead)
+@router.post("/{organization_id}/image", response_model=schemas.organizations.Read)
 async def upload_organization_image(
     organization_id: UUID,
     session: dependencies.DBSession,
@@ -71,7 +71,7 @@ async def upload_organization_image(
     return await service.upload_image(session, organization_id, file, background_tasks)
 
 
-@router.delete("/{organization_id}/image", response_model=schemas.OrganizationRead)
+@router.delete("/{organization_id}/image", response_model=schemas.organizations.Read)
 async def delete_organization_image(
     organization_id: UUID,
     session: dependencies.DBSession,

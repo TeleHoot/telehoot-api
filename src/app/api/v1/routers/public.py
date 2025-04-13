@@ -11,9 +11,9 @@ async def healthcheck():
     return 1
 
 
-@router.post("/register", response_model=schemas.UserRead)
+@router.post("/register", response_model=schemas.users.Read)
 async def register(
-    user_create: schemas.UserCreate,
+    user_create: schemas.users.Create,
     users_service: dependencies.UsersService,
     session: dependencies.DBSession,
 ):
