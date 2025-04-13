@@ -4,12 +4,11 @@ from inspect import getmembers, isclass
 
 from beanie import Document
 
-# All database models must be imported here to be able to
-# initialize them on startup.
+from .organization import Organization
 from .questions import Question
 from .user import User
 
-__all__ = ["Question", "User", "gather_documents"]
+__all__ = ["Organization", "Question", "User", "gather_documents"]
 
 
 def gather_documents() -> Sequence[type[Document]]:
