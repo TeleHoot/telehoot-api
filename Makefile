@@ -15,6 +15,7 @@ PRE_COMMIT = pre-commit
 PYTEST = pytest
 RUFF = ruff
 UVICORN = uvicorn
+HYPERCORN = hypercorn
 PYRIGHT = pyright
 
 # Help command
@@ -115,7 +116,7 @@ test-docker: lint format type-check pytest
 
 # Start the app using uvicorn
 start:
-	$(UV) run $(UVICORN) src.main:app --host 0.0.0.0 --port 8000 --reload
+	$(UV) run $(HYPERCORN) src.main:app --bind 0.0.0.0:8000 --reload
 
 # Create .env file from example.env on Unix systems
 create-env-unix:
