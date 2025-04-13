@@ -11,7 +11,7 @@ from src.core.repositories.exceptions import S3ObjectDoesntExistError
 
 class S3:
     """
-    Repository class that provides a façade for application to access the underlying S3 storage.
+    Repository class that provides a facade for application to access the underlying S3 storage.
     """
 
     minio_client: Minio
