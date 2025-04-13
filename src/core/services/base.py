@@ -58,8 +58,10 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
         return self._validate_data(entity)
 
     @log_operation
-    async def read_all(self, session: AsyncSession, page: int = 1, limit: int = 10) -> list[TRead]:
-        entities = await self.repo.read_all(session, page, min(limit, 100))
+    async def read_many(
+        self, session: AsyncSession, page: int = 1, limit: int = 10
+    ) -> list[TRead]:
+        entities = await self.repo.read_many(session, page, min(limit, 100))
 
         return [self._validate_data(e) for e in entities]
 

@@ -41,7 +41,7 @@ async def read_organizations(
     service: dependencies.OrganizationService,
     filter_query: dependencies.PageLimitQuery,
 ):
-    return await service.read_all(session, page=filter_query.page, limit=filter_query.limit)
+    return await service.read_many(session, page=filter_query.page, limit=filter_query.limit)
 
 
 @router.patch("/{organization_id}", response_model=schemas.OrganizationRead)
