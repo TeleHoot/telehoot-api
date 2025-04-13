@@ -2,12 +2,10 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from src import core
 from src.app import schemas
 from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/organization", tags=["organization"])
-settings = core.config.get_settings()
 
 
 @router.post("/", response_model=schemas.OrganizationRead)
