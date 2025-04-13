@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     POSTGRES: settings.PostgreSQLSettings = settings.PostgreSQLSettings()
     MONGO: settings.MongoDBSettings = settings.MongoDBSettings()
+    S3: settings.S3ServiceSettings = settings.S3ServiceSettings()
 
     API_PREFIX: str = "/api"
 
