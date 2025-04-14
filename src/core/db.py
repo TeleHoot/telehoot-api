@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator, Callable, Sequence
 from contextlib import asynccontextmanager
 from typing import TypeVar
@@ -15,6 +16,8 @@ from sqlalchemy.ext.asyncio import (
 from src.core import config, utils
 
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 @utils.decorators.Singleton
@@ -75,6 +78,5 @@ async def init_mongo(
             multiprocessing_mode=True,
         )
     except Exception as e:
-        print(e)  # noqa: T201
-        # set logger in future
+        logger.exception("Failed to initialize MongoDB connection", extra={"error": str(e)})
         raise

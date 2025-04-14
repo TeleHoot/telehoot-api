@@ -1,4 +1,6 @@
 import logging.config
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
@@ -11,14 +13,11 @@ settings = core.config.get_settings()
 
 
 def create_app() -> FastAPI:
-    async def lifespan(application: FastAPI):
-        try:
-            await core.db.init_mongo(settings, gather_documents)
-            yield
-        except Exception as e:  # noqa: BLE001
-            print(e)  # noqa: T201
-            # set logger in future
-            yield
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        await core.db.init_mongo(settings, gather_documents)
+        yield
 
     app = FastAPI(
         debug=settings.DEBUG,
@@ -28,7 +27,7 @@ def create_app() -> FastAPI:
         docs_url=settings.DOCS_URL,
         redoc_url=settings.REDOC_URL,
         default_response_class=ORJSONResponse,
-        lifespan=lifespan,  # type: ignore[valid-type]
+        lifespan=lifespan,
     )
 
     logging.config.dictConfig(core.logger.setup_logger())
