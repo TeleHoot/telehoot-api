@@ -15,7 +15,7 @@ ModelType = TypeVar("ModelType", bound=models.Base)
 class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
     def __init__(self, model: type[ModelType]):
         self.model = model
-        self.logger = logging.getLogger(f"repositories.{model.__name__.lower()}")
+        self.logger = logging.getLogger(f"repositories.{self.__class__.__name__.lower()}")
         self.context = {
             "model": self.model.__name__,
             "table": self.model.__tablename__,
