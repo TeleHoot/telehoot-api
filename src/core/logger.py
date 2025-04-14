@@ -9,7 +9,7 @@ def setup_logger() -> dict:
         "disable_existing_loggers": False,
         "formatters": {
             "default": {
-                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                "()": "pythonjsonlogger.json.JsonFormatter",
                 "format": settings.LOGGER.FORMAT,
                 "datefmt": "%Y-%m-%d %H:%M:%S",
             },
