@@ -93,23 +93,3 @@ class Organizations(
     async def _delete_file_in_background(self, s3_path: str):
         async with self.s3:
             await self.s3.delete_file(s3_path)
-
-    async def _validate_data(self, entity: models.Organization) -> schemas.organizations.Read:
-        data = entity.__dict__
-
-        if hasattr(entity, "image_path") and entity.image_path:
-            data["image_url"] = await self._get_image_url(str(entity.id), entity.image_path)
-        else:
-            data["image_url"] = None
-
-        return self.read_schema.model_validate(data)
-
-    async def _get_image_url(self, org_id: str, image_path: str) -> str | None:
-        try:
-            async with self.s3:
-                return await self.s3.generate_download_url(
-                    image_path, f"organization_{org_id}_image.jpg", expiration_minutes=5
-                )
-        except Exception as e:  # noqa: BLE001
-            self.logger.warning("Failed to generate image URL: %s", e)
-            return None

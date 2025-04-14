@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Base(BaseModel):
@@ -23,6 +23,6 @@ class Read(Base):
     id: UUID
     created_at: datetime
     updated_at: datetime
-    image_url: HttpUrl | None = None
+    image_path: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
