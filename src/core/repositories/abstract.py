@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 ModelType = TypeVar("ModelType")
 
 
-class AbstractCRUD[ModelType](ABC):
+class BaseCRUD[ModelType](ABC):
     @abstractmethod
     async def create(self, session: AsyncSession, data: dict) -> ModelType:
         raise NotImplementedError

@@ -95,7 +95,7 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
         try:
             query = select(self.model)
 
-            if issubclass(self.model, models.mixins.SoftDelete):
+            if issubclass(self.model, models.sqlalchemy.SoftDelete):
                 query = query.where(self.model.deleted_at.is_(None))
 
             query = query.offset((page - 1) * limit).limit(limit)
@@ -142,7 +142,7 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
                 return False
 
             # Soft delete
-            if issubclass(self.model, models.mixins.SoftDelete):
+            if issubclass(self.model, models.sqlalchemy.SoftDelete):
                 if instance.deleted_at is None:
                     instance.deleted_at = func.timezone("UTC", func.now())
                     await session.flush()
