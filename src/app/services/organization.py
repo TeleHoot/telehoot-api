@@ -37,7 +37,7 @@ class Organizations(
     ) -> schemas.organizations.Read:
         organization = await self.repo.read_by_id(session, organization_id)
 
-        s3_path = f"{datetime.now(tz=UTC).strftime('%Y/%m/%d')}/{uuid.uuid4()}"
+        s3_path = f"{datetime.now(tz=UTC).strftime("%Y/%m/%d")}/{uuid.uuid4()}"
 
         file_content = await file.read()
 

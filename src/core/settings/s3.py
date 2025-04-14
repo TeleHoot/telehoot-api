@@ -1,10 +1,9 @@
-from pydantic import BaseModel
-from pydantic_settings import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core import settings
 
 
-class S3ServiceSettings(BaseModel):
+class S3ServiceSettings(BaseSettings):
     BUCKET_NAME: str = "telehoot"
     ENDPOINT: str = "localhost:9000"
     ACCESS_KEY: str = "user"

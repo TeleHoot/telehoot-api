@@ -18,7 +18,6 @@ class Base:
     """
 
     def __init__(self):
-        self.logger = logging.getLogger(f"repositories.{__name__.lower()}")
         self.session = aioboto3.Session(
             aws_access_key_id=settings.S3.ACCESS_KEY,
             aws_secret_access_key=settings.S3.SECRET_KEY,
@@ -30,6 +29,7 @@ class Base:
         )
         self._use_ssl = settings.S3.REQUIRE_TLS
         self._client_error = "S3 client not initialized. Use async context manager"
+        self.logger = logging.getLogger(f"repositories.{__name__.lower()}")
         self.context = {
             "bucket": settings.S3.BUCKET_NAME,
         }
@@ -101,7 +101,7 @@ class Base:
             raise RuntimeError(self._client_error)
 
         response_content_disposition = (
-            f"attachment; filename={desired_filename or s3_path.split('/')[-1]}"
+            f"attachment; filename={desired_filename or s3_path.split("/")[-1]}"
         )
         params = {
             "Bucket": settings.S3.BUCKET_NAME,
