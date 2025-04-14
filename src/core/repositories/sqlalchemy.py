@@ -12,7 +12,7 @@ from src.core.utils.decorators import log_operation
 ModelType = TypeVar("ModelType", bound=models.sqlalchemy.Base)
 
 
-class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
+class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
     def __init__(self, model: type[ModelType]):
         self.model = model
         self.logger = logging.getLogger(f"repositories.{self.__class__.__name__.lower()}")
