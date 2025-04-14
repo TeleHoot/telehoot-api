@@ -35,6 +35,15 @@ class Settings(BaseSettings):
     USER_ROLE: str = "USER"
     ADMIN_ROLE: str = "ADMIN"
 
+    ALLOWED_IMAGE_TYPES: set[str] = {
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+        "image/tiff",
+    }
+
     model_config = SettingsConfigDict(env_file=Path(__file__).parents[2] / ".env", extra="ignore")
 
 

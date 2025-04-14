@@ -11,8 +11,8 @@ def setup_logger() -> dict:
             "default": {
                 "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
                 "format": settings.LOGGER.FORMAT,
-                "datefmt": "%Y-%m-%d %H:%M:%S"
-                },
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
             "uvicorn_access": {
                 "()": "uvicorn.logging.AccessFormatter",
                 "fmt": '%(asctime)s [%(process)s] [%(levelname)s] [%(name)s] %(client_addr)s - "%(request_line)s" %(status_code)s',  # noqa: E501
