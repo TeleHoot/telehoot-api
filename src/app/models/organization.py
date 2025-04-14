@@ -1,10 +1,10 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.core.models import Base, mixins
+from src import core
 
 
-class Organization(Base, mixins.SoftDelete):
+class Organization(core.models.sqlalchemy.Base, core.models.mixins.SoftDelete):
     __tablename__ = "organizations"
     repr_cols = ("id", "name")
 

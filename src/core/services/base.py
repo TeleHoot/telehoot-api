@@ -10,10 +10,15 @@ from src.core.utils.decorators import log_operation
 TCreate = TypeVar("TCreate", bound=BaseModel)
 TRead = TypeVar("TRead", bound=BaseModel)
 TUpdate = TypeVar("TUpdate", bound=BaseModel)
-TEntity = TypeVar("TEntity", bound=models.Base)
+TEntity = TypeVar("TEntity", bound=models.sqlalchemy.Base)
 
 
-class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity: models.Base]:
+class BaseCRUD[
+    TCreate: BaseModel,
+    TRead: BaseModel,
+    TUpdate: BaseModel,
+    TEntity: models.sqlalchemy.Base,
+]:
     def __init__(
         self,
         repo: repositories.abstract.AbstractCRUD,

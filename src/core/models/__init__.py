@@ -1,3 +1,3 @@
-from . import mongo, sqlalchemy
+from . import mixins, mongo, s3, sqlalchemy
 
-__all__ = ["mongo", "sqlalchemy"]
+__all__ = ["mixins", "mongo", "s3", "sqlalchemy"]
