@@ -32,7 +32,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity
     async def create(self, session: AsyncSession, create_schema: TCreate) -> TRead:
         data = self._prepare_data(create_schema.model_dump(exclude_unset=True))
         entity = await self.repo.create(session, data)
-        return self._validate_data(entity)
+        return await self._validate_data(entity)
 
     @log_operation
     async def create_many(
@@ -45,7 +45,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity
         ]
         entities = await self.repo.create_many(session, data)
 
-        return [self._validate_data(e) for e in entities]
+        return [await self._validate_data(e) for e in entities]
 
     @log_operation
     async def read_by_id(self, session: AsyncSession, entity_id: int | str) -> TRead:
@@ -56,7 +56,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity
                 f"entity_id: {entity_id}",
             )
 
-        return self._validate_data(entity)
+        return await self._validate_data(entity)
 
     @log_operation
     async def read_many(
@@ -64,7 +64,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity
     ) -> list[TRead]:
         entities = await self.repo.read_many(session, page, min(limit, 100))
 
-        return [self._validate_data(e) for e in entities]
+        return [await self._validate_data(e) for e in entities]
 
     @log_operation
     async def update_by_id(
@@ -82,7 +82,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity
                 f"entity_id: {entity_id}",
             )
 
-        return self._validate_data(updated_entity)
+        return await self._validate_data(updated_entity)
 
     @log_operation
     async def delete_by_id(self, session: AsyncSession, entity_id: int | str) -> bool:
@@ -99,5 +99,5 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TEntity
     def _prepare_data(data: dict) -> dict:
         return data
 
-    def _validate_data(self, entity: TEntity) -> TRead:
+    async def _validate_data(self, entity: TEntity) -> TRead:
         return self.read_schema.model_validate(entity)

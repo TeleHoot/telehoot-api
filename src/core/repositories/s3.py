@@ -1,9 +1,8 @@
 import uuid
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
+from datetime import UTC, datetime
 
-from minio import Minio, S3Error
-from urllib3 import ProxyManager
+import aioboto3
+from botocore.exceptions import ClientError
 
 from src.core.config import get_settings
 from src.core.repositories.exceptions import S3ObjectDoesntExistError
@@ -11,74 +10,92 @@ from src.core.repositories.exceptions import S3ObjectDoesntExistError
 
 class S3:
     """
-    Repository class that provides a facade for application to access the underlying S3 storage.
+    Async S3 repository using aioboto3 with connection pooling.
     """
-
-    minio_client: Minio
-    tmp_path: Path
 
     def __init__(self):
         self.settings = get_settings()
-        self.minio_client = Minio(
-            self.settings.S3.ENDPOINT,
-            access_key=self.settings.S3.ACCESS_KEY,
-            secret_key=self.settings.S3.SECRET_KEY,
-            region=self.settings.S3.REGION,
-            secure=self.settings.S3.REQUIRE_TLS,
-            http_client=ProxyManager(self.settings.S3.INTERNAL_URL)
-            if self.settings.S3.IS_PROXY_REQUIRED
-            else None,
+        self.session = aioboto3.Session(
+            aws_access_key_id=self.settings.S3.ACCESS_KEY,
+            aws_secret_access_key=self.settings.S3.SECRET_KEY,
+            region_name=self.settings.S3.REGION,
         )
-        self.tmp_path = Path("./tmp")
+        self._client = None
+        self._endpoint_url = (
+            self.settings.S3.INTERNAL_URL
+            if self.settings.S3.IS_PROXY_REQUIRED
+            else self.settings.S3.ENDPOINT
+        )
+        self._use_ssl = self.settings.S3.REQUIRE_TLS
+        self._client_error = "S3 client not initialized. Use async context manager"
+
+    async def __aenter__(self):
+        self._client = await self.session.client(
+            "s3",
+            endpoint_url=self._endpoint_url,
+            use_ssl=self._use_ssl,
+        ).__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self._client:
+            await self._client.__aexit__(exc_type, exc_val, exc_tb)
+            self._client = None
 
     @staticmethod
-    def __generate_upload_path() -> str:
+    async def _generate_upload_path() -> str:
         current_yyyy_mm_dd: str = datetime.now(tz=UTC).strftime("%Y/%m/%d")
         return f"{current_yyyy_mm_dd}/"
 
-    def generate_upload_path_with_file_name(self) -> str:
-        return f"{self.__generate_upload_path()}{uuid.uuid4()}"
+    async def generate_upload_path_with_file_name(self) -> str:
+        return f"{await self._generate_upload_path()}{uuid.uuid4()}"
 
-    def __validate_object_existence(self, s3_object_path: str) -> None:
-        try:
-            self.minio_client.stat_object(self.settings.S3.BUCKET_NAME, s3_object_path)
-        except S3Error as e:
-            if e.code == "NoSuchKey":
-                error_msg = (
-                    f"The S3 object with path='{s3_object_path}' does not exist in the bucket."
-                )
-                raise S3ObjectDoesntExistError(error_msg) from e
-            raise
+    async def upload_fileobj(self, fileobj, s3_path: str, content_type: str | None = None) -> None:
+        if not self._client:
+            raise RuntimeError(self._client_error)
 
-    def upload_fileobj(self, fileobj, s3_path: str, content_type: str | None) -> None:
-        self.minio_client.put_object(
-            bucket_name=self.settings.S3.BUCKET_NAME,
-            object_name=s3_path,
-            data=fileobj,
-            length=-1,
-            content_type=content_type,  # type: ignore[valid-type]
-            part_size=10 * 1024 * 1024,  # 10MB chunks
+        await self._client.upload_fileobj(
+            Fileobj=fileobj,
+            Bucket=self.settings.S3.BUCKET_NAME,
+            Key=s3_path,
+            ExtraArgs={
+                "ContentType": content_type,
+            },
         )
 
-    def delete_file(self, s3_path: str) -> None:
-        try:
-            self.minio_client.remove_object(self.settings.S3.BUCKET_NAME, s3_path)
-        except S3Error as e:
-            if e.code != "NoSuchKey":
-                raise
+    async def delete_file(self, s3_path: str) -> None:
+        if not self._client:
+            raise RuntimeError(self._client_error)
 
-    def generate_download_url(
+        try:
+            await self._client.delete_object(
+                Bucket=self.settings.S3.BUCKET_NAME,
+                Key=s3_path,
+            )
+        except ClientError as e:
+            if e.response["Error"]["Code"] != "NoSuchKey":
+                raise S3ObjectDoesntExistError from e
+
+    async def generate_download_url(
         self,
         s3_path: str,
         desired_filename: str | None = None,
         expiration_minutes: int = 360,
     ) -> str:
-        filename = desired_filename or s3_path.split("/")[-1]
-        headers = {"response-content-disposition": f"attachment; filename={filename}"}
+        if not self._client:
+            raise RuntimeError(self._client_error)
 
-        return self.minio_client.presigned_get_object(
-            bucket_name=self.settings.S3.BUCKET_NAME,
-            object_name=s3_path,
-            expires=timedelta(minutes=expiration_minutes),
-            response_headers=headers,  # type: ignore[valid-type]
+        response_content_disposition = (
+            f"attachment; filename={desired_filename or s3_path.split('/')[-1]}"
+        )
+        params = {
+            "Bucket": self.settings.S3.BUCKET_NAME,
+            "Key": s3_path,
+            "ResponseContentDisposition": response_content_disposition,
+        }
+
+        return await self._client.generate_presigned_url(
+            "get_object",
+            Params=params,
+            ExpiresIn=expiration_minutes * 60,
         )

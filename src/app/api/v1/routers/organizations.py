@@ -5,8 +5,10 @@ from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile,
 
 from src.app import schemas
 from src.app.api.v1 import dependencies
+from src.core.config import get_settings
 
 router = APIRouter(prefix="/organization", tags=["organization"])
+settings = get_settings()
 
 
 @router.post("/", response_model=schemas.organizations.Read)
@@ -63,9 +65,11 @@ async def upload_organization_image(
     background_tasks: BackgroundTasks,
     file: Annotated[UploadFile, File(description="Organization image")],
 ):
-    if file.content_type and not file.content_type.startswith("image/"):
+    if not file.content_type or file.content_type not in settings.ALLOWED_IMAGE_TYPES:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Only image files are allowed"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Only image files are allowed. Valid types: "
+            f"{', '.join(settings.ALLOWED_IMAGE_TYPES)}",
         )
 
     return await service.upload_image(session, organization_id, file, background_tasks)
