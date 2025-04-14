@@ -8,7 +8,7 @@ from src.core.config import get_settings
 from src.core.repositories.exceptions import S3ObjectDoesntExistError
 
 
-class S3:
+class Base:
     """
     Async S3 repository using aioboto3 with connection pooling.
     """

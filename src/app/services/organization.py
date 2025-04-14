@@ -20,7 +20,7 @@ class Organizations(
 ):
     def __init__(self):
         self.repo = repositories.Organizations()
-        self.s3 = core.repositories.S3()
+        self.s3 = core.repositories.s3.Base()
         super().__init__(
             self.repo,
             create_schema=schemas.organizations.Create,

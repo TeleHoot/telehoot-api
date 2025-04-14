@@ -1,9 +1,8 @@
-from . import abstract, exceptions, sqlalchemy
-from .s3 import S3
+from . import abstract, exceptions, s3, sqlalchemy
 
 __all__ = [
-    "S3",
     "abstract",
     "exceptions",
+    "s3",
     "sqlalchemy",
 ]
