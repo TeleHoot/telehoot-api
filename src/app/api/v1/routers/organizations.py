@@ -69,7 +69,7 @@ async def upload_organization_image(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Only image files are allowed. Valid types: "
-            f"{", ".join(settings.ALLOWED_IMAGE_TYPES)}",
+            f"{', '.join(settings.ALLOWED_IMAGE_TYPES)}",
         )
 
     return await service.upload_image(session, organization_id, file, background_tasks)
