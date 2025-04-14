@@ -59,3 +59,7 @@ class Base(DeclarativeBase):
 
         cols_str = ", ".join(cols)
         return f"<{self.__class__.__name__}({cols_str})>"
+
+
+class SoftDelete:
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

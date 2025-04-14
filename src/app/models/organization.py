@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src import core
 
 
-class Organization(core.models.sqlalchemy.Base, core.models.mixins.SoftDelete):
+class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "organizations"
     repr_cols = ("id", "name")
 

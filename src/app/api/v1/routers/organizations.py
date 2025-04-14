@@ -7,7 +7,7 @@ from src.app import schemas
 from src.app.api.v1 import dependencies
 from src.core.config import get_settings
 
-router = APIRouter(prefix="/organization", tags=["organization"])
+router = APIRouter(prefix="/organizations", tags=["organizations"])
 settings = get_settings()
 
 
