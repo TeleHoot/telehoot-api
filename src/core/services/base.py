@@ -4,24 +4,24 @@ from typing import TypeVar
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import models, repositories, services
+from src.core import repositories, services
 from src.core.utils.decorators import log_operation
 
 TCreate = TypeVar("TCreate", bound=BaseModel)
 TRead = TypeVar("TRead", bound=BaseModel)
 TUpdate = TypeVar("TUpdate", bound=BaseModel)
-TEntity = TypeVar("TEntity", bound=models.sqlalchemy.Base)
+TEntity = TypeVar("TEntity", bound=object)
 
 
 class BaseCRUD[
     TCreate: BaseModel,
     TRead: BaseModel,
     TUpdate: BaseModel,
-    TEntity: models.sqlalchemy.Base,
+    TModel: object,
 ]:
     def __init__(
         self,
-        repo: repositories.abstract.AbstractCRUD,
+        repo: repositories.abstract.BaseCRUD,
         create_schema: type[TCreate],
         read_schema: type[TRead],
         update_schema: type[TUpdate],
@@ -35,7 +35,7 @@ class BaseCRUD[
 
     @log_operation
     async def create(self, session: AsyncSession, create_schema: TCreate) -> TRead:
-        data = self._prepare_data(create_schema.model_dump(exclude_unset=True))
+        data = await self._dump_data(create_schema)
         entity = await self.repo.create(session, data)
         return await self._validate_data(entity)
 
@@ -45,12 +45,10 @@ class BaseCRUD[
         session: AsyncSession,
         create_schemas: list[TCreate],
     ) -> list[TRead]:
-        data = [
-            self._prepare_data(schema.model_dump(exclude_unset=True)) for schema in create_schemas
-        ]
+        data = [await self._dump_data(schema) for schema in create_schemas]
         entities = await self.repo.create_many(session, data)
 
-        return [await self._validate_data(e) for e in entities]
+        return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
     async def read_by_id(self, session: AsyncSession, entity_id: int | str) -> TRead:
@@ -69,7 +67,7 @@ class BaseCRUD[
     ) -> list[TRead]:
         entities = await self.repo.read_many(session, page, min(limit, 100))
 
-        return [await self._validate_data(e) for e in entities]
+        return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
     async def update_by_id(
@@ -78,7 +76,8 @@ class BaseCRUD[
         entity_id: int | str,
         update_schema: TUpdate,
     ) -> TRead | None:
-        data = update_schema.model_dump(exclude_unset=True)
+        data = await self._dump_data(update_schema)
+
         updated_entity = await self.repo.update_by_id(session, entity_id, data)
 
         if not updated_entity:
@@ -100,9 +99,9 @@ class BaseCRUD[
 
         return is_deleted
 
-    @staticmethod
-    def _prepare_data(data: dict) -> dict:
-        return data
-
-    async def _validate_data(self, entity: TEntity) -> TRead:
+    async def _validate_data(self, entity: TModel) -> TRead:
         return self.read_schema.model_validate(entity)
+
+    @staticmethod
+    async def _dump_data(schema: BaseModel) -> dict:
+        return schema.model_dump(exclude_unset=True)
