@@ -1,6 +1,10 @@
-from collections.abc import AsyncGenerator
+import logging
+from collections.abc import AsyncGenerator, Callable, Sequence
 from contextlib import asynccontextmanager
+from typing import TypeVar
 
+from beanie import Document, init_beanie
+from motor.motor_asyncio import AsyncIOMotorClient
 from sqlalchemy import AsyncAdaptedQueuePool, NullPool
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -10,6 +14,10 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from src.core import config, utils
+
+T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 @utils.decorators.Singleton
@@ -45,3 +53,30 @@ class DatabaseManager:
 
 def get_db_manager():
     return DatabaseManager()
+
+
+async def init_mongo(
+    settings: config.Settings, aggregator: Callable[[], Sequence[type[Document]]]
+) -> None:
+    """Initialize MongoDB connection with Beanie ODM.
+
+    Args:
+        settings: Application settings containing MongoDB configuration
+        aggregator: Function that returns a sequence of document model classes
+    """
+    try:
+        client = AsyncIOMotorClient(
+            settings.MONGO.URL,
+            serverSelectionTimeoutMS=5000,
+        )
+
+        await client.admin.command("ping")
+
+        await init_beanie(
+            database=getattr(client, settings.MONGO.INITDB_DATABASE),
+            document_models=aggregator(),
+            multiprocessing_mode=True,
+        )
+    except Exception as e:
+        logger.exception("Failed to initialize MongoDB connection", extra={"error": str(e)})
+        raise

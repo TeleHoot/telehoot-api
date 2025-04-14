@@ -96,5 +96,5 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel]:
     def _prepare_data(data: dict) -> dict:
         return data
 
-    def _validate_data(self, entity: models.Base) -> TRead:
+    def _validate_data(self, entity: models.sqlalchemy.Base) -> TRead:
         return cast(TRead, self.read_schema.model_validate(entity))

@@ -6,10 +6,10 @@ from src.core import settings
 
 class MongoDBSettings(BaseSettings):
     HOST: str = "localhost"
-    USER: str = "mongo"
+    INITDB_ROOT_USERNAME: str = "mongo"
     PORT: int = 27017
-    PASSWORD: str = "mongo"
-    DB: str = "admin"
+    INITDB_ROOT_PASSWORD: str = "mongo"
+    INITDB_DATABASE: str = "mongo"
 
     model_config = SettingsConfigDict(
         env_file=settings.env_config.ENV_FILE_PATH, extra="ignore", env_prefix="MONGO_"
@@ -20,11 +20,10 @@ class MongoDBSettings(BaseSettings):
     def DSN(self) -> MongoDsn:
         return MongoDsn.build(
             scheme="mongodb",
-            username=self.USER,
-            password=self.PASSWORD,
+            username=self.INITDB_ROOT_USERNAME,
+            password=self.INITDB_ROOT_PASSWORD,
             host=self.HOST,
             port=self.PORT,
-            path=self.DB,
         )
 
     @computed_field

@@ -16,10 +16,10 @@ db_manager = get_db_manager()
 @pytest.fixture(scope="session")
 async def setup_db_schema() -> AsyncGenerator[None]:
     async with db_manager.engine.begin() as conn:
-        await conn.run_sync(core.models.Base.metadata.create_all)
+        await conn.run_sync(core.models.sqlalchemy.Base.metadata.create_all)
     yield
     async with db_manager.engine.begin() as conn:
-        await conn.run_sync(core.models.Base.metadata.drop_all)
+        await conn.run_sync(core.models.sqlalchemy.Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="function")

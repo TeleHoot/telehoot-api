@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core import models, repositories
 from src.core.utils.decorators import log_operation
 
-ModelType = TypeVar("ModelType", bound=models.Base)
+ModelType = TypeVar("ModelType", bound=models.sqlalchemy.Base)
 
 
 class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):

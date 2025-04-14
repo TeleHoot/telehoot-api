@@ -35,7 +35,7 @@ logger.setLevel(logging.INFO)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = core.models.Base.metadata
+target_metadata = core.models.sqlalchemy.Base.metadata
 
 def run_migrations_offline() -> None:
     """
