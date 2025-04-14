@@ -1,11 +1,15 @@
+import logging
 import uuid
 from datetime import UTC, datetime
+from typing import BinaryIO
 
 import aioboto3
 from botocore.exceptions import ClientError
 
 from src.core.config import get_settings
-from src.core.repositories.exceptions import S3ObjectDoesntExistError
+from src.core.utils.decorators import log_operation
+
+settings = get_settings()
 
 
 class Base:
@@ -14,20 +18,21 @@ class Base:
     """
 
     def __init__(self):
-        self.settings = get_settings()
+        self.logger = logging.getLogger(f"repositories.{__name__.lower()}")
         self.session = aioboto3.Session(
-            aws_access_key_id=self.settings.S3.ACCESS_KEY,
-            aws_secret_access_key=self.settings.S3.SECRET_KEY,
-            region_name=self.settings.S3.REGION,
+            aws_access_key_id=settings.S3.ACCESS_KEY,
+            aws_secret_access_key=settings.S3.SECRET_KEY,
+            region_name=settings.S3.REGION,
         )
         self._client = None
         self._endpoint_url = (
-            self.settings.S3.INTERNAL_URL
-            if self.settings.S3.IS_PROXY_REQUIRED
-            else self.settings.S3.ENDPOINT
+            settings.S3.INTERNAL_URL if settings.S3.IS_PROXY_REQUIRED else settings.S3.ENDPOINT
         )
-        self._use_ssl = self.settings.S3.REQUIRE_TLS
+        self._use_ssl = settings.S3.REQUIRE_TLS
         self._client_error = "S3 client not initialized. Use async context manager"
+        self.context = {
+            "bucket": settings.S3.BUCKET_NAME,
+        }
 
     async def __aenter__(self):
         self._client = await self.session.client(
@@ -50,32 +55,42 @@ class Base:
     async def generate_upload_path_with_file_name(self) -> str:
         return f"{await self._generate_upload_path()}{uuid.uuid4()}"
 
-    async def upload_fileobj(self, fileobj, s3_path: str, content_type: str | None = None) -> None:
+    @log_operation
+    async def upload_fileobj(
+        self,
+        fileobj: BinaryIO | bytes | bytearray,
+        s3_path: str,
+        content_type: str | None = None,
+    ) -> None:
         if not self._client:
             raise RuntimeError(self._client_error)
 
         await self._client.upload_fileobj(
             Fileobj=fileobj,
-            Bucket=self.settings.S3.BUCKET_NAME,
+            Bucket=settings.S3.BUCKET_NAME,
             Key=s3_path,
             ExtraArgs={
                 "ContentType": content_type,
             },
         )
 
-    async def delete_file(self, s3_path: str) -> None:
+    @log_operation
+    async def delete_file(self, s3_path: str) -> bool:
         if not self._client:
             raise RuntimeError(self._client_error)
 
         try:
             await self._client.delete_object(
-                Bucket=self.settings.S3.BUCKET_NAME,
+                Bucket=settings.S3.BUCKET_NAME,
                 Key=s3_path,
             )
+            return True
         except ClientError as e:
             if e.response["Error"]["Code"] != "NoSuchKey":
-                raise S3ObjectDoesntExistError from e
+                self.logger.warning("Delete target not found", extra={"deleted": False})
+        return False
 
+    @log_operation
     async def generate_download_url(
         self,
         s3_path: str,
@@ -89,7 +104,7 @@ class Base:
             f"attachment; filename={desired_filename or s3_path.split('/')[-1]}"
         )
         params = {
-            "Bucket": self.settings.S3.BUCKET_NAME,
+            "Bucket": settings.S3.BUCKET_NAME,
             "Key": s3_path,
             "ResponseContentDisposition": response_content_disposition,
         }
