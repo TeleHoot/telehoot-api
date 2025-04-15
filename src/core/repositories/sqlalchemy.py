@@ -4,9 +4,8 @@ from typing import TypeVar
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import models, repositories
+from src.core import models, repositories, uow
 from src.core.utils.decorators import log_operation
 
 ModelType = TypeVar("ModelType", bound=models.sqlalchemy.Base)
@@ -22,7 +21,9 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
         }
 
     @log_operation
-    async def create(self, session: AsyncSession, data: dict) -> ModelType:
+    async def create(self, uow: uow.UnitOfWork, data: dict) -> ModelType:
+        session = uow.postgres_session
+
         try:
             instance = self.model(**data)
             session.add(instance)
@@ -45,7 +46,9 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
         return instance
 
     @log_operation
-    async def create_many(self, session: AsyncSession, data_list: list[dict]) -> list[ModelType]:
+    async def create_many(self, uow: uow.UnitOfWork, data_list: list[dict]) -> list[ModelType]:
+        session = uow.postgres_session
+
         try:
             instances = [self.model(**data) for data in data_list]
             session.add_all(instances)
@@ -71,9 +74,11 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
     @log_operation
     async def read_by_id(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         entity_id: int | str,
     ) -> ModelType | None:
+        session = uow.postgres_session
+
         try:
             entity = await session.get(self.model, entity_id)
             if not entity:
@@ -88,10 +93,12 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
     @log_operation
     async def read_many(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         page: int = 1,
         limit: int = 10,
     ) -> Sequence[ModelType]:
+        session = uow.postgres_session
+
         try:
             query = select(self.model)
 
@@ -111,10 +118,12 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
     @log_operation
     async def update_by_id(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         entity_id: int | str,
         data: dict,
     ) -> ModelType | None:
+        session = uow.postgres_session
+
         try:
             instance = await self.read_by_id(session, entity_id)
             if instance:
@@ -134,7 +143,9 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
             ) from e
 
     @log_operation
-    async def delete_by_id(self, session: AsyncSession, entity_id: int | str) -> bool:
+    async def delete_by_id(self, uow: uow.UnitOfWork, entity_id: int | str) -> bool:
+        session = uow.postgres_session
+
         try:
             instance = await self.read_by_id(session, entity_id)
             if not instance:

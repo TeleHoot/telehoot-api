@@ -9,6 +9,7 @@ from . import (
     schemas,
     services,
     settings,
+    uow,
     utils,
 )
 
@@ -23,5 +24,6 @@ __all__ = [
     "schemas",
     "services",
     "settings",
+    "uow",
     "utils",
 ]

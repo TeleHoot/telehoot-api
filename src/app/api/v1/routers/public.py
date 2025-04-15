@@ -15,6 +15,6 @@ async def healthcheck():
 async def register(
     user_create: schemas.users.Create,
     users_service: dependencies.UsersService,
-    session: dependencies.DBSession,
+    uow: dependencies.PostgresUOW,
 ):
-    return await users_service.create(session, user_create)
+    return await users_service.create(uow, user_create)

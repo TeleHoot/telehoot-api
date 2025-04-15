@@ -4,7 +4,6 @@ from io import BytesIO
 from uuid import UUID
 
 from fastapi import BackgroundTasks, UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
 from src.app import models, repositories, schemas
@@ -30,12 +29,12 @@ class Organizations(
 
     async def upload_image(
         self,
-        session: AsyncSession,
+        uow: core.uow.UnitOfWork,
         organization_id: UUID,
         file: UploadFile,
         background_tasks: BackgroundTasks,
     ) -> schemas.organizations.Read:
-        organization = await self.repo.read_by_id(session, organization_id)
+        organization = await self.repo.read_by_id(uow, organization_id)
 
         s3_path = f"{datetime.now(tz=UTC).strftime('%Y/%m/%d')}/{uuid.uuid4()}"
 
@@ -49,9 +48,7 @@ class Organizations(
             old_image_path=organization.image_path,
         )
 
-        updated_org = await self.repo.update_by_id(
-            session, organization_id, {"image_path": s3_path}
-        )
+        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": s3_path})
 
         return await self._validate_data(updated_org)
 
@@ -75,18 +72,18 @@ class Organizations(
 
     async def delete_image(
         self,
-        session: AsyncSession,
+        uow: core.uow.UnitOfWork,
         organization_id: UUID,
         background_tasks: BackgroundTasks,
     ) -> schemas.organizations.Read:
-        organization = await self.read_by_id(session, organization_id)
+        organization = await self.read_by_id(uow, organization_id)
 
         if not organization.image_path:
             return await self._validate_data(organization)
 
         background_tasks.add_task(self._delete_file_in_background, organization.image_path)
 
-        updated_org = await self.repo.update_by_id(session, organization_id, {"image_path": None})
+        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": None})
 
         return await self._validate_data(updated_org)
 

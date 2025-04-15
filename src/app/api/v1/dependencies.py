@@ -1,20 +1,32 @@
+from collections.abc import AsyncGenerator, Callable
 from typing import Annotated
 
 from fastapi import Depends
 from fastapi.params import Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
 from src.app import services
-from src.core.db import get_sql_manager
-
-settings = core.config.get_settings()
-db_manager = get_sql_manager()
-
-DBSession = Annotated[AsyncSession, Depends(db_manager.get_session)]
-
 
 UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
 
 PageLimitQuery = Annotated[core.schemas.query_filter.FilterParams, Query()]
+
+
+def get_uow_factory(
+    *,
+    use_postgres: bool = True,
+    use_mongodb: bool = False,
+) -> Callable[[], AsyncGenerator[core.uow.UnitOfWork]]:
+    async def _get_uow() -> AsyncGenerator[core.uow.UnitOfWork]:
+        async with core.uow.get_uow(use_postgres=use_postgres, use_mongodb=use_mongodb) as uow:
+            yield uow
+
+    return _get_uow
+
+
+PostgresUOW = Annotated[core.uow.UnitOfWork, Depends(get_uow_factory(use_postgres=True))]
+MongoUOW = Annotated[core.uow.UnitOfWork, Depends(get_uow_factory(use_mongodb=True))]
+FullUOW = Annotated[
+    core.uow.UnitOfWork, Depends(get_uow_factory(use_postgres=True, use_mongodb=True))
+]

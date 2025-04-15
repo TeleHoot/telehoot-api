@@ -2,9 +2,8 @@ import logging
 from typing import TypeVar
 
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import repositories, services
+from src.core import repositories, services, uow
 from src.core.utils.decorators import log_operation
 
 TCreate = TypeVar("TCreate", bound=BaseModel)
@@ -34,25 +33,25 @@ class BaseCRUD[
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
     @log_operation
-    async def create(self, session: AsyncSession, create_schema: TCreate) -> TRead:
+    async def create(self, uow: uow.UnitOfWork, create_schema: TCreate) -> TRead:
         data = await self._dump_data(create_schema)
-        entity = await self.repo.create(session, data)
+        entity = await self.repo.create(uow, data)
         return await self._validate_data(entity)
 
     @log_operation
     async def create_many(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         create_schemas: list[TCreate],
     ) -> list[TRead]:
         data = [await self._dump_data(schema) for schema in create_schemas]
-        entities = await self.repo.create_many(session, data)
+        entities = await self.repo.create_many(uow, data)
 
         return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
-    async def read_by_id(self, session: AsyncSession, entity_id: int | str) -> TRead:
-        entity = await self.repo.read_by_id(session, entity_id)
+    async def read_by_id(self, uow: uow.UnitOfWork, entity_id: int | str) -> TRead:
+        entity = await self.repo.read_by_id(uow, entity_id)
         if not entity:
             raise services.exceptions.EntityNotFoundError(
                 self.__class__.__name__,
@@ -62,23 +61,21 @@ class BaseCRUD[
         return await self._validate_data(entity)
 
     @log_operation
-    async def read_many(
-        self, session: AsyncSession, page: int = 1, limit: int = 10
-    ) -> list[TRead]:
-        entities = await self.repo.read_many(session, page, min(limit, 100))
+    async def read_many(self, uow: uow.UnitOfWork, page: int = 1, limit: int = 10) -> list[TRead]:
+        entities = await self.repo.read_many(uow, page, min(limit, 100))
 
         return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
     async def update_by_id(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         entity_id: int | str,
         update_schema: TUpdate,
     ) -> TRead | None:
         data = await self._dump_data(update_schema)
 
-        updated_entity = await self.repo.update_by_id(session, entity_id, data)
+        updated_entity = await self.repo.update_by_id(uow, entity_id, data)
 
         if not updated_entity:
             raise services.exceptions.EntityNotFoundError(
@@ -89,8 +86,9 @@ class BaseCRUD[
         return await self._validate_data(updated_entity)
 
     @log_operation
-    async def delete_by_id(self, session: AsyncSession, entity_id: int | str) -> bool:
-        is_deleted = await self.repo.delete_by_id(session, entity_id)
+    async def delete_by_id(self, uow: uow.UnitOfWork, entity_id: int | str) -> bool:
+        is_deleted = await self.repo.delete_by_id(uow, entity_id)
+
         if not is_deleted:
             raise services.exceptions.EntityNotFoundError(
                 self.__class__.__name__,
