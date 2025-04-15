@@ -12,13 +12,16 @@ class UnitOfWork:
         use_postgres: bool = True,
         use_mongodb: bool = False,
     ):
+        self._postgres_manager = None
+        self._mongo_manager = None
+        self._postgres_session = None
+        self._mongo_session = None
+
         if use_postgres:
             self._postgres_manager = db.get_postgres_manager()
-            self._postgres_session = None
 
         if use_mongodb:
             self._mongo_manager = db.get_mongo_manager()
-            self._mongo_session = None
 
     async def __aenter__(self):
         if self._postgres_manager:

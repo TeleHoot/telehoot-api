@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncGenerator, Callable, Sequence
+from collections.abc import Callable, Sequence
 from typing import TypeVar
 
 from beanie import Document, init_beanie
@@ -42,8 +42,8 @@ class PostgresManager:
         )
 
     @property
-    async def session(self) -> AsyncGenerator[AsyncSession]:
-        yield self._session_factory()
+    async def session(self) -> AsyncSession:
+        return self._session_factory()
 
 
 def get_postgres_manager():
