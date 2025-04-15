@@ -1,0 +1,45 @@
+from collections.abc import AsyncGenerator
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src import core
+from src.main import app
+
+
+@pytest.fixture(scope="session")
+async def setup_db_schema():
+    async with core.db.get_postgres_manager().engine.begin() as conn:
+        await conn.run_sync(core.models.sqlalchemy.Base.metadata.create_all)
+    yield
+    async with core.db.get_postgres_manager().engine.begin() as conn:
+        await conn.run_sync(core.models.sqlalchemy.Base.metadata.drop_all)
+
+
+@pytest.fixture
+async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
+    async with core.db.get_postgres_manager()._session_factory.begin() as session:  # noqa: SLF001
+        try:
+            yield session
+        finally:
+            await session.rollback()
+
+
+@pytest.fixture
+async def client(monkeypatch, db_session: AsyncSession):
+    async def patched_aenter(self):  # noqa: RUF029
+        self._postgres_session = db_session
+        return self
+
+    async def patched_aexit(*args, **kwargs):
+        pass
+
+    monkeypatch.setattr(core.uow.UnitOfWork, "__aenter__", patched_aenter)
+    monkeypatch.setattr(core.uow.UnitOfWork, "__aexit__", patched_aexit)
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test/api/v1",
+    ) as client:
+        yield client

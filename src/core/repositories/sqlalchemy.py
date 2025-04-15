@@ -22,9 +22,8 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
 
     @log_operation
     async def create(self, uow: uow.UnitOfWork, data: dict) -> ModelType:
-        session = uow.postgres_session
-
         try:
+            session = uow.postgres_session
             instance = self.model(**data)
             session.add(instance)
             await session.flush()
@@ -47,9 +46,8 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
 
     @log_operation
     async def create_many(self, uow: uow.UnitOfWork, data_list: list[dict]) -> list[ModelType]:
-        session = uow.postgres_session
-
         try:
+            session = uow.postgres_session
             instances = [self.model(**data) for data in data_list]
             session.add_all(instances)
             await session.flush()
@@ -77,9 +75,8 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
         uow: uow.UnitOfWork,
         entity_id: int | str,
     ) -> ModelType | None:
-        session = uow.postgres_session
-
         try:
+            session = uow.postgres_session
             entity = await session.get(self.model, entity_id)
             if not entity:
                 self.logger.info("Entity not found", extra={"exists": False})
@@ -97,9 +94,8 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
         page: int = 1,
         limit: int = 10,
     ) -> Sequence[ModelType]:
-        session = uow.postgres_session
-
         try:
+            session = uow.postgres_session
             query = select(self.model)
 
             if issubclass(self.model, models.sqlalchemy.SoftDelete):
@@ -122,9 +118,8 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
         entity_id: int | str,
         data: dict,
     ) -> ModelType | None:
-        session = uow.postgres_session
-
         try:
+            session = uow.postgres_session
             instance = await self.read_by_id(session, entity_id)
             if instance:
                 for key, value in data.items():
@@ -144,9 +139,8 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
 
     @log_operation
     async def delete_by_id(self, uow: uow.UnitOfWork, entity_id: int | str) -> bool:
-        session = uow.postgres_session
-
         try:
+            session = uow.postgres_session
             instance = await self.read_by_id(session, entity_id)
             if not instance:
                 self.logger.warning("Delete target not found", extra={"deleted": False})

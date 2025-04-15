@@ -9,3 +9,4 @@ class User(core.models.sqlalchemy.Base):
     repr_cols = ("id", "name")
 
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    balance: Mapped[float] = mapped_column(default=0.0)

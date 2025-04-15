@@ -24,7 +24,7 @@ settings = config.get_settings()
 @utils.decorators.Singleton
 class PostgresManager:
     def __init__(self):
-        self._engine = self._create_engine()
+        self.engine = self._create_engine()
         self._session_factory = self._create_session_factory()
 
     @staticmethod
@@ -38,15 +38,14 @@ class PostgresManager:
 
     def _create_session_factory(self) -> async_sessionmaker[AsyncSession]:
         return async_sessionmaker(
-            bind=self._engine, class_=AsyncSession, expire_on_commit=False, autobegin=False
+            bind=self.engine, class_=AsyncSession, expire_on_commit=False, autobegin=False
         )
 
-    @property
-    async def session(self) -> AsyncSession:
+    async def get_session(self) -> AsyncSession:
         return self._session_factory()
 
 
-def get_postgres_manager():
+def get_postgres_manager() -> PostgresManager:
     return PostgresManager()
 
 

@@ -1,3 +1,4 @@
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
@@ -12,24 +13,20 @@ class UnitOfWork:
         use_postgres: bool = True,
         use_mongodb: bool = False,
     ):
-        self._postgres_manager = None
-        self._mongo_manager = None
         self._postgres_session = None
         self._mongo_session = None
 
-        if use_postgres:
-            self._postgres_manager = db.get_postgres_manager()
+        self._postgres_manager = db.get_postgres_manager() if use_postgres else None
 
-        if use_mongodb:
-            self._mongo_manager = db.get_mongo_manager()
+        self._mongo_manager = db.get_mongo_manager() if use_mongodb else None
 
     async def __aenter__(self):
         if self._postgres_manager:
-            self._postgres_session = await self._postgres_manager.session
+            self._postgres_session = await self._postgres_manager.get_session()
             await self._postgres_session.begin()
 
         if self._mongo_manager:
-            self._mongo_session = await self._mongo_manager.start_session()
+            self._mongo_session = await self._mongo_manager.client.start_session()
             self._mongo_session.start_transaction()
 
         return self
@@ -54,22 +51,12 @@ class UnitOfWork:
 
     @property
     def postgres_session(self) -> AsyncSession:
-        if self._postgres_session is None:
-            raise RuntimeError
+        assert self._postgres_session is not None
 
         return self._postgres_session
 
     @property
-    def mongo_session(self):
-        if self._mongo_session is None:
-            raise RuntimeError
+    def mongo_session(self) -> AsyncIOMotorClientSession:
+        assert self._mongo_session is not None
 
         return self._mongo_session
-
-
-def get_uow(
-    *,
-    use_postgres: bool = True,
-    use_mongodb: bool = False,
-) -> UnitOfWork:
-    return UnitOfWork(use_postgres=use_postgres, use_mongodb=use_mongodb)

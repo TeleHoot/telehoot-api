@@ -19,7 +19,7 @@ def get_uow_factory(
     use_mongodb: bool = False,
 ) -> Callable[[], AsyncGenerator[core.uow.UnitOfWork]]:
     async def _get_uow() -> AsyncGenerator[core.uow.UnitOfWork]:
-        async with core.uow.get_uow(use_postgres=use_postgres, use_mongodb=use_mongodb) as uow:
+        async with core.uow.UnitOfWork(use_postgres=use_postgres, use_mongodb=use_mongodb) as uow:
             yield uow
 
     return _get_uow
