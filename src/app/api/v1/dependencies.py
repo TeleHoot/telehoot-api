@@ -6,10 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
 from src.app import services
-from src.core.db import get_db_manager
+from src.core.db import get_sql_manager
 
 settings = core.config.get_settings()
-db_manager = get_db_manager()
+db_manager = get_sql_manager()
 
 DBSession = Annotated[AsyncSession, Depends(db_manager.get_session)]
 

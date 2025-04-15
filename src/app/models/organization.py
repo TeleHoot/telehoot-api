@@ -11,4 +11,4 @@ class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelet
     name: Mapped[str] = mapped_column(String(64))
     description: Mapped[str | None] = mapped_column(String(500))
     is_verified: Mapped[bool] = mapped_column(default=False)
-    image_path: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_path: Mapped[str | None] = mapped_column(String(255))

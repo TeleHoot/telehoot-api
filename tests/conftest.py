@@ -5,12 +5,12 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
-from src.core.db import get_db_manager
+from src.core.db import get_sql_manager
 from src.main import app
 
 pytest_plugins = ["pytest_asyncio"]
 
-db_manager = get_db_manager()
+db_manager = get_sql_manager()
 
 
 @pytest.fixture(scope="session")
