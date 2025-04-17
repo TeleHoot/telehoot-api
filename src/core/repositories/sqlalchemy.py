@@ -98,9 +98,6 @@ class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
             session = uow.postgres_session
             query = select(self.model)
 
-            if issubclass(self.model, models.sqlalchemy.SoftDelete):
-                query = query.where(self.model.deleted_at.is_(None))
-
             query = query.offset((page - 1) * limit).limit(limit)
 
             result = await session.scalars(query)
