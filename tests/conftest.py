@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import core
 from src.main import app
 
+postgres_manager = core.db.get_postgres_manager()
+
 
 @pytest.fixture(scope="session")
 async def setup_db_schema() -> AsyncGenerator[None]:
@@ -19,7 +21,7 @@ async def setup_db_schema() -> AsyncGenerator[None]:
 
 @pytest.fixture
 async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
-    async with core.db.get_postgres_manager()._session_factory.begin() as session:  # noqa: SLF001
+    async with postgres_manager._session_factory.begin() as session:  # noqa: SLF001
         try:
             yield session
         finally:

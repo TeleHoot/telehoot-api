@@ -6,8 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Base(BaseModel):
-    name: Annotated[str, Field(max_length=64)]
-    description: Annotated[str, Field(max_length=500)]
+    name: Annotated[str, Field(min_length=2, max_length=64)]
+    description: Annotated[str | None, Field(max_length=500)] = None
 
 
 class Create(Base):
@@ -15,7 +15,7 @@ class Create(Base):
 
 
 class Update(BaseModel):
-    name: Annotated[str | None, Field(max_length=64)] = None
+    name: Annotated[str | None, Field(min_length=2, max_length=64)] = None
     description: Annotated[str | None, Field(max_length=500)] = None
 
 

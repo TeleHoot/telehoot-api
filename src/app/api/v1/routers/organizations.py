@@ -11,7 +11,7 @@ router = APIRouter(prefix="/organizations", tags=["organizations"])
 settings = core.config.get_settings()
 
 
-@router.post("/", response_model=schemas.organizations.Read)
+@router.post("/", response_model=schemas.organizations.Read, status_code=status.HTTP_201_CREATED)
 async def create_organization(
     organization_create: schemas.organizations.Create,
     uow: dependencies.PostgresUOW,
