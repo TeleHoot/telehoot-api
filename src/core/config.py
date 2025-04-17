@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core import settings, utils
@@ -27,6 +25,7 @@ class Settings(BaseSettings):
 
     POSTGRES: settings.PostgreSQLSettings = settings.PostgreSQLSettings()
     MONGO: settings.MongoDBSettings = settings.MongoDBSettings()
+    S3: settings.S3ServiceSettings = settings.S3ServiceSettings()
 
     API_PREFIX: str = "/api"
 
@@ -34,7 +33,16 @@ class Settings(BaseSettings):
     USER_ROLE: str = "USER"
     ADMIN_ROLE: str = "ADMIN"
 
-    model_config = SettingsConfigDict(env_file=Path(__file__).parents[2] / ".env", extra="ignore")
+    ALLOWED_IMAGE_TYPES: set[str] = {
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+        "image/tiff",
+    }
+
+    model_config = SettingsConfigDict(env_file=settings.env_config.ENV_FILE_PATH, extra="ignore")
 
 
 def get_settings():

@@ -15,7 +15,7 @@ settings = core.config.get_settings()
 def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        await core.db.init_mongo(settings, gather_documents)
+        await core.db.init_mongo(gather_documents)
         yield
 
     app = FastAPI(

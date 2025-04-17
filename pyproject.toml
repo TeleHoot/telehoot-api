@@ -5,14 +5,16 @@ description = "Api for TeleHoot"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aioboto3>=14.1.0",
     "alembic>=1.15.1",
     "asyncpg>=0.30.0",
     "beanie>=1.29.0",
     "fastapi[standard]>=0.115.11",
     "greenlet>=3.1.1",
-    "gunicorn>=23.0.0",
+    "hypercorn>=0.17.3",
     "orjson>=3.10.16",
     "pydantic-settings>=2.8.1",
+    "python-json-logger>=3.3.0",
     "sqlalchemy>=2.0.39",
     "uuid-v7>=1.0.0",
     "uvicorn>=0.34.0",

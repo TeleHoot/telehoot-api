@@ -2,28 +2,28 @@ import logging
 from collections.abc import Sequence
 from typing import TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core import models, repositories
+from src.core import models, repositories, uow
 from src.core.utils.decorators import log_operation
 
 ModelType = TypeVar("ModelType", bound=models.sqlalchemy.Base)
 
 
-class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
+class BaseCRUD(repositories.abstract.BaseCRUD[ModelType]):
     def __init__(self, model: type[ModelType]):
         self.model = model
-        self.logger = logging.getLogger(f"repositories.{model.__name__.lower()}")
+        self.logger = logging.getLogger(f"repositories.{self.__class__.__name__.lower()}")
         self.context = {
             "model": self.model.__name__,
             "table": self.model.__tablename__,
         }
 
     @log_operation
-    async def create(self, session: AsyncSession, data: dict) -> ModelType:
+    async def create(self, uow: uow.UnitOfWork, data: dict) -> ModelType:
         try:
+            session = uow.postgres_session
             instance = self.model(**data)
             session.add(instance)
             await session.flush()
@@ -45,8 +45,9 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
         return instance
 
     @log_operation
-    async def create_many(self, session: AsyncSession, data_list: list[dict]) -> list[ModelType]:
+    async def create_many(self, uow: uow.UnitOfWork, data_list: list[dict]) -> list[ModelType]:
         try:
+            session = uow.postgres_session
             instances = [self.model(**data) for data in data_list]
             session.add_all(instances)
             await session.flush()
@@ -71,10 +72,11 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
     @log_operation
     async def read_by_id(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         entity_id: int | str,
     ) -> ModelType | None:
         try:
+            session = uow.postgres_session
             entity = await session.get(self.model, entity_id)
             if not entity:
                 self.logger.info("Entity not found", extra={"exists": False})
@@ -86,16 +88,19 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
             ) from e
 
     @log_operation
-    async def read_all(
+    async def read_many(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         page: int = 1,
         limit: int = 10,
     ) -> Sequence[ModelType]:
         try:
-            result = await session.scalars(
-                select(self.model).offset((page - 1) * limit).limit(limit),
-            )
+            session = uow.postgres_session
+            query = select(self.model)
+
+            query = query.offset((page - 1) * limit).limit(limit)
+
+            result = await session.scalars(query)
             return result.all()
         except Exception as e:
             raise repositories.exceptions.DatabaseError(
@@ -106,11 +111,12 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
     @log_operation
     async def update_by_id(
         self,
-        session: AsyncSession,
+        uow: uow.UnitOfWork,
         entity_id: int | str,
         data: dict,
     ) -> ModelType | None:
         try:
+            session = uow.postgres_session
             instance = await self.read_by_id(session, entity_id)
             if instance:
                 for key, value in data.items():
@@ -129,15 +135,26 @@ class BaseCRUD(repositories.abstract.AbstractCRUD[ModelType]):
             ) from e
 
     @log_operation
-    async def delete_by_id(self, session: AsyncSession, entity_id: int | str) -> bool:
+    async def delete_by_id(self, uow: uow.UnitOfWork, entity_id: int | str) -> bool:
         try:
+            session = uow.postgres_session
             instance = await self.read_by_id(session, entity_id)
-            if instance:
-                await session.delete(instance)
-                await session.flush()
+            if not instance:
+                self.logger.warning("Delete target not found", extra={"deleted": False})
+                return False
+
+            # Soft delete
+            if issubclass(self.model, models.sqlalchemy.SoftDelete):
+                if instance.deleted_at is None:
+                    instance.deleted_at = func.timezone("UTC", func.now())
+                    await session.flush()
                 return True
-            self.logger.warning("Delete target not found", extra={"deleted": False})
-            return False
+
+            # Hard delete
+            await session.delete(instance)
+            await session.flush()
+            return True
+
         except Exception as e:
             raise repositories.exceptions.EntityDeleteError(
                 self.__class__.__name__,

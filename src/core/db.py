@@ -1,6 +1,5 @@
 import logging
-from collections.abc import AsyncGenerator, Callable, Sequence
-from contextlib import asynccontextmanager
+from collections.abc import Callable, Sequence
 from typing import TypeVar
 
 from beanie import Document, init_beanie
@@ -15,24 +14,26 @@ from sqlalchemy.ext.asyncio import (
 
 from src.core import config, utils
 
+logger = logging.getLogger(__name__)
+
 T = TypeVar("T")
 
-logger = logging.getLogger(__name__)
+settings = config.get_settings()
 
 
 @utils.decorators.Singleton
-class DatabaseManager:
+class PostgresManager:
     def __init__(self):
-        self.settings = config.get_settings()
         self.engine = self._create_engine()
-        self.session_factory = self._create_session_factory()
+        self._session_factory = self._create_session_factory()
 
-    def _create_engine(self) -> AsyncEngine:
+    @staticmethod
+    def _create_engine() -> AsyncEngine:
         return create_async_engine(
-            self.settings.POSTGRES.URL,
-            echo=self.settings.DEBUG,
-            poolclass=NullPool if self.settings.DEBUG else AsyncAdaptedQueuePool,
-            pool_recycle=900 if not self.settings.DEBUG else -1,
+            settings.POSTGRES.URL,
+            echo=settings.DEBUG,
+            poolclass=NullPool if settings.DEBUG else AsyncAdaptedQueuePool,
+            pool_recycle=900 if not settings.DEBUG else -1,
         )
 
     def _create_session_factory(self) -> async_sessionmaker[AsyncSession]:
@@ -40,40 +41,44 @@ class DatabaseManager:
             bind=self.engine, class_=AsyncSession, expire_on_commit=False, autobegin=False
         )
 
-    async def get_session(self) -> AsyncGenerator[AsyncSession]:
-        async with self.session_factory.begin() as session:
-            yield session
-
-    # for manual testing
-    @asynccontextmanager
-    async def session_context(self) -> AsyncGenerator[AsyncSession]:
-        async with self.session_factory.begin() as session:
-            yield session
+    async def get_session(self) -> AsyncSession:
+        return self._session_factory()
 
 
-def get_db_manager():
-    return DatabaseManager()
+def get_postgres_manager() -> PostgresManager:
+    return PostgresManager()
 
 
-async def init_mongo(
-    settings: config.Settings, aggregator: Callable[[], Sequence[type[Document]]]
-) -> None:
-    """Initialize MongoDB connection with Beanie ODM.
+@utils.decorators.Singleton
+class MongoDBManager:
+    def __init__(self):
+        self.client: AsyncIOMotorClient | None = None
 
-    Args:
-        settings: Application settings containing MongoDB configuration
-        aggregator: Function that returns a sequence of document model classes
-    """
-    try:
-        client = AsyncIOMotorClient(
+    async def initialize(self):
+        self.client = AsyncIOMotorClient(
             settings.MONGO.URL,
             serverSelectionTimeoutMS=5000,
         )
 
-        await client.admin.command("ping")
+        await self.client.admin.command("ping")
+
+
+def get_mongo_manager() -> MongoDBManager:
+    return MongoDBManager()
+
+
+async def init_mongo(aggregator: Callable[[], Sequence[type[Document]]]) -> None:
+    """Initialize MongoDB connection with Beanie ODM.
+
+    Args:
+        aggregator: Function that returns a sequence of document model classes
+    """
+    try:
+        mongo_manager = get_mongo_manager()
+        await mongo_manager.initialize()
 
         await init_beanie(
-            database=getattr(client, settings.MONGO.INITDB_DATABASE),
+            database=mongo_manager.client[settings.MONGO.INITDB_DATABASE],
             document_models=aggregator(),
             multiprocessing_mode=True,
         )

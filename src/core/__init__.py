@@ -6,8 +6,10 @@ from . import (
     middlewares,
     models,
     repositories,
+    schemas,
     services,
     settings,
+    uow,
     utils,
 )
 
@@ -19,7 +21,9 @@ __all__ = [
     "middlewares",
     "models",
     "repositories",
+    "schemas",
     "services",
     "settings",
+    "uow",
     "utils",
 ]

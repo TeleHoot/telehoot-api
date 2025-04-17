@@ -8,7 +8,11 @@ def setup_logger() -> dict:
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
-            "default": {"format": settings.LOGGER.FORMAT, "datefmt": "%Y-%m-%d %H:%M:%S"},
+            "default": {
+                "()": "pythonjsonlogger.json.JsonFormatter",
+                "format": settings.LOGGER.FORMAT,
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
             "uvicorn_access": {
                 "()": "uvicorn.logging.AccessFormatter",
                 "fmt": '%(asctime)s [%(process)s] [%(levelname)s] [%(name)s] %(client_addr)s - "%(request_line)s" %(status_code)s',  # noqa: E501

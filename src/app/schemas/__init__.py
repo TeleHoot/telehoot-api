@@ -1,7 +1,6 @@
-from .user import UserBase, UserCreate, UserRead
+from . import organizations, users
 
 __all__ = [
-    "UserBase",
-    "UserCreate",
-    "UserRead",
+    "organizations",
+    "users",
 ]

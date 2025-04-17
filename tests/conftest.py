@@ -5,44 +5,45 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
-from src.core.db import get_db_manager
 from src.main import app
 
-pytest_plugins = ["pytest_asyncio"]
-
-db_manager = get_db_manager()
+postgres_manager = core.db.get_postgres_manager()
 
 
 @pytest.fixture(scope="session")
 async def setup_db_schema() -> AsyncGenerator[None]:
-    async with db_manager.engine.begin() as conn:
+    async with core.db.get_postgres_manager().engine.begin() as conn:
         await conn.run_sync(core.models.sqlalchemy.Base.metadata.create_all)
     yield
-    async with db_manager.engine.begin() as conn:
+    async with core.db.get_postgres_manager().engine.begin() as conn:
         await conn.run_sync(core.models.sqlalchemy.Base.metadata.drop_all)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
-    async with db_manager.session_factory.begin() as session:
+    async with postgres_manager._session_factory.begin() as session:  # noqa: SLF001
         try:
             yield session
         finally:
             await session.rollback()
 
 
-@pytest.fixture(scope="function")
-async def anonim_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
-    """
-    Yields:
-        AsyncClient: Non-authenticated client
-    """
-    app.dependency_overrides[db_manager.get_session] = lambda: db_session
+@pytest.fixture
+async def client(
+    monkeypatch: pytest.MonkeyPatch, db_session: AsyncSession
+) -> AsyncGenerator[AsyncClient]:
+    async def patched_aenter(self):  # noqa: RUF029
+        self._postgres_session = db_session
+        return self
+
+    async def patched_aexit(*args, **kwargs):
+        pass
+
+    monkeypatch.setattr(core.uow.UnitOfWork, "__aenter__", patched_aenter)
+    monkeypatch.setattr(core.uow.UnitOfWork, "__aexit__", patched_aexit)
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test/api/v1",
     ) as client:
         yield client
-
-    app.dependency_overrides = {}
