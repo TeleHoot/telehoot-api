@@ -6,7 +6,7 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
 async def test_create_organizations_success(client: httpx.AsyncClient):
-    org_data = {"name": "TestName"}
+    org_data = {"name": "Tralalello Tralala"}
     response: httpx.Response = await client.post("/organizations/", json=org_data)
 
     assert response.status_code == status.HTTP_201_CREATED
