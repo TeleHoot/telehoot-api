@@ -18,10 +18,9 @@ class Organizations(
     ]
 ):
     def __init__(self):
-        self.repo = repositories.Organizations()
         self.s3 = core.repositories.s3.Base()
         super().__init__(
-            self.repo,
+            repositories.Organizations(),
             create_schema=schemas.organizations.Create,
             read_schema=schemas.organizations.Read,
             update_schema=schemas.organizations.Update,
@@ -34,7 +33,7 @@ class Organizations(
         file: UploadFile,
         background_tasks: BackgroundTasks,
     ) -> schemas.organizations.Read:
-        organization = await self.repo.read_by_id(uow, organization_id)
+        organization = await self.read_by_id(uow, organization_id)
 
         s3_path = f"{datetime.now(tz=UTC).strftime('%Y/%m/%d')}/{uuid.uuid4()}"
 
@@ -48,7 +47,7 @@ class Organizations(
             old_image_path=organization.image_path,
         )
 
-        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": s3_path})
+        updated_org = await self.update_by_id(uow, organization_id, {"image_path": s3_path})
 
         return await self._validate_data(updated_org)
 
@@ -83,7 +82,7 @@ class Organizations(
 
         background_tasks.add_task(self._delete_file_in_background, organization.image_path)
 
-        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": None})
+        updated_org = await self.update_by_id(uow, organization_id, {"image_path": None})
 
         return await self._validate_data(updated_org)
 

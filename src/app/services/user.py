@@ -8,9 +8,8 @@ class Users(
     ]
 ):
     def __init__(self):
-        self.repo = repositories.Users()
         super().__init__(
-            self.repo,
+            repositories.Users(),
             create_schema=schemas.users.Create,
             read_schema=schemas.users.Read,
             update_schema=schemas.users.Create,
