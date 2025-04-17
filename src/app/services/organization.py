@@ -47,9 +47,7 @@ class Organizations(
             old_image_path=organization.image_path,
         )
 
-        updated_org = await self.update_by_id(uow, organization_id, {"image_path": s3_path})
-
-        return await self._validate_data(updated_org)
+        return await self.update_by_id(uow, organization_id, {"image_path": s3_path})
 
     async def _process_image_upload(
         self,
@@ -78,13 +76,11 @@ class Organizations(
         organization = await self.read_by_id(uow, organization_id)
 
         if not organization.image_path:
-            return await self._validate_data(organization)
+            return organization
 
         background_tasks.add_task(self._delete_file_in_background, organization.image_path)
 
-        updated_org = await self.update_by_id(uow, organization_id, {"image_path": None})
-
-        return await self._validate_data(updated_org)
+        return await self.update_by_id(uow, organization_id, {"image_path": None})
 
     async def _delete_file_in_background(self, s3_path: str):
         async with self.s3:
