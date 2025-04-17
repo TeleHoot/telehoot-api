@@ -9,7 +9,7 @@ from src.main import app
 
 
 @pytest.fixture(scope="session")
-async def setup_db_schema():
+async def setup_db_schema() -> AsyncGenerator[None]:
     async with core.db.get_postgres_manager().engine.begin() as conn:
         await conn.run_sync(core.models.sqlalchemy.Base.metadata.create_all)
     yield
@@ -27,7 +27,9 @@ async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest.fixture
-async def client(monkeypatch, db_session: AsyncSession):
+async def client(
+    monkeypatch: pytest.MonkeyPatch, db_session: AsyncSession
+) -> AsyncGenerator[AsyncClient]:
     async def patched_aenter(self):  # noqa: RUF029
         self._postgres_session = db_session
         return self
