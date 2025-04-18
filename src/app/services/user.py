@@ -16,5 +16,5 @@ class Users(
             update_schema=schemas.users.Create,
         )
 
-    def read_by_tg_id(self):
+    def read_by_tg_id(self, uow, tg_id):
         raise NotImplementedError
