@@ -3,11 +3,13 @@ from .logger import LoggerSettings
 from .mongodb import MongoDBSettings
 from .postgresql import PostgreSQLSettings
 from .s3 import S3ServiceSettings
+from .telegram import TelegramOAuthSettings
 
 __all__ = [
     "LoggerSettings",
     "MongoDBSettings",
     "PostgreSQLSettings",
     "S3ServiceSettings",
+    "TelegramOAuthSettings",
     "env_config",
 ]

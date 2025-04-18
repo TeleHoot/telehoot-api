@@ -15,3 +15,6 @@ class Users(
             read_schema=schemas.users.Read,
             update_schema=schemas.users.Create,
         )
+
+    def read_by_tg_id(self):
+        raise NotImplementedError
