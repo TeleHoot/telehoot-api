@@ -5,8 +5,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Base(BaseModel):
-    name: Annotated[str, Field(min_length=3, max_length=255)]
-    balance: float = Field(ge=0, default=0.0)
+    telegram_id: int
+    username: Annotated[str | None, Field(min_length=5, max_length=32)]
+    telegram_username: Annotated[str, Field(min_length=5, max_length=32)]
+    first_name: Annotated[str, Field(min_length=1, max_length=50)]
+    last_name: Annotated[str | None, Field(min_length=1, max_length=50)]
+    photo_url: str
 
 
 class Create(Base):
@@ -17,3 +21,15 @@ class Read(Base):
     id: UUID
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class Update(BaseModel):
+    username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
+    telegram_username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
+    first_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    photo_url: str | None = None
+
+class TelegramAuth(Base):
+    auth_date: int
+    hash: str

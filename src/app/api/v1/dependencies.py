@@ -3,9 +3,10 @@ from typing import Annotated
 
 from fastapi import Depends
 from fastapi.params import Query
+from fastapi.security import HTTPBearer
 
 from src import core
-from src.app import services
+from src.app import schemas, services
 
 UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
@@ -30,3 +31,14 @@ MongoUOW = Annotated[core.uow.UnitOfWork, Depends(get_uow_factory(use_mongodb=Tr
 FullUOW = Annotated[
     core.uow.UnitOfWork, Depends(get_uow_factory(use_postgres=True, use_mongodb=True))
 ]
+
+security = HTTPBearer()
+AuthService = Annotated[services.Authentication, Depends(UsersService, OrganizationService)]
+
+
+def get_current_user(
+    uow: core.UnitOfWork,
+    auth_service: AuthService,
+    token: str = Depends(security),
+) -> schemas.users.Read:
+    return auth_service.read_user_by_token(uow, token)
