@@ -27,7 +27,7 @@ class Authentication:
 
     async def auth_user(
         self, uow: core.uow.UnitOfWork, telegram_data: schemas.users.TelegramAuth
-    ) -> str:
+    ) -> schemas.auth.Token:
         if not self.check_correct_hash(telegram_data):
             raise HTTPException(401, detail="Authentication failed")
 
@@ -48,8 +48,8 @@ class Authentication:
                     organization_id=organization.id, user_id=user.id, role=models.UserRoles.CREATOR
                 ),
             )
-
-        return self.encode_token({"user_id": str(user.id)})
+        token = self.encode_token({"user_id": str(user.id)})
+        return schemas.auth.Token(access_token=token)
 
     @log_operation
     async def read_user_by_token(self, uow: core.uow.UnitOfWork, token: str) -> schemas.users.Read:

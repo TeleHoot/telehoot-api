@@ -7,12 +7,10 @@ from src.app.api.v1 import dependencies
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = core.config.get_settings()
 
-
-@router.post("/token")
+@router.post("/token", response_model=schemas.auth.Token)
 async def get_token(
     telegram_data: schemas.users.TelegramAuth,
     uow: dependencies.PostgresUOW,
     auth_service: dependencies.AuthService,
 ):
-    token = await auth_service.auth_user(uow, telegram_data)
-    return {"access_token": token, "token_type": "bearer"}
+    return await auth_service.auth_user(uow, telegram_data)
