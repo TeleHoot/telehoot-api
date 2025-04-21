@@ -1,11 +1,11 @@
 import hmac
 from datetime import UTC, datetime
 from hashlib import sha256
-from httpx import AsyncClient
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+from httpx import AsyncClient
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
 from src.app import models
@@ -48,24 +48,37 @@ def fake_telegram_data(
     data["hash"] = computed_hash
     return data
 
+
 @pytest.mark.asyncio
-async def test_auth_new_user_(client: AsyncClient, fake_telegram_data: dict, db_session: AsyncSession):
+async def test_auth_new_user_(
+    client: AsyncClient, fake_telegram_data: dict, db_session: AsyncSession
+):
     response = await client.post("/auth", json=fake_telegram_data)
 
-    assert response.status_code == 200
+    assert response.status_code == 200  # noqa: PLR2004
     assert "access_token" in response.json()
     assert response.json()["token_type"] == "bearer"
 
     # Check that user was created in the database
-    user = await db_session.execute(select(models.User).where(models.User.telegram_id == fake_telegram_data["telegram_id"]))
+    user = await db_session.execute(
+        select(models.User).where(models.User.telegram_id == fake_telegram_data["telegram_id"])
+    )
     assert user.scalar_one_or_none() is not None
-    assert user.scalar_one_or_none().telegram_username == fake_telegram_data["telegram_username"]
+    assert user.scalar_one_or_none().telegram_username == fake_telegram_data["telegram_username"]  # type: ignore[valid-type]
 
     # Check that organization was created in the database
-    org = await db_session.execute(select(models.Organization).where(models.Organization.name == fake_telegram_data["telegram_username"].capitalize()))
+    org = await db_session.execute(
+        select(models.Organization).where(
+            models.Organization.name == fake_telegram_data["telegram_username"].capitalize()
+        )
+    )
     assert org.scalar_one_or_none() is not None
 
     # Check that organization_user was created in the database with role CREATOR
-    org_user = await db_session.execute(select(models.OrganizationUser).where(models.OrganizationUser.user_id == user.scalar_one_or_none().id))
+    org_user = await db_session.execute(
+        select(models.OrganizationUser).where(
+            models.OrganizationUser.user_id == user.scalar_one_or_none().id  # type: ignore[valid-type]
+        )
+    )
     assert org_user.scalar_one_or_none() is not None
-    assert org_user.scalar_one_or_none().role == models.UserRoles.CREATOR
+    assert org_user.scalar_one_or_none().role == models.UserRoles.CREATOR  # type: ignore[valid-type]

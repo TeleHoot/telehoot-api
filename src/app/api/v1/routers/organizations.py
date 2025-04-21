@@ -1,23 +1,36 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 
 from src import core
-from src.app import schemas
+from src.app import models, schemas
 from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 settings = core.config.get_settings()
 
 
-@router.post("/", response_model=schemas.organizations.Read, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=schemas.organizations.Read,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_organization(
     organization_create: schemas.organizations.Create,
     uow: dependencies.PostgresUOW,
-    service: dependencies.OrganizationService,
+    org_service: dependencies.OrganizationService,
+    user_org_service: dependencies.OrganizationUserService,
+    current_user: dependencies.AuthorizedUser,
 ):
-    return await service.create(uow, organization_create)
+    org = await org_service.create(uow, organization_create)
+    await user_org_service.create(
+        uow,
+        schemas.organizations_users.Create(
+            organization_id=org.id, user_id=current_user.id, role=models.UserRoles.CREATOR
+        ),
+    )
+    return org
 
 
 @router.get("/{organization_id}", response_model=schemas.organizations.Read)
@@ -38,7 +51,11 @@ async def read_organizations(
     return await service.read_many(uow, page=filter_query.page, limit=filter_query.limit)
 
 
-@router.patch("/{organization_id}", response_model=schemas.organizations.Read)
+@router.patch(
+    "/{organization_id}",
+    response_model=schemas.organizations.Read,
+    dependencies=[Depends(dependencies.get_current_user)],
+)
 async def update_organization(
     organization_id: UUID,
     organization_update: schemas.organizations.Update,
@@ -48,7 +65,11 @@ async def update_organization(
     return await service.update_by_id(uow, organization_id, organization_update)
 
 
-@router.delete("/{organization_id}", response_model=bool)
+@router.delete(
+    "/{organization_id}",
+    response_model=bool,
+    dependencies=[Depends(dependencies.get_current_user)],
+)
 async def delete_organization(
     organization_id: UUID,
     uow: dependencies.PostgresUOW,
@@ -57,7 +78,11 @@ async def delete_organization(
     return await service.delete_by_id(uow, organization_id)
 
 
-@router.post("/{organization_id}/image", response_model=schemas.organizations.Read)
+@router.post(
+    "/{organization_id}/image",
+    response_model=schemas.organizations.Read,
+    dependencies=[Depends(dependencies.get_current_user)],
+)
 async def upload_organization_image(
     organization_id: UUID,
     uow: dependencies.PostgresUOW,
@@ -75,7 +100,11 @@ async def upload_organization_image(
     return await service.upload_image(uow, organization_id, file, background_tasks)
 
 
-@router.delete("/{organization_id}/image", response_model=schemas.organizations.Read)
+@router.delete(
+    "/{organization_id}/image",
+    response_model=schemas.organizations.Read,
+    dependencies=[Depends(dependencies.get_current_user)],
+)
 async def delete_organization_image(
     organization_id: UUID,
     uow: dependencies.PostgresUOW,

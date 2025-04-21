@@ -1,7 +1,6 @@
 import hmac
 import logging
 
-from fastapi import HTTPException, status
 from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
 
@@ -29,7 +28,7 @@ class Authentication:
         self, uow: core.uow.UnitOfWork, telegram_data: schemas.users.TelegramAuth
     ) -> schemas.auth.Token:
         if not self.check_correct_hash(telegram_data):
-            raise HTTPException(401, detail="Authentication failed")
+            raise core.services.exceptions.AuthenticationError("Invalid hash")  # noqa: TRY003, EM101
 
         try:
             user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
@@ -70,15 +69,12 @@ class Authentication:
 
         return hmac.compare_digest(computed_hash, expected_hash)
 
-    def decode_token(self, token: str) -> dict:
+    @staticmethod
+    def decode_token(token: str) -> dict:
         try:
             return jwt.decode(token, settings.SECRET_KEY, algorithms="HS256")
-        except JWTError as e:
-            self.logger.exception("Invalid authentication credentials")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-            ) from e
+        except JWTError:
+            raise core.services.exceptions.AuthenticationError("Invalid credentials") from None  # noqa: TRY003, EM101
 
     @staticmethod
     def encode_token(data: dict) -> str:

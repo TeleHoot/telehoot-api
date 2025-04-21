@@ -1,7 +1,7 @@
 """Created new organization user model
 
 Revision ID: 9215e2c80c1c
-Revises: 
+Revises:
 Create Date: 2025-04-21 21:09:41.299331
 
 """

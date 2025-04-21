@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from src.app.models import Organization, User
 
 
-class UserRoles(enum.Enum):
+class UserRoles(enum.StrEnum):
     CREATOR = "creator"
     EDITOR = "editor"
     PRESENTER = "presenter"
