@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
 
 from src import core
-from src.app import schemas, services
+from src.app import models, schemas, services
 from src.core.utils.decorators import log_operation
 
 settings = core.config.get_settings()
@@ -18,6 +18,7 @@ class Authentication:
     ):
         self.users_service = services.Users()
         self.organizations_service = services.Organizations()
+        self.organizations_users_service = services.OrganizationsUsers()
 
         self.security = HTTPBearer()
 
@@ -35,9 +36,15 @@ class Authentication:
             user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
         except core.services.exceptions.EntityNotFoundError:
             user = await self.users_service.create(uow, telegram_data)
-            await self.organizations_service.create(
+            organization = await self.organizations_service.create(
                 uow,
                 schemas.organizations.Create(name=telegram_data.telegram_username.capitalize()),
+            )
+            await self.organizations_users_service.create(
+                uow,
+                schemas.organizations_users.Create(
+                    organization_id=organization.id, user_id=user.id, role=models.UserRoles.CREATOR
+                ),
             )
 
         return self.encode_token({"user_id": user.id})
