@@ -6,7 +6,7 @@ from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
 
 from src import core
-from src.app import services, schemas
+from src.app import schemas, services
 from src.core.utils.decorators import log_operation
 
 settings = core.config.get_settings()
@@ -15,36 +15,41 @@ settings = core.config.get_settings()
 class Authentication:
     def __init__(
         self,
-        users_service: services.UsersService,
-        organizations_service: services.OrganizationsService,
     ):
-        self.users_service = users_service
-        self.organizations_service = organizations_service
+        self.users_service = services.Users()
+        self.organizations_service = services.Organizations()
 
         self.security = HTTPBearer()
 
         self.context = {}
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
-    
+
     @log_operation
-    async def auth_user(self, uow: core.uow.UnitOfWork, telegram_data: schemas.oauth.TelegramAuth) -> schemas.users.Read:
+    async def auth_user(
+        self, uow: core.uow.UnitOfWork, telegram_data: schemas.users.TelegramAuth
+    ) -> str:
         if not self.check_correct_hash(telegram_data):
             raise HTTPException(401, detail="Authentication failed")
-        
-        try: 
-            user = await self.users_service.read_by_tg_id(uow, schemas.users.Read(telegram_id=telegram_data.id))
-        except core.services.exceptions.NotFoundError: 
+
+        try:
+            user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
+        except core.services.exceptions.EntityNotFoundError:
             user = await self.users_service.create(uow, telegram_data)
-            await self.organizations_service.create(uow, schemas.organizations.Create(user_id=user.id))
+            await self.organizations_service.create(
+                uow,
+                schemas.organizations.Create(name=telegram_data.telegram_username.capitalize()),
+            )
+
+        return self.encode_token({"user_id": user.id})
 
     @log_operation
     async def read_user_by_token(self, uow: core.uow.UnitOfWork, token: str) -> schemas.users.Read:
         user_data = self.decode_token(token)
-        return await self.users_service.read(uow, user_data["user_id"])
+        return await self.users_service.read_by_id(uow, user_data["user_id"])
 
     @log_operation
     @staticmethod
-    def check_correct_hash(telegram_data: core.schemas.oauth.TelegramAuth) -> bool:
+    def check_correct_hash(telegram_data: schemas.users.TelegramAuth) -> bool:
         expected_hash = telegram_data.hash
 
         sorted_params = sorted(
@@ -60,7 +65,7 @@ class Authentication:
     @log_operation
     def decode_token(self, token: str) -> dict:
         try:
-            return jwt.decode(token, settings.TG.BOT_SECRET, algorithms=[settings.TG.ALGORITHM])
+            return jwt.decode(token, settings.TG.BOT_SECRET, algorithms="HS256")
         except JWTError as e:
             self.logger.exception("Invalid authentication credentials")
             raise HTTPException(
@@ -70,5 +75,5 @@ class Authentication:
 
     @log_operation
     @staticmethod
-    def encode_token(data: dict) -> dict:
+    def encode_token(data: dict) -> str:
         return jwt.encode(data, settings.SECRET_KEY, algorithm="HS256")

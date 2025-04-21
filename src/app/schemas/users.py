@@ -30,6 +30,7 @@ class Update(BaseModel):
     last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
     photo_url: str | None = None
 
+
 class TelegramAuth(Base):
     auth_date: int
     hash: str

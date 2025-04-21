@@ -16,10 +16,13 @@ class Users(
             update_schema=schemas.users.Update,
         )
 
-    def read_by_telegram_id(self, uow: core.uow.UnitOfWork, telegram_id: int):
-        user = await self.repo.read_by_id(uow, telegram_id)
+    @core.utils.decorators.log_operation
+    async def read_by_telegram_id(self, uow: core.uow.UnitOfWork, telegram_id: int):
+        user = await self.repo.read_by_telegram_id(uow, telegram_id)
 
         if not user:
-            raise core.exceptions.EntityNotFoundError(
+            raise core.services.exceptions.EntityNotFoundError(
                 self.__class__.__name__, f"telegram_id={telegram_id}"
             )
+
+        return await self._validate_data(user)
