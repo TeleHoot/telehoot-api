@@ -65,7 +65,7 @@ class Authentication:
     @log_operation
     def decode_token(self, token: str) -> dict:
         try:
-            return jwt.decode(token, settings.TG.BOT_SECRET, algorithms="HS256")
+            return jwt.decode(token, settings.SECRET_KEY, algorithms="HS256")
         except JWTError as e:
             self.logger.exception("Invalid authentication credentials")
             raise HTTPException(
