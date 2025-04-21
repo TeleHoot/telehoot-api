@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     APP_TITLE: str = "TeleHootAPI"
     APP_DESCRIPTION: str = "API for TeleHoot"
     APP_VERSION: str = "0.1.0"
+    SECRET_KEY: str = "secret"
 
     DOCS_URL: str | None = "/docs"
     REDOC_URL: str | None = "/redoc"

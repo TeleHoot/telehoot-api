@@ -1,6 +1,5 @@
 import hashlib
 
-from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.core import settings
@@ -11,8 +10,8 @@ class TelegramOAuthSettings(BaseSettings):
     ALGORITHM: str = "SHA256"
 
     @property
-    def BOT_SECRET(self) -> SecretStr:
-        return SecretStr(hashlib.sha256(self.BOT_TOKEN.encode("UTF-8")).hexdigest())
+    def BOT_SECRET(self):
+        return hashlib.sha256(self.BOT_TOKEN.encode("UTF-8")).digest()
 
     model_config = SettingsConfigDict(
         env_file=settings.env_config.ENV_FILE_PATH, extra="ignore", env_prefix="TG_"

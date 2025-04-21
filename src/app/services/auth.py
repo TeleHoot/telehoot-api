@@ -25,7 +25,6 @@ class Authentication:
         self.context = {}
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
-    @log_operation
     async def auth_user(
         self, uow: core.uow.UnitOfWork, telegram_data: schemas.users.TelegramAuth
     ) -> str:
@@ -35,7 +34,10 @@ class Authentication:
         try:
             user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
         except core.services.exceptions.EntityNotFoundError:
-            user = await self.users_service.create(uow, telegram_data)
+            user = await self.users_service.create(
+                uow,
+                schemas.users.Create.model_validate(telegram_data.model_dump(exclude_unset=True)),
+            )
             organization = await self.organizations_service.create(
                 uow,
                 schemas.organizations.Create(name=telegram_data.telegram_username.capitalize()),
@@ -47,14 +49,13 @@ class Authentication:
                 ),
             )
 
-        return self.encode_token({"user_id": user.id})
+        return self.encode_token({"user_id": str(user.id)})
 
     @log_operation
     async def read_user_by_token(self, uow: core.uow.UnitOfWork, token: str) -> schemas.users.Read:
         user_data = self.decode_token(token)
         return await self.users_service.read_by_id(uow, user_data["user_id"])
 
-    @log_operation
     @staticmethod
     def check_correct_hash(telegram_data: schemas.users.TelegramAuth) -> bool:
         expected_hash = telegram_data.hash
@@ -69,7 +70,6 @@ class Authentication:
 
         return hmac.compare_digest(computed_hash, expected_hash)
 
-    @log_operation
     def decode_token(self, token: str) -> dict:
         try:
             return jwt.decode(token, settings.SECRET_KEY, algorithms="HS256")
@@ -80,7 +80,6 @@ class Authentication:
                 detail="Invalid authentication credentials",
             ) from e
 
-    @log_operation
     @staticmethod
     def encode_token(data: dict) -> str:
         return jwt.encode(data, settings.SECRET_KEY, algorithm="HS256")
