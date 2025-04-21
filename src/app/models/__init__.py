@@ -5,10 +5,11 @@ from inspect import getmembers, isclass
 from beanie import Document
 
 from .organization import Organization
+from .organization_user import OrganizationUser, UserRoles
 from .questions import Question
 from .user import User
 
-__all__ = ["Organization", "Question", "User", "gather_documents"]
+__all__ = ["Organization", "OrganizationUser", "Question", "User", "UserRoles", "gather_documents"]
 
 
 def gather_documents() -> Sequence[type[Document]]:
