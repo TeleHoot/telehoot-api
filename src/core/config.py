@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     CSRF_COOKIE_NAME: str = "csrftoken"
     CSRF_EXPIRE_TIME: int = 86400 * 7
 
+    SESSION_COOKIE_NAME: str = "session"
+    SESSION_EXPIRE_TIME: int = 86400 * 7
+
     DOMAIN: str = "example.site"
 
     ALLOW_ORIGINS: list[str] = ["*"]
