@@ -33,11 +33,11 @@ FullUOW = Annotated[
 ]
 
 security = HTTPBearer()
-AuthService = Annotated[services.Authentication, Depends(UsersService, OrganizationService)]
+AuthService = Annotated[services.Authentication, Depends()]
 
 
 def get_current_user(
-    uow: core.UnitOfWork,
+    uow: core.uow.UnitOfWork,
     auth_service: AuthService,
     token: str = Depends(security),
 ) -> schemas.users.Read:
