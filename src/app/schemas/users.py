@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -19,6 +20,7 @@ class Create(Base):
 
 class Read(Base):
     id: UUID
+    deleted_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

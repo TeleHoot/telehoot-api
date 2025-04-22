@@ -21,7 +21,7 @@ async def create_organization(
     uow: dependencies.PostgresUOW,
     org_service: dependencies.OrganizationService,
     user_org_service: dependencies.OrganizationUserService,
-    current_user: dependencies.AuthorizedUser,
+    current_user: dependencies.ActiveUser,
 ):
     org = await org_service.create(uow, organization_create)
     await user_org_service.create(

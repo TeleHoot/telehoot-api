@@ -50,4 +50,14 @@ async def get_current_user(
     return await auth_service.read_user_by_token(uow, token)
 
 
-AuthorizedUser = Annotated[schemas.users.Read, Depends(get_current_user)]
+CurrentUser = Annotated[schemas.users.Read, Depends(get_current_user)]
+
+
+async def get_active_user(current_user: CurrentUser) -> schemas.users.Read:  # noqa: RUF029
+    if current_user.deleted_at is not None:
+        raise core.services.exceptions.AuthenticationError("User is deleted")  # noqa: TRY003, EM101
+
+    return current_user
+
+
+ActiveUser = Annotated[schemas.users.Read, Depends(get_active_user)]
