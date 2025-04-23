@@ -1,11 +1,12 @@
 from collections.abc import AsyncGenerator, Callable
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends
 from fastapi.params import Query
+from fastapi.security import APIKeyCookie
 
 from src import core
-from src.app import schemas, services
+from src.app import models, schemas, services
 from src.core.config import get_settings
 
 UsersService = Annotated[services.Users, Depends()]
@@ -37,16 +38,19 @@ FullUOW = Annotated[
 
 AuthService = Annotated[services.Authentication, Depends()]
 
+cookie = APIKeyCookie(
+    name=settings.SESSION_COOKIE_NAME,
+    auto_error=False,
+)
+
 
 async def get_current_user(
-    request: Request,
+    token: Annotated[str, Depends(cookie)],
     uow: PostgresUOW,
     auth_service: AuthService,
 ) -> schemas.users.Read:
-    token = request.cookies.get(settings.SESSION_COOKIE_NAME)
     if not token:
-        raise core.services.exceptions.AuthenticationError("Missing token")  # noqa: TRY003, EM101
-
+        raise core.services.exceptions.AuthenticationError("No session found")  # noqa: TRY003, EM101
     return await auth_service.read_user_by_token(uow, token)
 
 
@@ -61,3 +65,16 @@ async def get_active_user(current_user: CurrentUser) -> schemas.users.Read:  # n
 
 
 ActiveUser = Annotated[schemas.users.Read, Depends(get_active_user)]
+
+
+async def get_creator_user(
+    current_user: ActiveUser, uow: PostgresUOW, service: OrganizationUserService
+) -> schemas.users.Read:
+    org_user = await service.read_by_user_id(uow, current_user.id)
+    if org_user.role != models.organization_user.UserRoles.CREATOR:
+        raise core.services.exceptions.PermissionDeniedError("User is not creator")  # noqa: TRY003, EM101
+
+    return current_user
+
+
+CreatorUser = Annotated[schemas.users.Read, Depends(get_creator_user)]

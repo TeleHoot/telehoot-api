@@ -175,3 +175,4 @@ mongodata/
 minio/
 
 .ruff_cache/
+.DS_store

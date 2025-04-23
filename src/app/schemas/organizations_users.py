@@ -8,13 +8,12 @@ from src.app.schemas import organizations, users
 
 
 class Base(BaseModel):
-    organization_id: UUID
-    user_id: UUID
     role: models.UserRoles
 
 
 class Create(Base):
-    pass
+    user_id: UUID
+    organization_id: UUID
 
 
 class Update(BaseModel):
