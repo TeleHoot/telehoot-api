@@ -3,8 +3,8 @@ from collections.abc import Callable, Sequence
 from typing import TypeVar
 
 from beanie import Document, init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
-from sqlalchemy import AsyncAdaptedQueuePool, NullPool
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorClientSession
+from sqlalchemy import AsyncAdaptedQueuePool
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -32,8 +32,8 @@ class PostgresManager:
         return create_async_engine(
             settings.POSTGRES.URL,
             echo=settings.DEBUG,
-            poolclass=NullPool if settings.DEBUG else AsyncAdaptedQueuePool,
-            pool_recycle=900 if not settings.DEBUG else -1,
+            poolclass=AsyncAdaptedQueuePool,
+            pool_recycle=900,
         )
 
     def _create_session_factory(self) -> async_sessionmaker[AsyncSession]:
@@ -51,9 +51,6 @@ def get_postgres_manager() -> PostgresManager:
 
 @utils.decorators.Singleton
 class MongoDBManager:
-    def __init__(self):
-        self.client: AsyncIOMotorClient | None = None
-
     async def initialize(self):
         self.client = AsyncIOMotorClient(
             settings.MONGO.URL,
@@ -61,6 +58,9 @@ class MongoDBManager:
         )
 
         await self.client.admin.command("ping")
+
+    async def get_session(self) -> AsyncIOMotorClientSession:
+        return await self.client.start_session()
 
 
 def get_mongo_manager() -> MongoDBManager:
