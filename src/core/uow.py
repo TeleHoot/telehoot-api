@@ -13,20 +13,19 @@ class UnitOfWork:
         use_postgres: bool = True,
         use_mongodb: bool = False,
     ):
-        self._postgres_session = None
-        self._mongo_session = None
-
         self._postgres_manager = db.get_postgres_manager() if use_postgres else None
 
         self._mongo_manager = db.get_mongo_manager() if use_mongodb else None
 
     async def __aenter__(self):
         if self._postgres_manager:
-            self._postgres_session = await self._postgres_manager.get_session()
+            self._postgres_session: AsyncSession = await self._postgres_manager.get_session()
             await self._postgres_session.begin()
 
         if self._mongo_manager:
-            self._mongo_session = await self._mongo_manager.client.start_session()
+            self._mongo_session: AsyncIOMotorClientSession = (
+                await self._mongo_manager.get_session()
+            )
             self._mongo_session.start_transaction()
 
         return self
@@ -51,12 +50,8 @@ class UnitOfWork:
 
     @property
     def postgres_session(self) -> AsyncSession:
-        assert self._postgres_session is not None
-
         return self._postgres_session
 
     @property
     def mongo_session(self) -> AsyncIOMotorClientSession:
-        assert self._mongo_session is not None
-
         return self._mongo_session
