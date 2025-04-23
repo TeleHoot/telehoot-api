@@ -14,8 +14,10 @@ class UnitOfWork:
         use_mongodb: bool = False,
     ):
         self._postgres_manager = db.get_postgres_manager() if use_postgres else None
+        self._postgres_session = None  # type: ignore[valid-type]
 
         self._mongo_manager = db.get_mongo_manager() if use_mongodb else None
+        self._mongo_session = None  # type: ignore[valid-type]
 
     async def __aenter__(self):
         if self._postgres_manager:

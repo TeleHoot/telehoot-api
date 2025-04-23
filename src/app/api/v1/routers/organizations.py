@@ -54,7 +54,7 @@ async def read_organizations(
 @router.patch(
     "/{organization_id}",
     response_model=schemas.organizations.Read,
-    dependencies=[Depends(dependencies.get_current_user)],
+    dependencies=[Depends(dependencies.get_creator_user)],
 )
 async def update_organization(
     organization_id: UUID,
@@ -68,7 +68,7 @@ async def update_organization(
 @router.delete(
     "/{organization_id}",
     response_model=bool,
-    dependencies=[Depends(dependencies.get_current_user)],
+    dependencies=[Depends(dependencies.get_creator_user)],
 )
 async def delete_organization(
     organization_id: UUID,
@@ -81,7 +81,7 @@ async def delete_organization(
 @router.post(
     "/{organization_id}/image",
     response_model=schemas.organizations.Read,
-    dependencies=[Depends(dependencies.get_current_user)],
+    dependencies=[Depends(dependencies.get_creator_user)],
 )
 async def upload_organization_image(
     organization_id: UUID,
@@ -103,7 +103,7 @@ async def upload_organization_image(
 @router.delete(
     "/{organization_id}/image",
     response_model=schemas.organizations.Read,
-    dependencies=[Depends(dependencies.get_current_user)],
+    dependencies=[Depends(dependencies.get_creator_user)],
 )
 async def delete_organization_image(
     organization_id: UUID,
@@ -112,3 +112,71 @@ async def delete_organization_image(
     background_tasks: BackgroundTasks,
 ):
     return await service.delete_image(uow, organization_id, background_tasks)
+
+
+@router.post(
+    "/users",
+    response_model=schemas.organizations_users.Read,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(dependencies.get_creator_user)],
+)
+async def add_user_to_organization(
+    user_create: schemas.organizations_users.Create,
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationUserService,
+):
+    return await service.create(uow, user_create)
+
+
+@router.get(
+    "/users/{user_id}",
+    response_model=schemas.organizations_users.Read,
+)
+async def read_organization_user(
+    user_id: UUID,
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationUserService,
+):
+    return await service.read_by_id(uow, user_id)
+
+
+@router.get(
+    "/{organization_id}/users",
+    response_model=list[schemas.organizations_users.Read],
+)
+async def read_organization_users(
+    organization_id: UUID,
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationUserService,
+    filter_query: dependencies.PageLimitQuery,
+):
+    return await service.read_many_by_organization(
+        uow, organization_id, page=filter_query.page, limit=filter_query.limit
+    )
+
+
+@router.patch(
+    "/users/{user_id}",
+    response_model=schemas.organizations_users.Read,
+    dependencies=[Depends(dependencies.get_creator_user)],
+)
+async def update_organization_user_role(
+    user_id: UUID,
+    user_update: schemas.organizations_users.Update,
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationUserService,
+):
+    return await service.update_by_id(uow, user_id, user_update)
+
+
+@router.delete(
+    "/users/{user_id}",
+    response_model=bool,
+    dependencies=[Depends(dependencies.get_creator_user)],
+)
+async def remove_user_from_organization(
+    user_id: UUID,
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationUserService,
+):
+    return await service.delete_by_id(uow, user_id)
