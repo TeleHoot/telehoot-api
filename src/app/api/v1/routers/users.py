@@ -16,10 +16,9 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def get_users(
     uow: dependencies.PostgresUOW,
     users_service: dependencies.UsersService,
-    page: int = 1,
-    limit: int = 10,
+    filter_query: dependencies.PageLimitQuery,
 ):
-    return await users_service.read_many(uow, page, limit)
+    return await users_service.read_many(uow, filter_query.page, filter_query.limit)
 
 
 @router.get(
