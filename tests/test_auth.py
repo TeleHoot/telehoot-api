@@ -76,8 +76,8 @@ async def test_auth_new_user_(
 
     # Check that organization_user was created in the database with role CREATOR
     org_user = await db_session.execute(
-        select(models.OrganizationUser).where(
-            models.OrganizationUser.user_id == user.scalar_one_or_none().id  # type: ignore[valid-type]
+        select(models.Membership).where(
+            models.Membership.user_id == user.scalar_one_or_none().id  # type: ignore[valid-type]
         )
     )
     assert org_user.scalar_one_or_none() is not None

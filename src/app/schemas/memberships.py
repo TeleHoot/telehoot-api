@@ -9,19 +9,20 @@ from src.app.schemas import organizations, users
 
 class Base(BaseModel):
     role: models.UserRoles
+    status: models.MembershipStatuses
 
 
 class Create(Base):
-    user_id: UUID
     organization_id: UUID
+    user_id: UUID
 
 
 class Update(BaseModel):
     role: models.UserRoles | None = None
+    status: models.MembershipStatuses | None = None
 
 
 class Read(Base):
-    id: UUID
     organization: organizations.Read
     user: users.Read
     created_at: datetime

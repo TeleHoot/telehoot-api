@@ -6,12 +6,12 @@ from fastapi.params import Query
 from fastapi.security import APIKeyCookie
 
 from src import core
-from src.app import models, schemas, services
+from src.app import schemas, services
 from src.core.config import get_settings
 
 UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
-OrganizationUserService = Annotated[services.OrganizationsUsers, Depends()]
+MembershipsService = Annotated[services.Memberships, Depends()]
 
 PageLimitQuery = Annotated[core.schemas.query_filter.FilterParams, Query()]
 
@@ -65,16 +65,3 @@ async def get_active_user(current_user: CurrentUser) -> schemas.users.Read:  # n
 
 
 ActiveUser = Annotated[schemas.users.Read, Depends(get_active_user)]
-
-
-async def get_creator_user(
-    current_user: ActiveUser, uow: PostgresUOW, service: OrganizationUserService
-) -> schemas.users.Read:
-    org_user = await service.read_by_user_id(uow, current_user.id)
-    if org_user.role != models.organization_user.UserRoles.CREATOR:
-        raise core.services.exceptions.PermissionDeniedError("User is not creator")  # noqa: TRY003, EM101
-
-    return current_user
-
-
-CreatorUser = Annotated[schemas.users.Read, Depends(get_creator_user)]

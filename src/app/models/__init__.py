@@ -4,12 +4,21 @@ from inspect import getmembers, isclass
 
 from beanie import Document
 
+from .membership import Membership, UserRoles
+from .membership import Statuses as MembershipStatuses
 from .organization import Organization
-from .organization_user import OrganizationUser, UserRoles
 from .questions import Question
 from .user import User
 
-__all__ = ["Organization", "OrganizationUser", "Question", "User", "UserRoles", "gather_documents"]
+__all__ = [
+    "Membership",
+    "MembershipStatuses",
+    "Organization",
+    "Question",
+    "User",
+    "UserRoles",
+    "gather_documents",
+]
 
 
 def gather_documents() -> Sequence[type[Document]]:

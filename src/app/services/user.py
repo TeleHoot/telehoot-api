@@ -14,10 +14,11 @@ class Users(
             read_schema=schemas.users.Read,
             update_schema=schemas.users.Update,
         )
+        self.repo = repositories.Users()
 
     @core.utils.decorators.log_operation
     async def read_by_telegram_id(self, uow: core.uow.UnitOfWork, telegram_id: int):
-        user = await self.read_by_telegram_id(uow, telegram_id)
+        user = await self.repo.read_by_telegram_id(uow, telegram_id)
 
         if not user:
             raise core.services.exceptions.EntityNotFoundError(
