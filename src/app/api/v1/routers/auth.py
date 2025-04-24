@@ -21,8 +21,8 @@ async def get_token(
         key=settings.SESSION_COOKIE_NAME,
         value=auth_data.access_token,
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=not settings.DEBUG,
+        samesite="none" if not settings.DEBUG else "lax",
         max_age=settings.SESSION_EXPIRE_TIME,
     )
 
