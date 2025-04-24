@@ -14,6 +14,8 @@ class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     repr_cols = ("id", "telegram_username")
     username: Mapped[str | None] = mapped_column(String(255))
 
+    is_admin: Mapped[bool] = mapped_column(default=False)
+
     telegram_id: Mapped[int] = mapped_column(unique=True)
     telegram_username: Mapped[str] = mapped_column(String(255))
     first_name: Mapped[str] = mapped_column(String(255))

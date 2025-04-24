@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Base(BaseModel):
+    is_admin: Annotated[bool, Field(default=False)]
     telegram_id: int
     username: Annotated[str | None, Field(min_length=5, max_length=32)]
     telegram_username: Annotated[str, Field(min_length=5, max_length=32)]
