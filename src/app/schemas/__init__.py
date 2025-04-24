@@ -1,3 +1,3 @@
-from . import auth, organizations, organizations_users, users
+from . import auth, memberships, organizations, users
 
-__all__ = ["auth", "organizations", "organizations_users", "users"]
+__all__ = ["auth", "memberships", "organizations", "users"]

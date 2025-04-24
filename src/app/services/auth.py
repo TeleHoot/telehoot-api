@@ -17,7 +17,7 @@ class Authentication:
     ):
         self.users_service = services.Users()
         self.organizations_service = services.Organizations()
-        self.organizations_users_service = services.OrganizationsUsers()
+        self.memberships_service = services.Memberships()
 
         self.security = HTTPBearer()
 
@@ -41,10 +41,13 @@ class Authentication:
                 uow,
                 schemas.organizations.Create(name=telegram_data.telegram_username.capitalize()),
             )
-            await self.organizations_users_service.create(
+            await self.memberships_service.create(
                 uow,
-                schemas.organizations_users.Create(
-                    organization_id=organization.id, user_id=user.id, role=models.UserRoles.CREATOR
+                schemas.memberships.Create(
+                    organization_id=organization.id,
+                    user_id=user.id,
+                    role=models.UserRoles.CREATOR,
+                    status=models.MembershipStatuses.APPROVED,
                 ),
             )
         token = self.encode_token({"user_id": str(user.id)})

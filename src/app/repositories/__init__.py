@@ -1,5 +1,5 @@
+from .memberships import Memberships
 from .organization import Organizations
-from .organizations_users import OrganizationsUsers
 from .user import Users
 
-__all__ = ["Organizations", "OrganizationsUsers", "Users"]
+__all__ = ["Memberships", "Organizations", "Users"]

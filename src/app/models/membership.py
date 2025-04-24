@@ -16,8 +16,14 @@ class UserRoles(enum.StrEnum):
     PRESENTER = "presenter"
 
 
-class OrganizationUser(core.models.sqlalchemy.Base):
-    __tablename__ = "organizations_users"
+class Statuses(enum.StrEnum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    DECLINED = "declined"
+
+
+class Membership(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
+    __tablename__ = "memberships"
     repr_cols = ("id", "organization_id", "user_id", "role")
 
     organization_id: Mapped[UUID] = mapped_column(
@@ -26,8 +32,9 @@ class OrganizationUser(core.models.sqlalchemy.Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
 
     role: Mapped[UserRoles] = mapped_column()
+    status: Mapped[Statuses] = mapped_column(default=Statuses.PENDING)
 
     organization: Mapped["Organization"] = relationship(
-        back_populates="organizations_users", lazy="selectin"
+        back_populates="memberships", lazy="selectin"
     )
-    user: Mapped["User"] = relationship(back_populates="organizations_users", lazy="selectin")
+    user: Mapped["User"] = relationship(back_populates="memberships", lazy="selectin")
