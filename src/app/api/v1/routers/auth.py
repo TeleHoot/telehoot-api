@@ -8,7 +8,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 settings = core.config.get_settings()
 
 
-@router.post("/login")
+@router.post("/login", response_model=bool)
 async def get_token(
     telegram_data: schemas.users.TelegramAuth,
     uow: dependencies.PostgresUOW,
@@ -26,13 +26,13 @@ async def get_token(
         max_age=settings.SESSION_EXPIRE_TIME,
     )
 
-    return {"status": "success"}
+    return True
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=bool)
 async def logout(response: Response):
     response.delete_cookie(settings.SESSION_COOKIE_NAME)
-    return {"status": "success"}
+    return True
 
 
 @router.get("/me")
