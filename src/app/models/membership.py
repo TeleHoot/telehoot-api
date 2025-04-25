@@ -1,7 +1,7 @@
 import enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, ForeignKey
+from sqlalchemy import UUID, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src import core
@@ -24,12 +24,16 @@ class Statuses(enum.StrEnum):
 
 class Membership(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "memberships"
-    repr_cols = ("id", "organization_id", "user_id", "role")
+    __table_args__ = (PrimaryKeyConstraint("organization_id", "user_id"),)
+
+    repr_cols = ("organization_id", "user_id", "role")
 
     organization_id: Mapped[UUID] = mapped_column(
-        ForeignKey("organizations.id", ondelete="CASCADE")
+        ForeignKey("organizations.id", ondelete="CASCADE"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
 
     role: Mapped[UserRoles] = mapped_column()
     status: Mapped[Statuses] = mapped_column(default=Statuses.PENDING)

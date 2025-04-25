@@ -5,6 +5,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
+from src.app import models, schemas
+from src.app.api.v1 import dependencies
 from src.main import app
 
 postgres_manager = core.db.get_postgres_manager()
@@ -47,3 +49,26 @@ async def client(
         base_url="http://test/api/v1",
     ) as client:
         yield client
+
+
+@pytest.fixture(scope="function")
+def user_client(client: AsyncClient, user: models.User) -> AsyncClient:
+    app.dependency_overrides[dependencies.get_current_user] = (
+        lambda: schemas.users.Read.model_validate(user)
+    )
+    return client
+
+
+@pytest.fixture(scope="function")
+async def user(db_session: AsyncSession) -> models.User:
+    user = models.User(
+        username="Tung Tung Tung Sahur",
+        is_admin=False,
+        telegram_id=12345,
+        telegram_username="Tung Tung Tung Sahur",
+        first_name="Lirili",
+        last_name="Larila",
+    )
+    db_session.add(user)
+    await db_session.flush()
+    return user

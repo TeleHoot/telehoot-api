@@ -42,17 +42,18 @@ async def get_memberships(
 
 
 @router.get(
-    "/{membership_id}",
+    "/{organization_id}/{user_id}",
     response_model=schemas.memberships.Read,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_membership(
-    membership_id: UUID,
+    organization_id: UUID,
+    user_id: UUID,
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
 ):
-    return await memberships_service.read_by_id(uow, membership_id)
+    return await memberships_service.read_by_id(uow, organization_id, user_id)
 
 
 @router.patch(

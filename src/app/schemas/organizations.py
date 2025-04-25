@@ -1,8 +1,23 @@
+import enum
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from src import core
+from src.core.schemas.filter import SortOrderField
+
+
+class SortFields(enum.StrEnum):
+    NAME = "name"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class SortParams(core.schemas.query_filter.PageLimitParams):
+    sort_by: SortFields | None = None
+    order_by: SortOrderField = SortOrderField.ASCENDING
 
 
 class Base(BaseModel):

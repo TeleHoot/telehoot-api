@@ -52,8 +52,10 @@ class UnitOfWork:
 
     @property
     def postgres_session(self) -> AsyncSession:
+        assert self._postgres_session is not None
         return self._postgres_session
 
     @property
     def mongo_session(self) -> AsyncIOMotorClientSession:
+        assert self._mongo_session is not None
         return self._mongo_session

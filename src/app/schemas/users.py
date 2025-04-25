@@ -1,8 +1,16 @@
+import enum
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class UserSortFields(enum.StrEnum):
+    USERNAME = "username"
+    TELEGRAM_USERNAME = "telegram_username"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
 
 
 class Base(BaseModel):
@@ -12,7 +20,7 @@ class Base(BaseModel):
     telegram_username: Annotated[str, Field(min_length=5, max_length=32)]
     first_name: Annotated[str, Field(min_length=1, max_length=50)]
     last_name: Annotated[str | None, Field(min_length=1, max_length=50)]
-    photo_url: str
+    photo_url: str | None
 
 
 class Create(Base):

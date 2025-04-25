@@ -1,7 +1,15 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
 
 from src import core
 from src.app import models, schemas
@@ -49,9 +57,9 @@ async def read_organization(
 async def read_organizations(
     uow: dependencies.PostgresUOW,
     service: dependencies.OrganizationService,
-    filter_query: dependencies.PageLimitQuery,
+    sort_query: dependencies.OrganizationsSortQuery,
 ):
-    return await service.read_many(uow, page=filter_query.page, limit=filter_query.limit)
+    return await service.read_many(uow, page=sort_query.page, limit=sort_query.limit)
 
 
 @router.patch(
