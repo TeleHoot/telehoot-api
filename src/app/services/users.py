@@ -4,7 +4,11 @@ from src.app import models, repositories, schemas
 
 class Users(
     core.services.BaseCRUD[
-        schemas.users.Create, schemas.users.Read, schemas.users.Update, models.User
+        schemas.users.Create,
+        schemas.users.Read,
+        schemas.users.Update,
+        schemas.users.Filters,
+        models.User,
     ]
 ):
     def __init__(self):
@@ -13,6 +17,7 @@ class Users(
             create_schema=schemas.users.Create,
             read_schema=schemas.users.Read,
             update_schema=schemas.users.Update,
+            filters_schema=schemas.users.Filters,
         )
         self.repo = repositories.Users()
 

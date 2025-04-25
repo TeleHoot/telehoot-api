@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src import core
+
 
 class UserSortFields(enum.StrEnum):
     USERNAME = "username"
@@ -46,3 +48,7 @@ class TelegramAuth(Base):
     is_admin: Annotated[bool | None, Field(exclude=True)] = False
     auth_date: int
     hash: str
+
+
+class Filters(core.schemas.BaseFilters):
+    is_admin: bool | None = None

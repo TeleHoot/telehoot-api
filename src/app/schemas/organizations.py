@@ -15,7 +15,7 @@ class SortFields(enum.StrEnum):
     UPDATED_AT = "updated_at"
 
 
-class SortParams(core.schemas.query_filter.PageLimitParams):
+class SortParams(core.schemas.PageLimitParams):
     sort_by: SortFields | None = None
     order_by: SortOrderField = SortOrderField.ASCENDING
 
@@ -41,3 +41,7 @@ class Read(Base):
     image_path: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class Filters(core.schemas.BaseFilters):
+    pass

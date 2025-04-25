@@ -14,6 +14,7 @@ class Organizations(
         schemas.organizations.Create,
         schemas.organizations.Read,
         schemas.organizations.Update,
+        schemas.organizations.Filters,
         models.Organization,
     ]
 ):
@@ -24,6 +25,7 @@ class Organizations(
             create_schema=schemas.organizations.Create,
             read_schema=schemas.organizations.Read,
             update_schema=schemas.organizations.Update,
+            filters_schema=schemas.organizations.Filters,
         )
 
     async def upload_image(

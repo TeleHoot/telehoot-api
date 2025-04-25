@@ -58,8 +58,9 @@ async def read_organizations(
     uow: dependencies.PostgresUOW,
     service: dependencies.OrganizationService,
     sort_query: dependencies.OrganizationsSortQuery,
+    filters: schemas.organizations.Filters | None = None,
 ):
-    return await service.read_many(uow, page=sort_query.page, limit=sort_query.limit)
+    return await service.read_many(uow, filters, sort_query.page, sort_query.limit)
 
 
 @router.patch(

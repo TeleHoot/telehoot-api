@@ -91,7 +91,11 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
 
     @log_operation
     async def read_many(
-        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
+        self,
+        uow: UnitOfWork,
+        filters: dict | None = None,
+        page: int = 1,
+        limit: int = 10,
     ) -> Sequence[SQLModelType]:
         try:
             session = uow.postgres_session

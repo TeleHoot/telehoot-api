@@ -33,12 +33,11 @@ async def create_membership(
 async def get_memberships(
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
-    organization_id: UUID | None = None,
-    user_id: UUID | None = None,
+    filters: schemas.memberships.Filters | None = None,
     page: int = 1,
     limit: int = 10,
 ):
-    return await memberships_service.read_many(uow, organization_id, user_id, page, limit)
+    return await memberships_service.read_many(uow, filters, page, limit)
 
 
 @router.get(
