@@ -1,5 +1,6 @@
 import hmac
 import logging
+from hashlib import sha256
 
 from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
@@ -27,6 +28,8 @@ class Authentication:
     async def auth_user(
         self, uow: core.uow.UnitOfWork, telegram_data: schemas.users.TelegramAuth
     ) -> schemas.auth.Token:
+        if not self.check_correct_hash(telegram_data):
+            raise core.services.exceptions.AuthenticationError("Invalid hash")  # noqa: TRY003, EM101
         try:
             user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
         except core.services.exceptions.EntityNotFoundError:
@@ -63,9 +66,8 @@ class Authentication:
             f"{x}={y}" for x, y in telegram_data.model_dump().items() if x != "hash"
         )
         data_check_bytes = "\n".join(sorted_params).encode()
-        computed_hash = hmac.new(
-            settings.TG.BOT_SECRET, data_check_bytes, settings.TG.ALGORITHM
-        ).hexdigest()
+
+        computed_hash = hmac.new(settings.TG.BOT_SECRET, data_check_bytes, sha256).hexdigest()
 
         return hmac.compare_digest(computed_hash, expected_hash)
 
