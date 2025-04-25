@@ -18,14 +18,13 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 @pytest.fixture
 def fake_telegram_data(
-    telegram_id: int = 12345,
-    username: str = "test_user",
-    first_name: str = "Test",
-    last_name: str = "User",
+    telegram_id: int = 1337228,
+    username: str = "brainrot_1337",
+    first_name: str = "Lirali",
+    last_name: str = "Larila",
     photo_url: str = "https://example.com/photo.jpg",
 ) -> dict:
     data = {
-        "is_admin": False,
         "telegram_id": telegram_id,
         "username": username,
         "telegram_username": username,
