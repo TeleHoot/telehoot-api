@@ -52,14 +52,6 @@ async def client(
 
 
 @pytest.fixture(scope="function")
-def user_client(client: AsyncClient, user: models.User) -> AsyncClient:
-    app.dependency_overrides[dependencies.get_current_user] = (
-        lambda: schemas.users.Read.model_validate(user)
-    )
-    return client
-
-
-@pytest.fixture(scope="function")
 async def user(db_session: AsyncSession) -> models.User:
     user = models.User(
         username="Tung Tung Tung Sahur",
@@ -72,3 +64,11 @@ async def user(db_session: AsyncSession) -> models.User:
     db_session.add(user)
     await db_session.flush()
     return user
+
+
+@pytest.fixture(scope="function")
+def user_client(client: AsyncClient, user: models.User) -> AsyncClient:
+    app.dependency_overrides[dependencies.get_current_user] = (
+        lambda: schemas.users.Read.model_validate(user)
+    )
+    return client
