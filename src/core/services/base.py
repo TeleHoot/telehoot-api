@@ -72,9 +72,7 @@ class BaseCRUD[
     async def read_many(
         self, uow: UnitOfWork, filters: TFilters | None = None, page: int = 1, limit: int = 10
     ) -> list[TRead]:
-        filters_data = None
-        if filters:
-            filters_data = await self._dump_data(filters)
+        filters_data = await self._dump_data(filters) if filters else None
 
         entities = await self.repo.read_many(uow, filters_data, page, min(limit, 100))
 

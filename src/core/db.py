@@ -25,7 +25,7 @@ settings = config.get_settings()
 class PostgresManager:
     def __init__(self):
         self.engine = self._create_engine()
-        self._session_factory = self._create_session_factory()
+        self.session_factory = self._create_session_factory()
 
     @staticmethod
     def _create_engine() -> AsyncEngine:
@@ -42,7 +42,7 @@ class PostgresManager:
         )
 
     async def get_session(self) -> AsyncSession:
-        return self._session_factory()
+        return self.session_factory()
 
 
 def get_postgres_manager() -> PostgresManager:

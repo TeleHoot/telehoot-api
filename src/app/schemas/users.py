@@ -16,12 +16,12 @@ class UserSortFields(enum.StrEnum):
 
 
 class Base(BaseModel):
-    is_admin: Annotated[bool | None, Field(default=False)]
     telegram_id: int
-    username: Annotated[str | None, Field(min_length=5, max_length=32)]
+    username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
     telegram_username: Annotated[str, Field(min_length=5, max_length=32)]
-    first_name: Annotated[str, Field(min_length=1, max_length=50)]
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)]
+    firstname: Annotated[str, Field(min_length=1, max_length=50)]
+    lastname: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    is_admin: bool = False
     photo_url: str | None
 
 
@@ -32,6 +32,7 @@ class Create(Base):
 class Read(Base):
     id: UUID
     deleted_at: datetime | None = None
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -39,13 +40,13 @@ class Read(Base):
 class Update(BaseModel):
     username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
     telegram_username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
-    first_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    firstname: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    lastname: Annotated[str | None, Field(min_length=1, max_length=50)] = None
     photo_url: str | None = None
 
 
 class TelegramAuth(Base):
-    is_admin: Annotated[bool | None, Field(exclude=True)] = False
+    is_admin: Annotated[bool, Field(exclude=True)] = False
     auth_date: int
     hash: str
 

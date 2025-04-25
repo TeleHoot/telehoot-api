@@ -23,7 +23,7 @@ async def setup_db_schema() -> AsyncGenerator[None]:
 
 @pytest.fixture
 async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
-    async with postgres_manager._session_factory.begin() as session:  # noqa: SLF001
+    async with postgres_manager.session_factory.begin() as session:
         try:
             yield session
         finally:
@@ -57,12 +57,13 @@ async def user(db_session: AsyncSession) -> models.User:
         username="Tung Tung Tung Sahur",
         is_admin=False,
         telegram_id=12345,
-        telegram_username="Tung Tung Tung Sahur",
-        first_name="Lirili",
-        last_name="Larila",
+        telegram_username="Sahur228",
+        firstname="Lirili",
+        lastname="Larila",
     )
     db_session.add(user)
     await db_session.flush()
+    await db_session.refresh(user)
     return user
 
 
@@ -72,3 +73,12 @@ def user_client(client: AsyncClient, user: models.User) -> AsyncClient:
         lambda: schemas.users.Read.model_validate(user)
     )
     return client
+
+
+@pytest.fixture(scope="function")
+async def organization(db_session: AsyncSession) -> models.Organization:
+    org = models.Organization(name="Bondito")
+    db_session.add(org)
+    await db_session.flush()
+    await db_session.refresh(org)
+    return org

@@ -20,16 +20,16 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 def fake_telegram_data(
     telegram_id: int = 1337228,
     username: str = "brainrot_1337",
-    first_name: str = "Lirali",
-    last_name: str = "Larila",
+    fitstname: str = "Lirali",
+    lastname: str = "Larila",
     photo_url: str = "https://example.com/photo.jpg",
 ) -> dict:
     data = {
         "telegram_id": telegram_id,
         "username": username,
         "telegram_username": username,
-        "first_name": first_name,
-        "last_name": last_name,
+        "firstname": fitstname,
+        "lastname": lastname,
         "photo_url": photo_url,
         "auth_date": int(datetime.now(tz=UTC).timestamp()),
         "hash": "",  # Will be calculated
@@ -77,4 +77,4 @@ async def test_auth_new_user(
         .where(models.Membership.organization_id == org.id)
     )
     assert membership is not None
-    assert membership.role == models.UserRoles.CREATOR
+    assert membership.role == models.UserRoles.OWNER

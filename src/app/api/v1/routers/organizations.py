@@ -37,7 +37,7 @@ async def create_organization(
         schemas.memberships.Create(
             organization_id=org.id,
             user_id=current_user.id,
-            role=models.UserRoles.CREATOR,
+            role=models.UserRoles.OWNER,
             status=models.MembershipStatuses.APPROVED,
         ),
     )

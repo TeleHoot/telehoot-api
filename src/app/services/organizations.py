@@ -7,6 +7,7 @@ from fastapi import BackgroundTasks, UploadFile
 
 from src import core
 from src.app import models, repositories, schemas
+from src.core.uow import UnitOfWork
 
 
 class Organizations(
@@ -30,7 +31,7 @@ class Organizations(
 
     async def upload_image(
         self,
-        uow: core.uow.UnitOfWork,
+        uow: UnitOfWork,
         organization_id: UUID,
         file: UploadFile,
         background_tasks: BackgroundTasks,
@@ -71,7 +72,7 @@ class Organizations(
 
     async def delete_image(
         self,
-        uow: core.uow.UnitOfWork,
+        uow: UnitOfWork,
         organization_id: UUID,
         background_tasks: BackgroundTasks,
     ) -> schemas.organizations.Read:

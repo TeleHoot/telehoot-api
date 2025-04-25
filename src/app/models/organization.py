@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "organizations"
-    repr_cols = ("id", "name")
+    repr_cols = ("id", "name", "is_verified")
 
     id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
 
