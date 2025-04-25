@@ -1,12 +1,12 @@
 import logging
 from collections.abc import Sequence
 from typing import TypeVar
-from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from src.core import models, repositories
+from src.core.services.base import EntityID
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 
@@ -75,7 +75,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
     async def read_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: int | str | UUID,
+        entity_id: EntityID,
     ) -> SQLModelType | None:
         try:
             session = uow.postgres_session
@@ -91,14 +91,17 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
 
     @log_operation
     async def read_many(
-        self,
-        uow: UnitOfWork,
-        page: int = 1,
-        limit: int = 10,
+        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
     ) -> Sequence[SQLModelType]:
         try:
             session = uow.postgres_session
             query = select(self.model)
+            if filters:
+                for field, value in filters.items():
+                    if value is None:
+                        continue
+                    column = getattr(self.model, field)
+                    query = query.where(column == value)
 
             query = query.offset((page - 1) * limit).limit(limit)
 
@@ -114,7 +117,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
     async def update_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: int | str | UUID,
+        entity_id: EntityID,
         data: dict,
     ) -> SQLModelType | None:
         try:
@@ -137,7 +140,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
             ) from e
 
     @log_operation
-    async def delete_by_id(self, uow: UnitOfWork, entity_id: int | str | UUID) -> bool:
+    async def delete_by_id(self, uow: UnitOfWork, entity_id: EntityID) -> bool:
         try:
             session = uow.postgres_session
             instance = await self.read_by_id(session, entity_id)

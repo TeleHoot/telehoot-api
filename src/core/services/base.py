@@ -13,6 +13,8 @@ TRead = TypeVar("TRead", bound=BaseModel)
 TUpdate = TypeVar("TUpdate", bound=BaseModel)
 TModel = TypeVar("TModel")
 
+type EntityID = int | str | UUID | dict[str, str]
+
 
 class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]:
     def __init__(
@@ -47,7 +49,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
         return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
-    async def read_by_id(self, uow: UnitOfWork, entity_id: int | str | UUID) -> TRead:
+    async def read_by_id(self, uow: UnitOfWork, entity_id: EntityID) -> TRead:
         entity = await self.repo.read_by_id(uow, entity_id)
         if not entity:
             raise services.exceptions.EntityNotFoundError(
@@ -58,8 +60,10 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
         return await self._validate_data(entity)
 
     @log_operation
-    async def read_many(self, uow: UnitOfWork, page: int = 1, limit: int = 10) -> list[TRead]:
-        entities = await self.repo.read_many(uow, page, min(limit, 100))
+    async def read_many(
+        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
+    ) -> list[TRead]:
+        entities = await self.repo.read_many(uow, page, min(limit, 100), filters)
 
         return [await self._validate_data(entity) for entity in entities]
 
@@ -67,7 +71,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
     async def update_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: int | str | UUID,
+        entity_id: EntityID,
         update_schema: TUpdate,
     ) -> TRead:
         data = await self._dump_data(update_schema)
@@ -83,7 +87,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
         return await self._validate_data(updated_entity)
 
     @log_operation
-    async def delete_by_id(self, uow: UnitOfWork, entity_id: int | str | UUID) -> bool:
+    async def delete_by_id(self, uow: UnitOfWork, entity_id: EntityID) -> bool:
         is_deleted = await self.repo.delete_by_id(uow, entity_id)
 
         if not is_deleted:

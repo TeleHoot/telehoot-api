@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
+from sqlalchemy import UUID, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from uuid_v7.base import uuid7
 
 from src import core
 
@@ -12,6 +13,8 @@ if TYPE_CHECKING:
 class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "organizations"
     repr_cols = ("id", "name")
+
+    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
 
     name: Mapped[str] = mapped_column(String(64))
     description: Mapped[str | None] = mapped_column(String(500))

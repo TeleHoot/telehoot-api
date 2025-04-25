@@ -2,6 +2,9 @@ from uuid import UUID
 
 from src import core
 from src.app import models, repositories, schemas
+from src.core.services.base import EntityID
+from src.core.uow import UnitOfWork
+from src.core.utils.decorators import log_operation
 
 
 class Memberships(
@@ -21,15 +24,28 @@ class Memberships(
             update_schema=schemas.memberships.Update,
         )
 
-    @core.utils.decorators.log_operation
+    @log_operation
     async def read_many(
         self,
-        uow: core.uow.UnitOfWork,
+        uow: UnitOfWork,
         organization_id: UUID | None,
         user_id: UUID | None,
         page: int = 1,
         limit: int = 10,
-    ):
-        users = await self.repo.read_many(uow, organization_id, user_id, page, limit)
+    ) -> list[schemas.memberships.Read]:
+        return await super().read_many(
+            uow=uow,
+            page=page,
+            limit=limit,
+            filters={"user_id": user_id, "organization_id": organization_id}
+            if user_id or organization_id
+            else None,
+        )
 
-        return [await self._validate_data(user) for user in users]
+    @log_operation
+    async def read_by_id(
+        self, uow: UnitOfWork, organization_id: EntityID, user_id: EntityID
+    ) -> schemas.memberships.Read:
+        return await super().read_by_id(
+            uow=uow, entity_id={"organization_id": organization_id, "user_id": user_id}
+        )

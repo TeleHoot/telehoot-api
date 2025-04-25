@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import TypeVar
-from uuid import UUID
+from typing import Any, TypeVar
 
 from src.core.uow import UnitOfWork
 
@@ -21,16 +20,13 @@ class BaseCRUD[ModelType](ABC):
     async def read_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: int | str | UUID,
+        entity_id: Any,
     ) -> ModelType | None:
         raise NotImplementedError
 
     @abstractmethod
     async def read_many(
-        self,
-        uow: UnitOfWork,
-        page: int = 1,
-        limit: int = 10,
+        self, uow: UnitOfWork, page: int = 1, limit: int = 10, *args, **kwargs
     ) -> Sequence[ModelType]:
         raise NotImplementedError
 
@@ -38,11 +34,11 @@ class BaseCRUD[ModelType](ABC):
     async def update_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: int | str | UUID,
+        entity_id: Any,
         data: dict,
     ) -> ModelType | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_by_id(self, uow: UnitOfWork, entity_id: int | str | UUID) -> bool:
+    async def delete_by_id(self, uow: UnitOfWork, entity_id: Any) -> bool:
         raise NotImplementedError

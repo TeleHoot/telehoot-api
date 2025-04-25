@@ -13,7 +13,9 @@ UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
 MembershipsService = Annotated[services.Memberships, Depends()]
 
-PageLimitQuery = Annotated[core.schemas.query_filter.FilterParams, Query()]
+PageLimitQuery = Annotated[core.schemas.query_filter.PageLimitParams, Query()]
+
+OrganizationsSortQuery = Annotated[schemas.organizations.SortParams, Query()]
 
 settings = get_settings()
 

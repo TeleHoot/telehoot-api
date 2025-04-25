@@ -40,10 +40,12 @@ async def create_test_helper(
     return None
 
 
-async def test_create_organizations_success(client: httpx.AsyncClient, db_session: AsyncSession):
+async def test_create_organizations_success(
+    user_client: httpx.AsyncClient, db_session: AsyncSession
+):
     org_data = {"name": "Tralalello Tralala"}
     await create_test_helper(
-        data=org_data, status_code=status.HTTP_201_CREATED, client=client, session=db_session
+        data=org_data, status_code=status.HTTP_201_CREATED, client=user_client, session=db_session
     )
 
 
@@ -56,10 +58,10 @@ async def test_create_organizations_success(client: httpx.AsyncClient, db_sessio
     ],
 )
 async def test_create_organizations_length(
-    test_name: str, status_code: int, client: httpx.AsyncClient
+    test_name: str, status_code: int, user_client: httpx.AsyncClient
 ):
     org_data = {"name": test_name}
-    await create_test_helper(data=org_data, status_code=status_code, client=client)
+    await create_test_helper(data=org_data, status_code=status_code, client=user_client)
 
 
 async def test_read_organizations_empty_db(client: httpx.AsyncClient):
@@ -68,12 +70,12 @@ async def test_read_organizations_empty_db(client: httpx.AsyncClient):
     assert response.json() == []
 
 
-async def test_read_many_organizations(client: httpx.AsyncClient, db_session: AsyncSession):
+async def test_read_many_organizations(user_client: httpx.AsyncClient, db_session: AsyncSession):
     num_created, org_data = 3, {"name": "TestName"}
     for _ in range(num_created):
-        await client.post("/organizations/", json=org_data)
+        await user_client.post("/organizations/", json=org_data)
 
-    response: httpx.Response = await client.get("/organizations/")
+    response: httpx.Response = await user_client.get("/organizations/")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -83,14 +85,18 @@ async def test_read_many_organizations(client: httpx.AsyncClient, db_session: As
     assert len(result.all()) == num_created
 
 
-async def test_update_organizations_success(client: httpx.AsyncClient, db_session: AsyncSession):
+async def test_update_organizations_success(
+    user_client: httpx.AsyncClient, db_session: AsyncSession
+):
     org_data = {"name": "Tralalello Tralala"}
     org_id = await create_test_helper(
-        data=org_data, status_code=status.HTTP_201_CREATED, client=client, session=db_session
+        data=org_data, status_code=status.HTTP_201_CREATED, client=user_client, session=db_session
     )
 
     update_org_data = {"name": "Trippi Troppa"}
-    response: httpx.Response = await client.patch(f"/organizations/{org_id}", json=update_org_data)
+    response: httpx.Response = await user_client.patch(
+        f"/organizations/{org_id}", json=update_org_data
+    )
 
     response_data = response.json()
 
