@@ -9,6 +9,7 @@ from .membership import Statuses as MembershipStatuses
 from .organization import Organization
 from .questions import Question
 from .user import User
+from .session import Session, SessionParticipant
 
 __all__ = [
     "Membership",
@@ -18,6 +19,8 @@ __all__ = [
     "User",
     "UserRoles",
     "gather_documents",
+    "Session",
+    "SessionParticipant",
 ]
 
 

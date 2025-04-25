@@ -45,3 +45,4 @@ class Update(BaseModel):
 class TelegramAuth(Base):
     auth_date: int
     hash: str
+    is_admin: Annotated[bool | None, Field(exclude=True)] = False
