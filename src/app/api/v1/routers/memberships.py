@@ -53,33 +53,45 @@ async def get_membership(
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
 ):
-    return await memberships_service.read_by_id(uow, organization_id, user_id)
+    return await memberships_service.read_by_id(
+        uow=uow, entity_id={"organization_id": organization_id, "user_id": user_id}
+    )
 
 
 @router.patch(
-    "/{membership_id}",
+    "/{organization_id}/{user_id}",
     response_model=schemas.memberships.Read,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def update_membership(
-    membership_id: UUID,
+    organization_id: UUID,
+    user_id: UUID,
     membership_data: schemas.memberships.Update,
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
 ):
-    return await memberships_service.update_by_id(uow, membership_id, membership_data)
+    return await memberships_service.update_by_id(
+        uow=uow,
+        entity_id={"organization_id": organization_id, "user_id": user_id},
+        update_schema=membership_data,
+    )
 
 
 @router.delete(
-    "/{membership_id}",
-    response_model=bool,
+    "/{organization_id}/{user_id}",
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def delete_membership(
-    membership_id: UUID,
+    organization_id: UUID,
+    user_id: UUID,
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
 ):
-    return await memberships_service.delete_by_id(uow, membership_id)
+    return {
+        "is_success": await memberships_service.delete_by_id(
+            uow=uow,
+            entity_id={"organization_id": organization_id, "user_id": user_id},
+        )
+    }
