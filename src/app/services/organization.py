@@ -28,21 +28,6 @@ class Organizations(
             update_schema=schemas.organizations.Update,
         )
 
-    @log_operation
-    async def read_many(
-            self,
-            uow: UnitOfWork,
-            user_id: UUID | None,
-            page: int = 1,
-            limit: int = 10,
-    ) -> list[schemas.organizations.Read]:
-        return await super().read_many(
-            uow=uow,
-            page=page,
-            limit=limit,
-            filters={"user_id": user_id} if user_id else None,
-        )
-
     async def upload_image(
         self,
         uow: core.uow.UnitOfWork,
