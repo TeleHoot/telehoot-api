@@ -7,6 +7,8 @@ from fastapi import BackgroundTasks, UploadFile
 
 from src import core
 from src.app import models, repositories, schemas
+from src.core.uow import UnitOfWork
+from src.core.utils.decorators import log_operation
 
 
 class Organizations(
@@ -24,6 +26,21 @@ class Organizations(
             create_schema=schemas.organizations.Create,
             read_schema=schemas.organizations.Read,
             update_schema=schemas.organizations.Update,
+        )
+
+    @log_operation
+    async def read_many(
+            self,
+            uow: UnitOfWork,
+            user_id: UUID | None,
+            page: int = 1,
+            limit: int = 10,
+    ) -> list[schemas.organizations.Read]:
+        return await super().read_many(
+            uow=uow,
+            page=page,
+            limit=limit,
+            filters={"user_id": user_id} if user_id else None,
         )
 
     async def upload_image(
