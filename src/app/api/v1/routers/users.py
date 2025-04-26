@@ -1,11 +1,15 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from fastapi.params import Query
 
 from src.app import schemas
 from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+users_filters = Annotated[schemas.users.Filters | None, Query()]
 
 
 @router.get(
@@ -16,12 +20,10 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def get_users(
     uow: dependencies.PostgresUOW,
     users_service: dependencies.UsersService,
-    pagination_query: dependencies.PaginationQuery,
-    filters: schemas.users.Filters | None = None,
+    filters: users_filters = None,
+    pagination_query: dependencies.PaginationQuery = None,
 ):
-    return await users_service.read_many(
-        uow, filters, pagination_query.page, pagination_query.limit
-    )
+    return await users_service.read_many(uow, filters, pagination_query)
 
 
 @router.get(

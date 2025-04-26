@@ -70,11 +70,20 @@ class BaseCRUD[
 
     @log_operation
     async def read_many(
-        self, uow: UnitOfWork, filters: TFilters | None = None, page: int = 1, limit: int = 10
+        self,
+        uow: UnitOfWork,
+        filters: TFilters | None = None,
+        pagination: schemas.PaginationParams | None = None,
     ) -> list[TRead]:
         filters_data = await self._dump_data(filters) if filters else None
 
-        entities = await self.repo.read_many(uow, filters_data, page, min(limit, 100))
+        page = 1
+        limit = 10
+        if pagination:
+            page = pagination.page
+            limit = pagination.limit
+
+        entities = await self.repo.read_many(uow, filters_data, page, limit)
 
         return [await self._validate_data(entity) for entity in entities]
 

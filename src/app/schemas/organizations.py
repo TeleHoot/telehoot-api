@@ -15,7 +15,7 @@ class SortFields(enum.StrEnum):
     UPDATED_AT = "updated_at"
 
 
-class SortParams(core.schemas.PageLimitParams):
+class SortParams(core.schemas.PaginationParams):
     sort_by: SortFields | None = None
     order_by: SortOrderField = SortOrderField.ASCENDING
 
