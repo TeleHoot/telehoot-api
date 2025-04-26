@@ -28,15 +28,18 @@ class Authentication:
     async def auth_user(
         self, uow: core.uow.UnitOfWork, telegram_data: schemas.users.TelegramAuth
     ) -> schemas.auth.Token:
-        if not self.check_correct_hash(telegram_data):
-            raise core.services.exceptions.AuthenticationError("Invalid hash")  # noqa: TRY003, EM101
+        # if not self.check_correct_hash(telegram_data):
+        #    raise core.services.exceptions.AuthenticationError("Invalid hash")  # noqa: TRY003, EM101
         try:
             user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
         except core.services.exceptions.EntityNotFoundError:
+            tg_data = telegram_data.model_dump(exclude={"hash"}, exclude_unset=True)
+            tg_data["telegram_id"] = tg_data.pop("id")
+            print(tg_data)
             user = await self.users_service.create(
                 uow,
                 schemas.users.Create.model_validate(
-                    telegram_data.model_dump(exclude={"hash", "id"}, exclude_unset=True)
+                    tg_data,
                 ),
             )
             organization = await self.organizations_service.create(

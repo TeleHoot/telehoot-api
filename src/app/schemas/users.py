@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class UserSortFields(enum.StrEnum):
@@ -14,7 +14,6 @@ class UserSortFields(enum.StrEnum):
 
 
 class Base(BaseModel):
-    id: int
     username: Annotated[str, Field(min_length=5, max_length=32)]
     first_name: Annotated[str, Field(min_length=1, max_length=50)]
     last_name: Annotated[str | None, Field(min_length=1, max_length=50)]
@@ -22,7 +21,14 @@ class Base(BaseModel):
 
 
 class Create(Base):
-    pass
+    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    photo_url: str | None = None
+    telegram_id: int | None = None
+
+    @computed_field
+    @property
+    def telegram_username(self) -> str:
+        return self.username
 
 
 class Read(Base):
@@ -41,6 +47,7 @@ class Update(BaseModel):
 
 
 class TelegramAuth(Base):
+    id: int
     auth_date: int
     hash: str
     last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
