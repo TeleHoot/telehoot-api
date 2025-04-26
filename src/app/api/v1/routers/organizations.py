@@ -10,6 +10,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.params import Query
 
 from src import core
 from src.app import models, schemas
@@ -17,6 +18,8 @@ from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 settings = core.config.get_settings()
+
+OrganizationsFiltersQuery = Annotated[schemas.organizations.Filters | None, Query()]
 
 
 @router.post(
@@ -44,6 +47,16 @@ async def create_organization(
     return org
 
 
+@router.get("/", response_model=list[schemas.organizations.Read])
+async def read_organizations(
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationService,
+    filters: OrganizationsFiltersQuery = None,
+    pagination: dependencies.PaginationQuery = None,
+):
+    return await service.read_many(uow, filters, pagination)
+
+
 @router.get("/{organization_id}", response_model=schemas.organizations.Read)
 async def read_organization(
     organization_id: UUID,
@@ -51,16 +64,6 @@ async def read_organization(
     service: dependencies.OrganizationService,
 ):
     return await service.read_by_id(uow, organization_id)
-
-
-@router.get("/", response_model=list[schemas.organizations.Read])
-async def read_organizations(
-    uow: dependencies.PostgresUOW,
-    service: dependencies.OrganizationService,
-    sort_query: dependencies.OrganizationsSortQuery,
-    filters: schemas.organizations.Filters | None = None,
-):
-    return await service.read_many(uow, filters, sort_query.page, sort_query.limit)
 
 
 @router.patch(

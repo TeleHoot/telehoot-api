@@ -9,7 +9,7 @@ from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-users_filters = Annotated[schemas.users.Filters | None, Query()]
+UsersFiltersQuery = Annotated[schemas.users.Filters | None, Query()]
 
 
 @router.get(
@@ -20,10 +20,10 @@ users_filters = Annotated[schemas.users.Filters | None, Query()]
 async def get_users(
     uow: dependencies.PostgresUOW,
     users_service: dependencies.UsersService,
-    filters: users_filters = None,
-    pagination_query: dependencies.PaginationQuery = None,
+    filters: UsersFiltersQuery = None,
+    pagination: dependencies.PaginationQuery = None,
 ):
-    return await users_service.read_many(uow, filters, pagination_query)
+    return await users_service.read_many(uow, filters, pagination)
 
 
 @router.get(
