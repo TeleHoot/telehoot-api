@@ -63,7 +63,7 @@ class Authentication:
     @staticmethod
     def check_correct_hash(telegram_data: schemas.users.TelegramAuth) -> bool:
         data = telegram_data.model_dump(
-            exclude={"hash", "telegram_id", "telegram_username"}, exclude_none=True
+            exclude={"hash", "telegram_id", "telegram_username"}, exclude_none=True, exclude_unset=True
         )
         expected_hash = telegram_data.hash
 
