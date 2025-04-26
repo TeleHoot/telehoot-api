@@ -14,10 +14,8 @@ class UserSortFields(enum.StrEnum):
 
 
 class Base(BaseModel):
-    is_admin: Annotated[bool, Field(default=False)]
-    telegram_id: int
-    username: Annotated[str | None, Field(min_length=5, max_length=32)]
-    telegram_username: Annotated[str, Field(min_length=5, max_length=32)]
+    id: int
+    username: Annotated[str, Field(min_length=5, max_length=32)]
     first_name: Annotated[str, Field(min_length=1, max_length=50)]
     last_name: Annotated[str | None, Field(min_length=1, max_length=50)]
     photo_url: str | None
@@ -45,3 +43,11 @@ class Update(BaseModel):
 class TelegramAuth(Base):
     auth_date: int
     hash: str
+
+    @property
+    def telegram_id(self) -> int:
+        return self.id
+
+    @property
+    def telegram_username(self) -> str:
+        return self.username

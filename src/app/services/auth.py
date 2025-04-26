@@ -35,7 +35,7 @@ class Authentication:
         except core.services.exceptions.EntityNotFoundError:
             user = await self.users_service.create(
                 uow,
-                schemas.users.Create.model_validate(telegram_data.model_dump(exclude_unset=True)),
+                schemas.users.Create.model_validate(telegram_data.model_dump(exclude={"hash", "id"}, exclude_unset=True)),
             )
             organization = await self.organizations_service.create(
                 uow,
@@ -60,14 +60,15 @@ class Authentication:
 
     @staticmethod
     def check_correct_hash(telegram_data: schemas.users.TelegramAuth) -> bool:
+        data = telegram_data.model_dump(exclude={"hash", "telegram_id", "telegram_username"}, exclude_none=True)
         expected_hash = telegram_data.hash
 
-        sorted_params = sorted(
-            f"{x}={y}" for x, y in telegram_data.model_dump().items() if x != "hash"
+        data_check_string = "\n".join(
+            f"{key}={value}"
+            for key, value in sorted(data.items())
         )
-        data_check_bytes = "\n".join(sorted_params).encode()
 
-        computed_hash = hmac.new(settings.TG.BOT_SECRET, data_check_bytes, sha256).hexdigest()
+        computed_hash = hmac.new(settings.TG.BOT_SECRET, data_check_string.encode(), sha256).hexdigest()
 
         return hmac.compare_digest(computed_hash, expected_hash)
 

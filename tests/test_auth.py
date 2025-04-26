@@ -25,10 +25,8 @@ def fake_telegram_data(
     photo_url: str = "https://example.com/photo.jpg",
 ) -> dict:
     data = {
-        "is_admin": False,
-        "telegram_id": telegram_id,
+        "id": telegram_id,
         "username": username,
-        "telegram_username": username,
         "first_name": first_name,
         "last_name": last_name,
         "photo_url": photo_url,
