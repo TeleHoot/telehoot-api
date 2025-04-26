@@ -26,7 +26,7 @@ class Create(Base):
 
 
 class Read(Base):
-    id: UUID
+    id: UUID  # type: ignore[valid-type]
     deleted_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
