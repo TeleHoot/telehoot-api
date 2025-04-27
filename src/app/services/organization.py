@@ -49,7 +49,8 @@ class Organizations(
             old_image_path=organization.image_path,
         )
 
-        return await self.update_by_id(uow, organization_id, {"image_path": s3_path})
+        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": s3_path})
+        return await self._validate_data(updated_org)
 
     async def _process_image_upload(
         self,
@@ -82,8 +83,48 @@ class Organizations(
 
         background_tasks.add_task(self._delete_file_in_background, organization.image_path)
 
-        return await self.update_by_id(uow, organization_id, {"image_path": None})
+        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": None})
+        return await self._validate_data(updated_org)
 
-    async def _delete_file_in_background(self, s3_path: str):
+    async def _delete_file_in_background(self, s3_path: str) -> None:
         async with self.s3:
             await self.s3.delete_file(s3_path)
+
+    async def read_by_id(self, uow: UnitOfWork, entity_id: UUID) -> schemas.organizations.Read:
+        entity = await super().read_by_id(uow, entity_id)
+        return await self._inject_image(entity)
+
+    async def read_many(
+        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
+    ) -> list[schemas.organizations.Read]:
+        entities = await super().read_many(uow, page, limit, filters)
+        return [await self._inject_image(entity) for entity in entities]
+
+    async def update_by_id(
+        self,
+        uow: UnitOfWork,
+        entity_id: UUID,
+        update_schema: schemas.organizations.Update,
+    ) -> schemas.organizations.Read:
+        entity = await super().update_by_id(uow, entity_id, update_schema)
+        return await self._inject_image(entity)
+
+    async def _inject_image(self, entity: schemas.organizations.Read) -> schemas.organizations.Read:
+        data = await self._dump_data(entity)
+
+        if hasattr(entity, "image_path") and entity.image_path:
+            data["image_path"] = await self._get_image_url(str(entity.id), entity.image_path)
+        else:
+            data["image_path"] = None
+
+        return self.read_schema.model_validate(data)
+
+    async def _get_image_url(self, org_id: str, image_path: str) -> str | None:
+        try:
+            async with self.s3:
+                return await self.s3.generate_download_url(
+                    image_path, f"organization_{org_id}_image.jpg", expiration_minutes=5
+                )
+        except Exception as e:  # noqa: BLE001
+            self.logger.warning("Failed to generate image URL: %s", e)
+            return None
