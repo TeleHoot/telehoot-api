@@ -6,7 +6,6 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
-from src.core.schemas.filter import SortOrderField
 
 
 class SortFields(enum.StrEnum):
@@ -17,7 +16,7 @@ class SortFields(enum.StrEnum):
 
 class SortParams(core.schemas.PaginationParams):
     sort_by: SortFields | None = None
-    order_by: SortOrderField = SortOrderField.ASCENDING
+    order_by: core.schemas.SortOrderField = core.schemas.SortOrderField.ASCENDING
 
 
 class Base(BaseModel):
