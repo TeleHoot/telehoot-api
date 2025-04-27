@@ -44,29 +44,6 @@ async def create_organization(
     return org
 
 
-@router.get(
-    "/mе/",
-    response_model=list[schemas.organizations.Read],
-    dependencies=[Depends(dependencies.get_active_user)],
-)
-async def read_my_organizations(
-    uow: dependencies.PostgresUOW,
-    memberships_service: dependencies.MembershipsService,
-    current_user: dependencies.ActiveUser,
-    sort_query: dependencies.OrganizationsSortQuery,
-):
-    memberships = await memberships_service.read_many(
-        uow,
-        user_id=current_user.id,
-        organization_id=None,
-        page=sort_query.page,
-        limit=sort_query.limit
-    )
-
-    organizations = [membership.organization for membership in memberships]
-    return organizations
-
-
 @router.get("/{organization_id}", response_model=schemas.organizations.Read)
 async def read_organization(
     organization_id: UUID,

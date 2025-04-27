@@ -21,6 +21,46 @@ async def get_users(
     return await users_service.read_many(uow, filter_query.page, filter_query.limit)
 
 
+@router.get("/me")
+async def get_me(current_user: dependencies.ActiveUser):
+    return current_user
+
+
+@router.get(
+    "/mе/organizations",
+    response_model=list[schemas.organizations.Read],
+)
+async def get_my_organizations(
+    uow: dependencies.PostgresUOW,
+    memberships_service: dependencies.MembershipsService,
+    current_user: dependencies.ActiveUser,
+    sort_query: dependencies.OrganizationsSortQuery,
+):
+    memberships = await memberships_service.read_many(
+        uow,
+        user_id=current_user.id,
+        organization_id=None,
+        page=sort_query.page,
+        limit=sort_query.limit
+    )
+
+    organizations = [membership.organization for membership in memberships]
+    return organizations
+
+
+@router.get(
+    "/me/memberships",
+    response_model=list[schemas.memberships.Read],
+)
+async def get_my_memberships(
+    uow: dependencies.PostgresUOW,
+    memberships_service: dependencies.MembershipsService,
+    sort_query: dependencies.OrganizationsSortQuery,
+    current_user: dependencies.ActiveUser,
+):
+    return await memberships_service.read_many(uow, None, current_user.id, sort_query.page, sort_query.limit)
+
+
 @router.get(
     "/{user_id}",
     dependencies=[Depends(dependencies.get_active_user)],

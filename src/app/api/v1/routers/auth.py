@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, Depends, status
 
 from src import core
 from src.app import schemas
@@ -33,8 +33,3 @@ async def get_token(
 async def logout(response: Response):
     response.delete_cookie(settings.SESSION_COOKIE_NAME)
     return {"is_success": True}
-
-
-@router.get("/me")
-async def get_me(current_user: dependencies.ActiveUser):
-    return current_user
