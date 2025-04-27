@@ -20,16 +20,16 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 def fake_telegram_data(
     telegram_id: int = 1337228,
     username: str = "brainrot_1337",
-    fitstname: str = "Lirali",
-    lastname: str = "Larila",
+    fitst_name: str = "Lirali",
+    last_name: str = "Larila",
     photo_url: str = "https://example.com/photo.jpg",
 ) -> dict:
     data = {
         "telegram_id": telegram_id,
         "username": username,
         "telegram_username": username,
-        "firstname": fitstname,
-        "lastname": lastname,
+        "first_name": fitst_name,
+        "last_name": last_name,
         "photo_url": photo_url,
         "auth_date": int(datetime.now(tz=UTC).timestamp()),
         "hash": "",  # Will be calculated

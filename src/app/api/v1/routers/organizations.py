@@ -51,8 +51,8 @@ async def create_organization(
 async def read_organizations(
     uow: dependencies.PostgresUOW,
     service: dependencies.OrganizationService,
-    filters: OrganizationsFiltersQuery = None,
-    pagination: dependencies.PaginationQuery = None,
+    filters: OrganizationsFiltersQuery | None = None,
+    pagination: dependencies.PaginationQuery | None = None,
 ):
     return await service.read_many(uow, filters, pagination)
 

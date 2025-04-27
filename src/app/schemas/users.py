@@ -19,8 +19,8 @@ class Base(BaseModel):
     telegram_id: int
     username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
     telegram_username: Annotated[str, Field(min_length=5, max_length=32)]
-    firstname: Annotated[str, Field(min_length=1, max_length=50)]
-    lastname: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    first_name: Annotated[str, Field(min_length=1, max_length=50)]
+    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
     is_admin: bool = False
     photo_url: str | None
 
@@ -40,8 +40,8 @@ class Read(Base):
 class Update(BaseModel):
     username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
     telegram_username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
-    firstname: Annotated[str | None, Field(min_length=1, max_length=50)] = None
-    lastname: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    first_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
     photo_url: str | None = None
 
 

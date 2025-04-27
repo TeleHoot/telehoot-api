@@ -58,8 +58,8 @@ async def user(db_session: AsyncSession) -> models.User:
         is_admin=False,
         telegram_id=12345,
         telegram_username="Sahur228",
-        firstname="Lirili",
-        lastname="Larila",
+        first_name="Lirili",
+        last_name="Larila",
     )
     db_session.add(user)
     await db_session.flush()

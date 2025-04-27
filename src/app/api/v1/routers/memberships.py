@@ -11,7 +11,7 @@ from src.app.api.v1 import dependencies
 router = APIRouter(prefix="/memberships", tags=["memberships"])
 settings = core.config.get_settings()
 
-MembershipsFiltersQuery = Annotated[schemas.memberships.Filters | None, Query()]
+MembershipsFiltersQuery = Annotated[schemas.memberships.Filters, Query()]
 
 
 @router.post(
@@ -31,14 +31,13 @@ async def create_membership(
 @router.get(
     "/",
     response_model=list[schemas.memberships.Read],
-    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_memberships(
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
-    filters: MembershipsFiltersQuery = None,
-    pagination: dependencies.PaginationQuery = None,
+    filters: MembershipsFiltersQuery | None = None,
+    pagination: dependencies.PaginationQuery | None = None,
 ):
     return await memberships_service.read_many(uow, filters, pagination)
 
