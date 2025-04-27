@@ -16,6 +16,7 @@ class Organizations(
         schemas.organizations.Read,
         schemas.organizations.Update,
         schemas.organizations.Filters,
+        schemas.organizations.SortParams,
         models.Organization,
     ]
 ):

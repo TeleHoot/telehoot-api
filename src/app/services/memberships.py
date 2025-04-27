@@ -8,6 +8,7 @@ class Memberships(
         schemas.memberships.Read,
         schemas.memberships.Update,
         schemas.memberships.Filters,
+        schemas.memberships.SortParams,
         models.Membership,
     ]
 ):

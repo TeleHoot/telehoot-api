@@ -8,17 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 
 
-class SortFields(enum.StrEnum):
-    NAME = "name"
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
-
-
-class SortParams(core.schemas.PaginationParams):
-    sort_by: SortFields | None = None
-    order_by: core.schemas.SortOrderField = core.schemas.SortOrderField.ASCENDING
-
-
 class Base(BaseModel):
     name: Annotated[str, Field(min_length=2, max_length=64)]
     description: Annotated[str | None, Field(max_length=500)] = None
@@ -44,3 +33,13 @@ class Read(Base):
 
 class Filters(core.schemas.BaseFilters):
     pass
+
+
+class SortFields(enum.StrEnum):
+    NAME = "name"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class SortParams(core.schemas.SortParams):
+    sort_by: SortFields | None = None

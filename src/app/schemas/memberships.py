@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 from uuid import UUID
 
@@ -37,3 +38,12 @@ class Filters(core.schemas.BaseFilters):
     user_id: UUID | None = None
     role: models.UserRoles | None = None
     status: models.MembershipStatuses | None = None
+
+
+class SortFields(enum.StrEnum):
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class SortParams(core.schemas.SortParams):
+    sort_by: SortFields | None = None

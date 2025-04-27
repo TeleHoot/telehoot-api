@@ -8,6 +8,7 @@ class Users(
         schemas.users.Read,
         schemas.users.Update,
         schemas.users.Filters,
+        schemas.users.SortParams,
         models.User,
     ]
 ):

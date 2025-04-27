@@ -8,13 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 
 
-class UserSortFields(enum.StrEnum):
-    USERNAME = "username"
-    TELEGRAM_USERNAME = "telegram_username"
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
-
-
 class Base(BaseModel):
     telegram_id: int
     username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
@@ -53,3 +46,14 @@ class TelegramAuth(Base):
 
 class Filters(core.schemas.BaseFilters):
     is_admin: bool | None = None
+
+
+class SortFields(enum.StrEnum):
+    USERNAME = "username"
+    TELEGRAM_USERNAME = "telegram_username"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class SortParams(core.schemas.SortParams):
+    sort_by: SortFields | None = None

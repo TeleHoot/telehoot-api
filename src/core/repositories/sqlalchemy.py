@@ -94,18 +94,29 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
         self,
         uow: UnitOfWork,
         filters: dict | None = None,
+        sorting: dict | None = None,
         page: int = 1,
         limit: int = 10,
     ) -> Sequence[SQLModelType]:
         try:
             session = uow.postgres_session
+
             query = select(self.model)
+
             if filters:
                 for field, value in filters.items():
                     if value is None:
                         continue
                     column = getattr(self.model, field)
                     query = query.where(column == value)
+
+            if sorting:
+                sort_by = sorting.get("sort_by")
+                order_by = sorting.get("order_by", "asc").lower()
+                if sort_by is not None:
+                    column = getattr(self.model, sort_by)
+                    column = column.desc() if order_by == "desc" else column.asc()
+                    query = query.order_by(column)
 
             query = query.offset((page - 1) * limit).limit(limit)
 

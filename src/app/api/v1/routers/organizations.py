@@ -19,7 +19,8 @@ from src.app.api.v1 import dependencies
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 settings = core.config.get_settings()
 
-OrganizationsFiltersQuery = Annotated[schemas.organizations.Filters | None, Query()]
+FiltersQuery = Annotated[schemas.organizations.Filters, Query()]
+SortingQuery = Annotated[schemas.organizations.SortParams, Query()]
 
 
 @router.post(
@@ -51,7 +52,8 @@ async def create_organization(
 async def read_organizations(
     uow: dependencies.PostgresUOW,
     service: dependencies.OrganizationService,
-    filters: OrganizationsFiltersQuery | None = None,
+    filters: FiltersQuery | None = None,
+    sorting: SortingQuery | None = None,
     pagination: dependencies.PaginationQuery | None = None,
 ):
     return await service.read_many(uow, filters, pagination)

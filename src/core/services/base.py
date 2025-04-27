@@ -12,6 +12,7 @@ TCreate = TypeVar("TCreate", bound=BaseModel)
 TRead = TypeVar("TRead", bound=BaseModel)
 TUpdate = TypeVar("TUpdate", bound=BaseModel)
 TFilters = TypeVar("TFilters", bound=schemas.BaseFilters)
+TSorting = TypeVar("TSorting", bound=schemas.SortParams)
 TModel = TypeVar("TModel")
 
 type EntityID = int | str | UUID | dict[str, str]
@@ -22,6 +23,7 @@ class BaseCRUD[
     TRead: BaseModel,
     TUpdate: BaseModel,
     TFilters: schemas.BaseFilters,
+    TSorting: schemas.SortParams,
     TModel,
 ]:
     def __init__(
@@ -73,9 +75,11 @@ class BaseCRUD[
         self,
         uow: UnitOfWork,
         filters: TFilters | None = None,
+        sorting: TSorting | None = None,
         pagination: schemas.PaginationParams | None = None,
     ) -> list[TRead]:
         filters_data = await self._dump_data(filters) if filters else None
+        sorting_data = await self._dump_data(sorting) if sorting else None
 
         page = 1
         limit = 10
@@ -83,7 +87,7 @@ class BaseCRUD[
             page = pagination.page
             limit = pagination.limit
 
-        entities = await self.repo.read_many(uow, filters_data, page, limit)
+        entities = await self.repo.read_many(uow, filters_data, sorting_data, page, limit)
 
         return [await self._validate_data(entity) for entity in entities]
 

@@ -29,6 +29,7 @@ class BaseCRUD[ModelType](ABC):
         self,
         uow: UnitOfWork,
         filters: dict | None = None,
+        sorting: dict | None = None,
         page: int = 1,
         limit: int = 10,
     ) -> Sequence[ModelType]:
