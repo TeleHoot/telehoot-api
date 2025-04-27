@@ -29,21 +29,17 @@ class Authentication:
         self, uow: core.uow.UnitOfWork, telegram_data: schemas.users.TelegramAuth
     ) -> schemas.auth.Token:
         if not self.check_correct_hash(telegram_data):
-           raise core.services.exceptions.AuthenticationError("Invalid hash")  # noqa: TRY003, EM101
+            raise core.services.exceptions.AuthenticationError("Invalid hash")  # noqa: TRY003, EM101
         try:
-            user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
+            user = await self.users_service.read_by_telegram_id(uow, telegram_data.id)
         except core.services.exceptions.EntityNotFoundError:
-            tg_data = telegram_data.model_dump(exclude={"hash"}, exclude_unset=True)
-            tg_data["telegram_id"] = tg_data.pop("id")
             user = await self.users_service.create(
                 uow,
-                schemas.users.Create.model_validate(
-                    tg_data,
-                ),
+                schemas.users.Create.model_validate(telegram_data.model_dump()),
             )
             organization = await self.organizations_service.create(
                 uow,
-                schemas.organizations.Create(name=telegram_data.telegram_username.capitalize()),
+                schemas.organizations.Create(name=telegram_data.username.capitalize()),
             )
             await self.memberships_service.create(
                 uow,
@@ -64,9 +60,8 @@ class Authentication:
 
     @staticmethod
     def check_correct_hash(telegram_data: schemas.users.TelegramAuth) -> bool:
-        data = telegram_data.model_dump(
-            exclude={"hash", "telegram_id", "telegram_username"}, exclude_none=True, exclude_unset=True
-        )
+        data = telegram_data.model_dump(exclude={"hash"}, exclude_unset=True, by_alias=False)
+
         expected_hash = telegram_data.hash
 
         data_check_string = "\n".join(f"{key}={value}" for key, value in sorted(data.items()))

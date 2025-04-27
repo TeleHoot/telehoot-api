@@ -27,7 +27,7 @@ async def get_me(current_user: dependencies.ActiveUser):
 
 
 @router.get(
-    "/mе/organizations",
+    "/me/organizations",
     response_model=list[schemas.organizations.Read],
 )
 async def get_my_organizations(
@@ -41,11 +41,10 @@ async def get_my_organizations(
         user_id=current_user.id,
         organization_id=None,
         page=sort_query.page,
-        limit=sort_query.limit
+        limit=sort_query.limit,
     )
 
-    organizations = [membership.organization for membership in memberships]
-    return organizations
+    return [membership.organization for membership in memberships]
 
 
 @router.get(
@@ -58,7 +57,9 @@ async def get_my_memberships(
     sort_query: dependencies.OrganizationsSortQuery,
     current_user: dependencies.ActiveUser,
 ):
-    return await memberships_service.read_many(uow, None, current_user.id, sort_query.page, sort_query.limit)
+    return await memberships_service.read_many(
+        uow, None, current_user.id, sort_query.page, sort_query.limit
+    )
 
 
 @router.get(

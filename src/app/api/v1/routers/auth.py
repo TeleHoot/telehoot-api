@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, Depends, status
+from fastapi import APIRouter, Response
 
 from src import core
 from src.app import schemas

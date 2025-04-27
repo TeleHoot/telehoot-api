@@ -8,7 +8,6 @@ from fastapi import BackgroundTasks, UploadFile
 from src import core
 from src.app import models, repositories, schemas
 from src.core.uow import UnitOfWork
-from src.core.utils.decorators import log_operation
 
 
 class Organizations(
@@ -50,6 +49,11 @@ class Organizations(
         )
 
         updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": s3_path})
+        if not updated_org:
+            raise core.services.exceptions.EntityNotFoundError(
+                self.__class__.__name__,
+                f"entity_id: {organization_id}",
+            )
         return await self._validate_data(updated_org)
 
     async def _process_image_upload(
@@ -84,6 +88,12 @@ class Organizations(
         background_tasks.add_task(self._delete_file_in_background, organization.image_path)
 
         updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": None})
+        if not updated_org:
+            raise core.services.exceptions.EntityNotFoundError(
+                self.__class__.__name__,
+                f"entity_id: {organization_id}",
+            )
+
         return await self._validate_data(updated_org)
 
     async def _delete_file_in_background(self, s3_path: str) -> None:
@@ -109,7 +119,9 @@ class Organizations(
         entity = await super().update_by_id(uow, entity_id, update_schema)
         return await self._inject_image(entity)
 
-    async def _inject_image(self, entity: schemas.organizations.Read) -> schemas.organizations.Read:
+    async def _inject_image(
+        self, entity: schemas.organizations.Read
+    ) -> schemas.organizations.Read:
         data = await self._dump_data(entity)
 
         if hasattr(entity, "image_path") and entity.image_path:

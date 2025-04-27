@@ -16,14 +16,12 @@ class UserSortFields(enum.StrEnum):
 class Base(BaseModel):
     username: Annotated[str, Field(min_length=5, max_length=32)]
     first_name: Annotated[str, Field(min_length=1, max_length=50)]
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)]
-    photo_url: str | None
+    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    photo_url: str | None = None
 
 
 class Create(Base):
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
-    photo_url: str | None = None
-    telegram_id: int | None = None
+    telegram_id: int
 
     @computed_field
     @property
@@ -32,7 +30,8 @@ class Create(Base):
 
 
 class Read(Base):
-    id: UUID  # type: ignore[valid-type]
+    id: UUID
+    telegram_id: int
     deleted_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -47,16 +46,8 @@ class Update(BaseModel):
 
 
 class TelegramAuth(Base):
-    id: int
+    id: Annotated[int, Field(alias="telegram_id")]
     auth_date: int
     hash: str
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
-    photo_url: str | None = None
 
-    @property
-    def telegram_id(self) -> int:
-        return self.id
-
-    @property
-    def telegram_username(self) -> str:
-        return self.username
+    model_config = ConfigDict(validate_by_alias=False, serialize_by_alias=True)
