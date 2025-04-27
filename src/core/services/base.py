@@ -81,11 +81,7 @@ class BaseCRUD[
         filters_data = await self._dump_data(filters) if filters else None
         sorting_data = await self._dump_data(sorting) if sorting else None
 
-        page = 1
-        limit = 10
-        if pagination:
-            page = pagination.page
-            limit = pagination.limit
+        page, limit = (pagination.page, pagination.limit) if pagination else (1, 10)
 
         entities = await self.repo.read_many(uow, filters_data, sorting_data, page, limit)
 

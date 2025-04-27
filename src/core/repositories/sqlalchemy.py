@@ -5,7 +5,7 @@ from typing import TypeVar
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from src.core import models, repositories
+from src.core import models, repositories, schemas
 from src.core.services.base import EntityID
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
@@ -110,13 +110,14 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                     column = getattr(self.model, field)
                     query = query.where(column == value)
 
-            if sorting:
-                sort_by = sorting.get("sort_by")
-                order_by = sorting.get("order_by", "asc").lower()
-                if sort_by is not None:
-                    column = getattr(self.model, sort_by)
-                    column = column.desc() if order_by == "desc" else column.asc()
-                    query = query.order_by(column)
+            if sorting and (sort_by := sorting.get("sort_by")) is not None:
+                order_by = sorting.get("order_by", "asc")
+                column = getattr(self.model, sort_by)
+                query = query.order_by(
+                    column.desc()
+                    if order_by == schemas.SortOrderField.DESCENDING
+                    else column.asc()
+                )
 
             query = query.offset((page - 1) * limit).limit(limit)
 
