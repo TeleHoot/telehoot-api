@@ -10,49 +10,26 @@ on:
       - dev
 
 jobs:
-  setup:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Upload setup
-        uses: actions/upload-artifact@v3
-        with:
-          name: python-environment
-          path: ${{ github.workspace }}
-
-  linting:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download setup
-        uses: actions/download-artifact@v3
-        with:
-          name: python-environment
       - name: Linting
         run: uv run ruff check .
 
   formatting:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download setup
-        uses: actions/download-artifact@v3
-        with:
-          name: python-environment
+      - uses: ./.github/actions/setup
       - name: Formatting
         run: uv run ruff format --check .
 
   type_check:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download setup
-        uses: actions/download-artifact@v3
-        with:
-          name: python-environment
+      - uses: ./.github/actions/setup
       - name: Type Consistency
         run: uv run pyright .
