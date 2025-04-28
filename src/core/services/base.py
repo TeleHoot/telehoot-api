@@ -3,7 +3,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from src.core import repositories, services, types
+from src.core import custom_types, repositories, services
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 
@@ -46,7 +46,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
         return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
-    async def read_by_id(self, uow: UnitOfWork, entity_id: types.EntityID) -> TRead:
+    async def read_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> TRead:
         entity = await self.repo.read_by_id(uow, entity_id)
         if not entity:
             raise services.exceptions.EntityNotFoundError(
@@ -68,7 +68,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
     async def update_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: types.EntityID,
+        entity_id: custom_types.EntityID,
         update_schema: TUpdate,
     ) -> TRead:
         data = await self._dump_data(update_schema)
@@ -84,7 +84,7 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
         return await self._validate_data(updated_entity)
 
     @log_operation
-    async def delete_by_id(self, uow: UnitOfWork, entity_id: types.EntityID) -> bool:
+    async def delete_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> bool:
         is_deleted = await self.repo.delete_by_id(uow, entity_id)
 
         if not is_deleted:

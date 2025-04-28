@@ -1,5 +1,6 @@
 from . import (
     config,
+    custom_types,
     db,
     error_handlers,
     logger,
@@ -9,13 +10,13 @@ from . import (
     schemas,
     services,
     settings,
-    types,
     uow,
     utils,
 )
 
 __all__ = [
     "config",
+    "custom_types",
     "db",
     "error_handlers",
     "logger",
@@ -25,7 +26,6 @@ __all__ = [
     "schemas",
     "services",
     "settings",
-    "types",
     "uow",
     "utils",
 ]

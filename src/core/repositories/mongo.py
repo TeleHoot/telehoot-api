@@ -5,7 +5,7 @@ from typing import TypeVar
 
 from beanie import Document
 
-from src.core import repositories, types
+from src.core import custom_types, repositories
 from src.core.repositories import exceptions
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
@@ -58,7 +58,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
     async def read_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: types.EntityID,
+        entity_id: custom_types.EntityID,
     ) -> MongoModelType | None:
         try:
             session = uow.mongo_session
@@ -91,7 +91,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
     async def update_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: types.EntityID,
+        entity_id: custom_types.EntityID,
         data: dict,
     ) -> MongoModelType | None:
         try:
@@ -113,7 +113,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
             ) from e
 
     @log_operation
-    async def delete_by_id(self, uow: UnitOfWork, entity_id: types.EntityID) -> bool:
+    async def delete_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> bool:
         try:
             session = uow.mongo_session
             instance = await self.read_by_id(uow, entity_id)

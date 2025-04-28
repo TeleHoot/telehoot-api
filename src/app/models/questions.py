@@ -1,8 +1,9 @@
+import enum
 from typing import Annotated
 
 from beanie import DocumentWithSoftDelete
-from pydantic import Field, UUID4, conlist
-import enum
+from pydantic import UUID4, Field
+
 from src import core
 
 
@@ -38,4 +39,4 @@ class Question(DocumentWithSoftDelete, core.models.mongo.BaseMixin):
     title: Annotated[str, Field(min_length=1, max_length=200)]
     type: QuestionType
     question_content: QuestionContent
-    answers: conlist(QuestionAnswer, min_length=1, max_length=10)
+    answers: Annotated[list[QuestionAnswer], Field(min_length=1, max_length=4)]

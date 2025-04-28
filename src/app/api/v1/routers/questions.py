@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, status
 

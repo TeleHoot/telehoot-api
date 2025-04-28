@@ -101,23 +101,20 @@ def init_replica_set():
 
         try:
             status = client.admin.command("replSetGetStatus")
-            logger.info(f"Replica Set are already initialized: {status['set']}")
+            logger.info("Replica Set are already initialized: %s", status["set"])
             return
         except PyMongoError as e:
             if "NotYetInitialized" not in str(e):
                 raise
 
-        cfg = {
-            "_id": "overleaf",
-            "members": [{"_id": 0, "host": "localhost:27017"}]
-        }
+        cfg = {"_id": "overleaf", "members": [{"_id": 0, "host": "localhost:27017"}]}
 
         logger.info("Initializing Replica Set...")
         client.admin.command("replSetInitiate", cfg)
         logger.info("Replica Set are successfully initialized")
 
-    except Exception as e:
-        logger.error(f"Error while initializing Replica Set: {e}")
+    except Exception:
+        logger.exception("Error while initializing Replica Set")
         raise
     finally:
-        client.close()
+        client.close()  # type: ignore[valid-type]
