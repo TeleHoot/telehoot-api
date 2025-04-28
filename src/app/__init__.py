@@ -15,6 +15,7 @@ settings = core.config.get_settings()
 def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        core.db.init_replica_set()
         await core.db.init_mongo(gather_documents)
         yield
 
@@ -30,6 +31,8 @@ def create_app() -> FastAPI:
     )
 
     logging.config.dictConfig(core.logger.setup_logger())
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
+    logging.getLogger("botocore").setLevel(logging.WARNING)
 
     core.middlewares.register_middlewares(app)
 

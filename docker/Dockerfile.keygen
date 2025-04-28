@@ -1,0 +1,11 @@
+FROM alpine:latest
+
+RUN apk add --no-cache openssl shadow
+
+WORKDIR /data
+
+CMD ["sh", "-c", \
+    "openssl rand -base64 756 > /data/mongodb.key && \
+     chmod 600 /data/mongodb.key && \
+     chown 999:999 /data/mongodb.key && \
+     echo 'Keyfile generated at /data/mongodb.key'"]

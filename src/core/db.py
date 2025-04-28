@@ -4,6 +4,8 @@ from typing import TypeVar
 
 from beanie import Document, init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorClientSession
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 from sqlalchemy import AsyncAdaptedQueuePool
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -85,3 +87,37 @@ async def init_mongo(aggregator: Callable[[], Sequence[type[Document]]]) -> None
     except Exception as e:
         logger.exception("Failed to initialize MongoDB connection", extra={"error": str(e)})
         raise
+
+
+def init_replica_set():
+    try:
+        client = MongoClient(
+            f"mongodb://{settings.MONGO.HOST}:{settings.MONGO.PORT}/",
+            directConnection=True,
+            username=settings.MONGO.INITDB_ROOT_USERNAME,
+            password=settings.MONGO.INITDB_ROOT_PASSWORD,
+            authSource="admin",
+        )
+
+        try:
+            status = client.admin.command("replSetGetStatus")
+            logger.info(f"Replica Set are already initialized: {status['set']}")
+            return
+        except PyMongoError as e:
+            if "NotYetInitialized" not in str(e):
+                raise
+
+        cfg = {
+            "_id": "overleaf",
+            "members": [{"_id": 0, "host": "localhost:27017"}]
+        }
+
+        logger.info("Initializing Replica Set...")
+        client.admin.command("replSetInitiate", cfg)
+        logger.info("Replica Set are successfully initialized")
+
+    except Exception as e:
+        logger.error(f"Error while initializing Replica Set: {e}")
+        raise
+    finally:
+        client.close()

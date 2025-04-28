@@ -12,6 +12,7 @@ from src.core.config import get_settings
 UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
 MembershipsService = Annotated[services.Memberships, Depends()]
+QuestionsService = Annotated[services.Questions, Depends()]
 
 PageLimitQuery = Annotated[core.schemas.query_filter.PageLimitParams, Query()]
 
