@@ -7,13 +7,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
 
+Username = Annotated[str, Field(min_length=5, max_length=32)]
+TelegramUsername = Annotated[str, Field(min_length=5, max_length=32)]
+FirstName = Annotated[str, Field(min_length=1, max_length=50)]
+LastName = Annotated[str, Field(min_length=1, max_length=50)]
+
 
 class Base(BaseModel):
     telegram_id: int
-    username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
-    telegram_username: Annotated[str, Field(min_length=5, max_length=32)]
-    first_name: Annotated[str, Field(min_length=1, max_length=50)]
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    username: Username | None = None
+    telegram_username: TelegramUsername
+    first_name: FirstName
+    last_name: LastName | None = None
     is_admin: bool = False
     photo_url: str | None
 
@@ -31,10 +36,10 @@ class Read(Base):
 
 
 class Update(BaseModel):
-    username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
-    telegram_username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
-    first_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    username: Username | None = None
+    telegram_username: TelegramUsername | None = None
+    first_name: FirstName | None = None
+    last_name: LastName | None = None
     photo_url: str | None = None
 
 

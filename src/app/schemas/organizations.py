@@ -7,10 +7,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
 
+Name = Annotated[str, Field(min_length=2, max_length=64)]
+Description = Annotated[str, Field(max_length=500)]
+
 
 class Base(BaseModel):
-    name: Annotated[str, Field(min_length=2, max_length=64)]
-    description: Annotated[str | None, Field(max_length=500)] = None
+    name: Name
+    description: Description | None = None
 
 
 class Create(Base):
@@ -18,8 +21,8 @@ class Create(Base):
 
 
 class Update(BaseModel):
-    name: Annotated[str | None, Field(min_length=2, max_length=64)] = None
-    description: Annotated[str | None, Field(max_length=500)] = None
+    name: Name | None = None
+    description: Description | None = None
 
 
 class Read(Base):
