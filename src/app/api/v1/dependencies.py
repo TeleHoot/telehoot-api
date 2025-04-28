@@ -2,7 +2,6 @@ from collections.abc import AsyncGenerator, Callable
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.params import Query
 from fastapi.security import APIKeyCookie
 
 from src import core
@@ -13,9 +12,8 @@ UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
 MembershipsService = Annotated[services.Memberships, Depends()]
 
-PaginationQuery = Annotated[core.schemas.PaginationParams, Query()]
+PaginationQuery = Annotated[core.schemas.PaginationParams, Depends()]
 
-OrganizationsSortQuery = Annotated[schemas.organizations.SortParams, Query()]
 
 settings = get_settings()
 

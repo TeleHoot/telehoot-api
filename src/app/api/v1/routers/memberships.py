@@ -2,7 +2,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from fastapi.params import Query
 
 from src import core
 from src.app import schemas
@@ -11,8 +10,8 @@ from src.app.api.v1 import dependencies
 router = APIRouter(prefix="/memberships", tags=["memberships"])
 settings = core.config.get_settings()
 
-FiltersQuery = Annotated[schemas.memberships.Filters, Query()]
-SortingQuery = Annotated[schemas.memberships.SortParams, Query()]
+FiltersQuery = Annotated[schemas.memberships.Filters, Depends()]
+SortingQuery = Annotated[schemas.memberships.SortParams, Depends()]
 
 
 @router.post(
@@ -37,11 +36,11 @@ async def create_membership(
 async def get_memberships(
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
-    filters: FiltersQuery | None = None,
-    sorting: SortingQuery | None = None,
-    pagination: dependencies.PaginationQuery | None = None,
+    filters: FiltersQuery,
+    sorting: SortingQuery,
+    pagination: dependencies.PaginationQuery,
 ):
-    return await memberships_service.read_many(uow, filters, pagination)
+    return await memberships_service.read_many(uow, filters, sorting, pagination)
 
 
 @router.get(

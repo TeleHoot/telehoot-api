@@ -1,5 +1,4 @@
-from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import (
@@ -11,19 +10,17 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.params import Query
-from pydantic import BaseModel, Field
 
 from src import core
 from src.app import models, schemas
 from src.app.api.v1 import dependencies
-from src.core.schemas.filter import BaseFilters, RangeFilter
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 settings = core.config.get_settings()
 
-FiltersQuery = Annotated[schemas.organizations.Filters, Query()]
-SortingQuery = Annotated[schemas.organizations.SortParams, Query()]
+
+FiltersQuery = Annotated[schemas.organizations.Filters, Depends()]
+SortingQuery = Annotated[schemas.organizations.SortParams, Depends()]
 
 
 @router.post(
@@ -51,49 +48,15 @@ async def create_organization(
     return org
 
 
-class FilterParams(BaseModel):
-    limit: int = Field(100, gt=0, le=100)
-    offset: int = Field(0, ge=0)
-
-    tags: list[str] = []
-
-
-class SortingParams(BaseModel):
-    order_by: Literal["asc", "desc"] = "asc"
-    sort_by: Literal["created_at", "updated_at"] = "created_at"
-
-
-def created_at_filter(
-    from_: Annotated[int | None, Query(alias="updated_at.from")] = None,
-    to: Annotated[int | None, Query(alias="updated_at.to")] = None,
-) -> RangeFilter[int]:
-    return RangeFilter(from_=from_, to=to)
-
-
-def get_filters(
-    created_from: Annotated[datetime | None, Query(alias="created_at.from")] = None,
-    created_to: Annotated[datetime | None, Query(alias="created_at.to")] = None,
-    updated_from: Annotated[datetime | None, Query(alias="updated_at.from")] = None,
-    updated_to: Annotated[datetime | None, Query(alias="updated_at.to", example=123)] = None,
-) -> BaseFilters:
-    return BaseFilters(
-        created_at=RangeFilter(from_=created_from, to=created_to),
-        updated_at=RangeFilter(from_=updated_from, to=updated_to),
-    )
-
-
-@router.get("/items/")
-async def read_items(
-    filter_query: Annotated[FilterParams, Query()], sort_query: Annotated[SortingParams, Query()],
-):
-    return filter_query, sort_query
-
-
 @router.get("/", response_model=list[schemas.organizations.Read])
 async def read_organizations(
-    uow: dependencies.PostgresUOW, service: dependencies.OrganizationService
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationService,
+    filters: FiltersQuery,
+    sorting: SortingQuery,
+    pagination: dependencies.PaginationQuery,
 ):
-    return await service.read_many(uow, None, None)
+    return await service.read_many(uow, filters, sorting, pagination)
 
 
 @router.get("/{organization_id}", response_model=schemas.organizations.Read)

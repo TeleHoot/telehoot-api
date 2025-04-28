@@ -46,3 +46,7 @@ class SortFields(enum.StrEnum):
 
 class SortParams(core.schemas.SortParams):
     sort_by: SortFields | None = None
+
+
+class ReadManyParams(Filters, SortParams, core.schemas.PaginationParams):
+    pass
