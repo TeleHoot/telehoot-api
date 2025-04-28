@@ -7,7 +7,6 @@ from src.core import settings
 
 class TelegramOAuthSettings(BaseSettings):
     BOT_TOKEN: str = "Some token"
-    ALGORITHM: str = "SHA256"
 
     @property
     def BOT_SECRET(self) -> bytes:

@@ -4,30 +4,41 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from src.core import repositories, services
+from src.core import repositories, schemas, services
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 
 TCreate = TypeVar("TCreate", bound=BaseModel)
 TRead = TypeVar("TRead", bound=BaseModel)
 TUpdate = TypeVar("TUpdate", bound=BaseModel)
+TFilters = TypeVar("TFilters", bound=schemas.BaseFilters)
+TSorting = TypeVar("TSorting", bound=schemas.SortParams)
 TModel = TypeVar("TModel")
 
 type EntityID = int | str | UUID | dict[str, str]
 
 
-class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]:
+class BaseCRUD[
+    TCreate: BaseModel,
+    TRead: BaseModel,
+    TUpdate: BaseModel,
+    TFilters: schemas.BaseFilters,
+    TSorting: schemas.SortParams,
+    TModel,
+]:
     def __init__(
         self,
         repo: repositories.abstract.BaseCRUD[TModel],
         create_schema: type[TCreate],
         read_schema: type[TRead],
         update_schema: type[TUpdate],
+        filters_schema: type[TFilters],
     ):
         self.repo = repo
         self.create_schema = create_schema
         self.read_schema = read_schema
         self.update_schema = update_schema
+        self.filters_schema = filters_schema
         self.context = {}
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
@@ -61,9 +72,18 @@ class BaseCRUD[TCreate: BaseModel, TRead: BaseModel, TUpdate: BaseModel, TModel]
 
     @log_operation
     async def read_many(
-        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
+        self,
+        uow: UnitOfWork,
+        filters: TFilters | None = None,
+        sorting: TSorting | None = None,
+        pagination: schemas.PaginationParams | None = None,
     ) -> list[TRead]:
-        entities = await self.repo.read_many(uow, page, min(limit, 100), filters)
+        filters_data = await self._dump_data(filters) if filters else None
+        sorting_data = await self._dump_data(sorting) if sorting else None
+
+        page, limit = (pagination.page, pagination.limit) if pagination else (1, 10)
+
+        entities = await self.repo.read_many(uow, filters_data, sorting_data, page, limit)
 
         return [await self._validate_data(entity) for entity in entities]
 
