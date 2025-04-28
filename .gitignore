@@ -177,4 +177,4 @@ minio/
 .ruff_cache/
 .DS_store
 
-*.key
+mongodb.key
