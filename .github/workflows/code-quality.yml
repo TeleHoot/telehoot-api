@@ -8,18 +8,39 @@ on:
     branches:
       - main
       - dev
+
 jobs:
-  quality:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+    outputs:
+      ready: ${{ steps.setup.outputs.ready }}
 
+  linting:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
       - name: Linting
         run: uv run ruff check .
 
+  formatting:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
       - name: Formatting
         run: uv run ruff format --check .
 
+  type_check:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
       - name: Type Consistency
         run: uv run pyright .
