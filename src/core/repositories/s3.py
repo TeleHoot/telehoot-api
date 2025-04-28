@@ -101,7 +101,7 @@ class Base:
             raise RuntimeError(self._client_error)
 
         response_content_disposition = (
-            f"attachment; filename={desired_filename or s3_path.split("/")[-1]}"
+            f"attachment; filename={desired_filename or s3_path.split('/')[-1]}"
         )
         params = {
             "Bucket": settings.S3.BUCKET_NAME,
