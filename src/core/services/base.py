@@ -3,7 +3,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from src.core import custom_types, repositories, services, schemas
+from src.core import custom_types, repositories, schemas, services
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 

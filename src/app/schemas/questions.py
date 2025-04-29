@@ -1,13 +1,16 @@
+import enum
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from beanie import PydanticObjectId
-from pydantic import UUID4, BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_core.core_schema import FieldValidationInfo, ValidationInfo
 
+from src import core
 from src.app.models.questions import MediaType, QuestionType
 
-QuizId = Annotated[UUID4, Field(...)]
+QuizId = Annotated[UUID, Field(...)]
 Order = Annotated[int, Field(ge=0, le=1000)]
 Title = Annotated[str, Field(min_length=1, max_length=200)]
 Type = Annotated[QuestionType, Field(description="Тип вопроса")]
@@ -24,7 +27,7 @@ class ContentBase(BaseModel):
     @classmethod
     def validate_media_path(cls, v: str | None, info: FieldValidationInfo) -> str | None:
         if info.data.get("media_type") != MediaType.NONE and not v:
-            raise ValueError("Media path is required when media_type is specified")  # noqa: EM101 TRY003
+            raise ValueError("Media path is required when media_type is specified")
         return v
 
     model_config = ConfigDict(
@@ -35,7 +38,7 @@ class ContentBase(BaseModel):
 
 class AnswerBase(BaseModel):
     text: AnswerText
-    is_correct: bool = Field(description="Является ли ответ правильным")
+    is_correct: bool
     order: Annotated[int, Field(ge=0, le=100, description="Порядок ответа")]
 
     model_config = ConfigDict(
@@ -60,11 +63,11 @@ class QuestionBase(BaseModel):
         if question_type in {QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE}:
             correct_answers = [ans for ans in v if ans.is_correct]
             if not correct_answers:
-                raise ValueError("At least one correct answer is required for choice questions")  # noqa: EM101 TRY003
+                raise ValueError("At least one correct answer is required for choice questions")
             if question_type == QuestionType.SINGLE_CHOICE and len(correct_answers) > 1:
-                raise ValueError("Single choice questions can have only one correct answer")  # noqa: EM101 TRY003
+                raise ValueError("Single choice questions can have only one correct answer")
         elif question_type == QuestionType.TEXT and len(v) != 1:
-            raise ValueError("Text questions must have exactly one answer")  # noqa: EM101 TRY003
+            raise ValueError("Text questions must have exactly one answer")
         return v
 
 
@@ -92,3 +95,17 @@ class Read(QuestionBase):
         populate_by_name=True,
         from_attributes=True,
     )
+
+
+class Filters(core.schemas.BaseFilters):
+    type: Type | None = None
+
+
+class SortFields(enum.StrEnum):
+    ORDER = "order"
+    TITLE = "title"
+    TYPE = "type"
+
+
+class SortParams(core.schemas.SortParams):
+    sort_by: SortFields | None = None

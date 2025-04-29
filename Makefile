@@ -151,8 +151,8 @@ dev: up migrate start
 
 # Create keyfile for mongodb
 keyfile:
-    @echo "Creating keyfile in project root" \
-    $(DOCKER) build mongo-keygen -f docker/Dockerfile.keygen docker/ \
-    $(DOCKER) run --rm -v .:/data mongo-keygen
+	@echo "Creating keyfile in project root"; \
+	$(DOCKER) build -t mongo-keygen -f docker/Dockerfile.keygen docker/; \
+	$(DOCKER) run --rm -v .:/data mongo-keygen
 
 .PHONY: help up down up-prod down-prod migrate install-deps pre-commit pre-commit-install lint format type-check pytest test test-docker start create-env-unix create-env-windows init-unix init-windows dev keyfile

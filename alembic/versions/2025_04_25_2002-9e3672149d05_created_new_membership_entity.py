@@ -49,7 +49,7 @@ def upgrade() -> None:
     op.create_table('memberships',
     sa.Column('organization_id', sa.UUID(), nullable=False),
     sa.Column('user_id', sa.UUID(), nullable=False),
-    sa.Column('role', sa.Enum('CREATOR', 'EDITOR', 'PRESENTER', name='userroles'), nullable=False),
+    sa.Column('role', sa.Enum('OWNER', 'EDITOR', 'PRESENTER', name='userroles'), nullable=False),
     sa.Column('status', sa.Enum('PENDING', 'APPROVED', 'DECLINED', name='statuses'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text("timezone('UTC', now())"), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text("timezone('UTC', now())"), nullable=False),

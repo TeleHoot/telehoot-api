@@ -90,6 +90,7 @@ async def init_mongo(aggregator: Callable[[], Sequence[type[Document]]]) -> None
 
 
 def init_replica_set():
+    client = None
     try:
         client = MongoClient(
             f"mongodb://{settings.MONGO.HOST}:{settings.MONGO.PORT}/",
@@ -107,7 +108,10 @@ def init_replica_set():
             if "NotYetInitialized" not in str(e):
                 raise
 
-        cfg = {"_id": "overleaf", "members": [{"_id": 0, "host": "localhost:27017"}]}
+        cfg = {
+            "_id": "overleaf",
+            "members": [{"_id": 0, "host": f"{settings.MONGO.HOST}:{settings.MONGO.PORT}"}],
+        }
 
         logger.info("Initializing Replica Set...")
         client.admin.command("replSetInitiate", cfg)
@@ -117,4 +121,5 @@ def init_replica_set():
         logger.exception("Error while initializing Replica Set")
         raise
     finally:
-        client.close()  # type: ignore[valid-type]
+        if client:
+            client.close()

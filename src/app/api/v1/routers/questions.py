@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, status
 
@@ -7,6 +9,9 @@ from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 settings = core.config.get_settings()
+
+FiltersQuery = Annotated[schemas.questions.Filters, Depends()]
+SortingQuery = Annotated[schemas.questions.SortParams, Depends()]
 
 
 @router.post(
@@ -31,10 +36,11 @@ async def create_question(
 async def get_questions(
     uow: dependencies.MongoUOW,
     service: dependencies.QuestionsService,
-    page: int = 1,
-    limit: int = 10,
+    filters: FiltersQuery,
+    sorting: SortingQuery,
+    pagination: dependencies.PaginationQuery,
 ):
-    return await service.read_many(uow, page, limit)
+    return await service.read_many(uow, filters, sorting, pagination)
 
 
 @router.get(
