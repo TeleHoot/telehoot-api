@@ -75,21 +75,19 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
 
     @log_operation
     async def read_many(
-            self,
-            uow: UnitOfWork,
-            filters: dict | None = None,
-            sorting: dict | None = None,
-            page: int = 1,
-            limit: int = 10,
+        self,
+        uow: UnitOfWork,
+        filters: dict | None = None,
+        sorting: dict | None = None,
+        page: int = 1,
+        limit: int = 10,
     ) -> Sequence[MongoModelType]:
         try:
             session = uow.mongo_session
 
             query_filters = {}
             if filters:
-                for field, value in filters.items():
-                    if value is not None:
-                        query_filters[field] = value
+                query_filters.update(filters)
 
             query = self.model.find(query_filters, session=session)
 
@@ -98,8 +96,9 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
                 sort_direction = (
                     pymongo.DESCENDING
                     if order_by == schemas.SortOrderField.DESCENDING
-                    else pymongo.ASCENDING)
-                query = query.sort([(sort_by, sort_direction)])
+                    else pymongo.ASCENDING
+                )
+                query = query.sort([(sort_by, sort_direction)])  # type: ignore[valid-type]
 
             query = query.skip((page - 1) * limit).limit(limit)
 
