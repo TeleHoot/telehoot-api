@@ -178,3 +178,5 @@ minio/
 .DS_store
 
 mongodb.key
+
+.vscode
