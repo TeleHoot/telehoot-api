@@ -3,8 +3,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import TypeVar
 
-import pymongo
-from beanie import Document
+from beanie import Document, SortDirection
 
 from src.core import custom_types, repositories, schemas
 from src.core.repositories import exceptions
@@ -85,20 +84,18 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
         try:
             session = uow.mongo_session
 
-            query_filters = {}
-            if filters:
-                query_filters.update(filters)
+            query_filters = filters or {}
 
             query = self.model.find(query_filters, session=session)
 
             if sorting and (sort_by := sorting.get("sort_by")) is not None:
                 order_by = sorting.get("order_by", "asc")
                 sort_direction = (
-                    pymongo.DESCENDING
+                    SortDirection.DESCENDING
                     if order_by == schemas.SortOrderField.DESCENDING
-                    else pymongo.ASCENDING
+                    else SortDirection.ASCENDING
                 )
-                query = query.sort([(sort_by, sort_direction)])  # type: ignore[valid-type]
+                query = query.sort([(sort_by, sort_direction)])
 
             query = query.skip((page - 1) * limit).limit(limit)
 
