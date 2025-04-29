@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class UserRoles(enum.StrEnum):
-    CREATOR = "creator"
+    OWNER = "owner"
     EDITOR = "editor"
     PRESENTER = "presenter"
 
@@ -35,7 +35,7 @@ class Membership(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete)
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
 
-    role: Mapped[UserRoles] = mapped_column()
+    role: Mapped[UserRoles]
     status: Mapped[Statuses] = mapped_column(default=Statuses.PENDING)
 
     organization: Mapped["Organization"] = relationship(

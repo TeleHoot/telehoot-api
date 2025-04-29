@@ -6,23 +6,14 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
-from src.core.schemas.filter import SortOrderField
 
-
-class SortFields(enum.StrEnum):
-    NAME = "name"
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
-
-
-class SortParams(core.schemas.query_filter.PageLimitParams):
-    sort_by: SortFields | None = None
-    order_by: SortOrderField = SortOrderField.ASCENDING
+Name = Annotated[str, Field(min_length=2, max_length=64)]
+Description = Annotated[str, Field(max_length=500)]
 
 
 class Base(BaseModel):
-    name: Annotated[str, Field(min_length=2, max_length=64)]
-    description: Annotated[str | None, Field(max_length=500)] = None
+    name: Name
+    description: Description | None = None
 
 
 class Create(Base):
@@ -30,8 +21,8 @@ class Create(Base):
 
 
 class Update(BaseModel):
-    name: Annotated[str | None, Field(min_length=2, max_length=64)] = None
-    description: Annotated[str | None, Field(max_length=500)] = None
+    name: Name | None = None
+    description: Description | None = None
 
 
 class Read(Base):
@@ -41,3 +32,21 @@ class Read(Base):
     image_path: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class Filters(core.schemas.BaseFilters):
+    pass
+
+
+class SortFields(enum.StrEnum):
+    NAME = "name"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class SortParams(core.schemas.SortParams):
+    sort_by: SortFields | None = None
+
+
+class ReadManyParams(Filters, SortParams, core.schemas.PaginationParams):
+    pass

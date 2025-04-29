@@ -19,6 +19,10 @@ router = APIRouter(prefix="/organizations", tags=["organizations"])
 settings = core.config.get_settings()
 
 
+FiltersQuery = Annotated[schemas.organizations.Filters, Depends()]
+SortingQuery = Annotated[schemas.organizations.SortParams, Depends()]
+
+
 @router.post(
     "/",
     response_model=schemas.organizations.Read,
@@ -37,11 +41,22 @@ async def create_organization(
         schemas.memberships.Create(
             organization_id=org.id,
             user_id=current_user.id,
-            role=models.UserRoles.CREATOR,
+            role=models.UserRoles.OWNER,
             status=models.MembershipStatuses.APPROVED,
         ),
     )
     return org
+
+
+@router.get("/", response_model=list[schemas.organizations.Read])
+async def read_organizations(
+    uow: dependencies.PostgresUOW,
+    service: dependencies.OrganizationService,
+    filters: FiltersQuery,
+    sorting: SortingQuery,
+    pagination: dependencies.PaginationQuery,
+):
+    return await service.read_many(uow, filters, sorting, pagination)
 
 
 @router.get("/{organization_id}", response_model=schemas.organizations.Read)
@@ -51,15 +66,6 @@ async def read_organization(
     service: dependencies.OrganizationService,
 ):
     return await service.read_by_id(uow, organization_id)
-
-
-@router.get("/", response_model=list[schemas.organizations.Read])
-async def read_organizations(
-    uow: dependencies.PostgresUOW,
-    service: dependencies.OrganizationService,
-    sort_query: dependencies.OrganizationsSortQuery,
-):
-    return await service.read_many(uow, page=sort_query.page, limit=sort_query.limit)
 
 
 @router.patch(

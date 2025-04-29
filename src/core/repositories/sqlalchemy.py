@@ -5,7 +5,7 @@ from typing import TypeVar
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from src.core import custom_types, models, repositories
+from src.core import custom_types, models, repositories, schemas
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 
@@ -90,17 +90,33 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
 
     @log_operation
     async def read_many(
-        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
+        self,
+        uow: UnitOfWork,
+        filters: dict | None = None,
+        sorting: dict | None = None,
+        page: int = 1,
+        limit: int = 10,
     ) -> Sequence[SQLModelType]:
         try:
             session = uow.postgres_session
+
             query = select(self.model)
+
             if filters:
                 for field, value in filters.items():
                     if value is None:
                         continue
                     column = getattr(self.model, field)
                     query = query.where(column == value)
+
+            if sorting and (sort_by := sorting.get("sort_by")) is not None:
+                order_by = sorting.get("order_by", "asc")
+                column = getattr(self.model, sort_by)
+                query = query.order_by(
+                    column.desc()
+                    if order_by == schemas.SortOrderField.DESCENDING
+                    else column.asc()
+                )
 
             query = query.offset((page - 1) * limit).limit(limit)
 

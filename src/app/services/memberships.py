@@ -1,9 +1,5 @@
-from uuid import UUID
-
 from src import core
 from src.app import models, repositories, schemas
-from src.core.uow import UnitOfWork
-from src.core.utils.decorators import log_operation
 
 
 class Memberships(
@@ -11,6 +7,8 @@ class Memberships(
         schemas.memberships.Create,
         schemas.memberships.Read,
         schemas.memberships.Update,
+        schemas.memberships.Filters,
+        schemas.memberships.SortParams,
         models.Membership,
     ]
 ):
@@ -21,22 +19,5 @@ class Memberships(
             create_schema=schemas.memberships.Create,
             read_schema=schemas.memberships.Read,
             update_schema=schemas.memberships.Update,
-        )
-
-    @log_operation
-    async def read_many(
-        self,
-        uow: UnitOfWork,
-        organization_id: UUID | None,
-        user_id: UUID | None,
-        page: int = 1,
-        limit: int = 10,
-    ) -> list[schemas.memberships.Read]:
-        return await super().read_many(
-            uow=uow,
-            page=page,
-            limit=limit,
-            filters={"user_id": user_id, "organization_id": organization_id}
-            if user_id or organization_id
-            else None,
+            filters_schema=schemas.memberships.Filters,
         )
