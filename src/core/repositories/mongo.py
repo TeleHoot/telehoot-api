@@ -3,9 +3,10 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import TypeVar
 
+import pymongo
 from beanie import Document
 
-from src.core import custom_types, repositories
+from src.core import custom_types, repositories, schemas
 from src.core.repositories import exceptions
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
@@ -74,15 +75,37 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
 
     @log_operation
     async def read_many(
-        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
+            self,
+            uow: UnitOfWork,
+            filters: dict | None = None,
+            sorting: dict | None = None,
+            page: int = 1,
+            limit: int = 10,
     ) -> Sequence[MongoModelType]:
         try:
             session = uow.mongo_session
-            query = self.model.find(filters or {}, session=session)
+
+            query_filters = {}
+            if filters:
+                for field, value in filters.items():
+                    if value is not None:
+                        query_filters[field] = value
+
+            query = self.model.find(query_filters, session=session)
+
+            if sorting and (sort_by := sorting.get("sort_by")) is not None:
+                order_by = sorting.get("order_by", "asc")
+                sort_direction = (
+                    pymongo.DESCENDING
+                    if order_by == schemas.SortOrderField.DESCENDING
+                    else pymongo.ASCENDING)
+                query = query.sort([(sort_by, sort_direction)])
+
             query = query.skip((page - 1) * limit).limit(limit)
+
             return await query.to_list()
         except Exception as e:
-            raise exceptions.DatabaseError(
+            raise repositories.exceptions.DatabaseError(
                 self.__class__.__name__,
                 str(e),
             ) from e
