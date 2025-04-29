@@ -1,17 +1,9 @@
 import enum
 from typing import Annotated
 
-from beanie import DocumentWithSoftDelete
 from pydantic import UUID4, Field
 
 from src import core
-
-
-class MediaType(enum.StrEnum):
-    IMAGE = "image"
-    VIDEO = "video"
-    AUDIO = "audio"
-    NONE = "none"
 
 
 class QuestionType(enum.StrEnum):
@@ -21,19 +13,18 @@ class QuestionType(enum.StrEnum):
     ORDERING = "ordering"
 
 
-class QuestionContent(DocumentWithSoftDelete, core.models.mongo.BaseMixin):
+class QuestionContent(core.models.mongo.BaseMixin, core.models.mongo.SoftDelete):
     description: Annotated[str, Field(min_length=1, max_length=1000)]
-    media_type: MediaType = MediaType.NONE
     media_path: str | None = None
 
 
-class QuestionAnswer(DocumentWithSoftDelete, core.models.mongo.BaseMixin):
+class QuestionAnswer(core.models.mongo.BaseMixin, core.models.mongo.SoftDelete):
     text: Annotated[str, Field(min_length=1, max_length=500)]
     is_correct: bool
     order: Annotated[int, Field(ge=0, le=100)]
 
 
-class Question(DocumentWithSoftDelete, core.models.mongo.BaseMixin):
+class Question(core.models.mongo.BaseMixin, core.models.mongo.SoftDelete):
     quiz_id: UUID4
     order: Annotated[int, Field(ge=0, le=1000)]
     title: Annotated[str, Field(min_length=1, max_length=200)]

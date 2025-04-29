@@ -5,9 +5,7 @@ from typing import TypeVar
 
 from beanie import Document, SortDirection
 
-from src.core import custom_types, repositories, schemas
-from src.core.repositories import exceptions
-from src.core.uow import UnitOfWork
+from src.core import custom_types, repositories, schemas, UnitOfWork, repositories, models
 from src.core.utils.decorators import log_operation
 
 MongoModelType = TypeVar("MongoModelType", bound=Document)
@@ -31,10 +29,10 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
             return instance
         except Exception as e:
             if "duplicate" in (err_info := str(e)):
-                raise exceptions.DuplicateError(
+                raise repositories.exceptions.DuplicateError(
                     self.__class__.__name__, self.model.get_collection_name(), err_info
                 ) from e
-            raise exceptions.EntityCreateError(
+            raise repositories.exceptions.EntityCreateError(
                 self.__class__.__name__, self.model.get_collection_name(), err_info
             ) from e
 
@@ -47,10 +45,10 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
             return instances
         except Exception as e:
             if "duplicate" in (err_info := str(e)):
-                raise exceptions.DuplicateError(
+                raise repositories.exceptions.DuplicateError(
                     self.__class__.__name__, self.model.get_collection_name(), err_info
                 ) from e
-            raise exceptions.EntityCreateError(
+            raise repositories.exceptions.EntityCreateError(
                 self.__class__.__name__, self.model.get_collection_name(), err_info
             ) from e
 
@@ -67,7 +65,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
                 self.logger.info("Entity not found", extra={"exists": False})
             return entity
         except Exception as e:
-            raise exceptions.DatabaseError(
+            raise repositories.exceptions.DatabaseError(
                 self.__class__.__name__,
                 str(e),
             ) from e
@@ -124,7 +122,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
                 self.logger.warning("Update target not found", extra={"updated": False})
             return instance
         except Exception as e:
-            raise exceptions.EntityUpdateError(
+            raise repositories.exceptions.EntityUpdateError(
                 self.__class__.__name__,
                 self.model.get_collection_name(),
                 f"entity_id: {entity_id}",
@@ -141,7 +139,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
                 return False
 
             # Soft delete (если модель поддерживает)
-            if hasattr(instance, "deleted_at"):
+            if issubclass(self.model, models.mongo.SoftDelete):
                 if instance.deleted_at is None:
                     instance.deleted_at = datetime.now(UTC)
                     await instance.save(session=session)
@@ -152,7 +150,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
             return True
 
         except Exception as e:
-            raise exceptions.EntityDeleteError(
+            raise repositories.exceptions.EntityDeleteError(
                 self.__class__.__name__,
                 self.model.get_collection_name(),
                 f"entity_id: {entity_id}",

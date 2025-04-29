@@ -31,7 +31,6 @@ class ContentBase(BaseModel):
         return v
 
     model_config = ConfigDict(
-        populate_by_name=True,
         from_attributes=True,
     )
 
@@ -42,7 +41,6 @@ class AnswerBase(BaseModel):
     order: Annotated[int, Field(ge=0, le=100, description="Порядок ответа")]
 
     model_config = ConfigDict(
-        populate_by_name=True,
         from_attributes=True,
     )
 
