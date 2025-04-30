@@ -7,7 +7,8 @@ from beanie import Document
 from .membership import Membership, UserRoles
 from .membership import Statuses as MembershipStatuses
 from .organization import Organization
-from .questions import Question
+from .question import Question
+from .quiz import Quiz
 from .user import User
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "MembershipStatuses",
     "Organization",
     "Question",
+    "Quiz",
     "User",
     "UserRoles",
     "gather_documents",

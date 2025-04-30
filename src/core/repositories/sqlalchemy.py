@@ -158,7 +158,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
     async def delete_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> bool:
         try:
             session = uow.postgres_session
-            instance = await self.read_by_id(session, entity_id)
+            instance = await self.read_by_id(uow, entity_id)
             if not instance:
                 self.logger.warning("Delete target not found", extra={"deleted": False})
                 return False

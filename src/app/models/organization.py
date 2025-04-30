@@ -7,7 +7,7 @@ from uuid_v7.base import uuid7
 from src import core
 
 if TYPE_CHECKING:
-    from src.app.models import Membership
+    from src.app.models import Membership, Quiz
 
 
 class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
@@ -24,3 +24,4 @@ class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelet
     memberships: Mapped[list["Membership"]] = relationship(
         back_populates="organization", lazy="selectin"
     )
+    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="organization", lazy="selectin")

@@ -7,7 +7,7 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src import core
-from src.app.models.questions import MediaType, QuestionType
+from src.app.models.question import MediaType, QuestionType
 
 Order = Annotated[int, Field(ge=0, le=1000)]
 Title = Annotated[str, Field(min_length=1, max_length=200)]

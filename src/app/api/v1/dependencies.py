@@ -13,6 +13,7 @@ UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
 MembershipsService = Annotated[services.Memberships, Depends()]
 QuestionsService = Annotated[services.Questions, Depends()]
+QuizzesService = Annotated[services.Quizzes, Depends()]
 
 PaginationQuery = Annotated[core.schemas.PaginationParams, Depends()]
 
