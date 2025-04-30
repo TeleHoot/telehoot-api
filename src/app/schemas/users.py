@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from src import core
 
@@ -14,21 +14,24 @@ LastName = Annotated[str, Field(min_length=1, max_length=50)]
 
 
 class Base(BaseModel):
-    telegram_id: int
-    username: Username | None = None
-    telegram_username: TelegramUsername
-    first_name: FirstName
-    last_name: LastName | None = None
-    is_admin: bool = False
-    photo_url: str | None
+    username: Annotated[str, Field(min_length=5, max_length=32)]
+    first_name: Annotated[str, Field(min_length=1, max_length=50)]
+    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    photo_url: str | None = None
 
 
 class Create(Base):
-    pass
+    telegram_id: int
+
+    @computed_field
+    @property
+    def telegram_username(self) -> str:
+        return self.username
 
 
 class Read(Base):
     id: UUID
+    telegram_id: int
     created_at: datetime
     deleted_at: datetime | None = None
 
@@ -44,9 +47,11 @@ class Update(BaseModel):
 
 
 class TelegramAuth(Base):
-    is_admin: Annotated[bool, Field(exclude=True)] = False
+    id: Annotated[int, Field(alias="telegram_id")]
     auth_date: int
     hash: str
+
+    model_config = ConfigDict(validate_by_alias=False, serialize_by_alias=True)
 
 
 class Filters(core.schemas.BaseFilters):

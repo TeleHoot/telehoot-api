@@ -32,15 +32,15 @@ class Authentication:
         if not self.check_correct_hash(telegram_data):
             raise core.services.exceptions.AuthenticationError("Invalid hash")
         try:
-            user = await self.users_service.read_by_telegram_id(uow, telegram_data.telegram_id)
+            user = await self.users_service.read_by_telegram_id(uow, telegram_data.id)
         except core.services.exceptions.EntityNotFoundError:
             user = await self.users_service.create(
                 uow,
-                schemas.users.Create.model_validate(telegram_data.model_dump(exclude_unset=True)),
+                schemas.users.Create.model_validate(telegram_data.model_dump()),
             )
             organization = await self.organizations_service.create(
                 uow,
-                schemas.organizations.Create(name=telegram_data.telegram_username.capitalize()),
+                schemas.organizations.Create(name=telegram_data.username.capitalize()),
             )
             await self.memberships_service.create(
                 uow,
@@ -61,15 +61,15 @@ class Authentication:
 
     @staticmethod
     def check_correct_hash(telegram_data: schemas.users.TelegramAuth) -> bool:
+        data = telegram_data.model_dump(exclude={"hash"}, exclude_unset=True, by_alias=False)
+
         expected_hash = telegram_data.hash
 
-        sorted_params = sorted(
-            f"{x}={y}" for x, y in telegram_data.model_dump().items() if x != "hash"
-        )
-        data_check_bytes = "\n".join(sorted_params).encode()
+        data_check_string = "\n".join(f"{key}={value}" for key, value in sorted(data.items()))
 
-        computed_hash = hmac.new(settings.TG.BOT_SECRET, data_check_bytes, sha256).hexdigest()
-
+        computed_hash = hmac.new(
+            settings.TG.BOT_SECRET, data_check_string.encode(), sha256
+        ).hexdigest()
         return hmac.compare_digest(computed_hash, expected_hash)
 
     @staticmethod
