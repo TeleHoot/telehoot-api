@@ -34,10 +34,6 @@ class Settings(BaseSettings):
 
     API_PREFIX: str = "/api"
 
-    TOKEN_PREFIX: str = "TOKEN"
-    USER_ROLE: str = "USER"
-    ADMIN_ROLE: str = "ADMIN"
-
     ALLOWED_IMAGE_TYPES: set[str] = {
         "image/jpeg",
         "image/png",

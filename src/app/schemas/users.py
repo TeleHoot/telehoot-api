@@ -5,12 +5,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
+from src import core
 
-class UserSortFields(enum.StrEnum):
-    USERNAME = "username"
-    TELEGRAM_USERNAME = "telegram_username"
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
+Username = Annotated[str, Field(min_length=5, max_length=32)]
+TelegramUsername = Annotated[str, Field(min_length=5, max_length=32)]
+FirstName = Annotated[str, Field(min_length=1, max_length=50)]
+LastName = Annotated[str, Field(min_length=1, max_length=50)]
 
 
 class Base(BaseModel):
@@ -33,15 +33,16 @@ class Read(Base):
     id: UUID
     telegram_id: int
     deleted_at: datetime | None = None
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class Update(BaseModel):
-    username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
-    telegram_username: Annotated[str | None, Field(min_length=5, max_length=32)] = None
-    first_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    username: Username | None = None
+    telegram_username: TelegramUsername | None = None
+    first_name: FirstName | None = None
+    last_name: LastName | None = None
     photo_url: str | None = None
 
 
@@ -51,3 +52,18 @@ class TelegramAuth(Base):
     hash: str
 
     model_config = ConfigDict(validate_by_alias=False, serialize_by_alias=True)
+
+
+class Filters(core.schemas.BaseFilters):
+    is_admin: bool | None = None
+
+
+class SortFields(enum.StrEnum):
+    USERNAME = "username"
+    TELEGRAM_USERNAME = "telegram_username"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class SortParams(core.schemas.SortParams):
+    sort_by: SortFields | None = None

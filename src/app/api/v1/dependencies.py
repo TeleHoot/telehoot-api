@@ -2,7 +2,6 @@ from collections.abc import AsyncGenerator, Callable
 from typing import Annotated
 
 from fastapi import Depends
-from fastapi.params import Query
 from fastapi.security import APIKeyCookie
 
 from src import core
@@ -13,9 +12,8 @@ UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
 MembershipsService = Annotated[services.Memberships, Depends()]
 
-PageLimitQuery = Annotated[core.schemas.query_filter.PageLimitParams, Query()]
+PaginationQuery = Annotated[core.schemas.PaginationParams, Depends()]
 
-OrganizationsSortQuery = Annotated[schemas.organizations.SortParams, Query()]
 
 settings = get_settings()
 
@@ -52,7 +50,7 @@ async def get_current_user(
     auth_service: AuthService,
 ) -> schemas.users.Read:
     if not token:
-        raise core.services.exceptions.AuthenticationError("No session found")  # noqa: TRY003, EM101
+        raise core.services.exceptions.AuthenticationError("No session found")
     return await auth_service.read_user_by_token(uow, token)
 
 
@@ -61,7 +59,7 @@ CurrentUser = Annotated[schemas.users.Read, Depends(get_current_user)]
 
 def get_active_user(current_user: CurrentUser) -> schemas.users.Read:
     if current_user.deleted_at is not None:
-        raise core.services.exceptions.AuthenticationError("User is deleted")  # noqa: TRY003, EM101
+        raise core.services.exceptions.AuthenticationError("User is deleted")
 
     return current_user
 

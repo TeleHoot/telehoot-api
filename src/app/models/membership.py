@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class UserRoles(enum.StrEnum):
-    CREATOR = "creator"
+    OWNER = "owner"
     EDITOR = "editor"
     PRESENTER = "presenter"
 

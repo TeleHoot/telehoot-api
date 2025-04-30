@@ -15,6 +15,8 @@ class Organizations(
         schemas.organizations.Create,
         schemas.organizations.Read,
         schemas.organizations.Update,
+        schemas.organizations.Filters,
+        schemas.organizations.SortParams,
         models.Organization,
     ]
 ):
@@ -25,11 +27,12 @@ class Organizations(
             create_schema=schemas.organizations.Create,
             read_schema=schemas.organizations.Read,
             update_schema=schemas.organizations.Update,
+            filters_schema=schemas.organizations.Filters,
         )
 
     async def upload_image(
         self,
-        uow: core.uow.UnitOfWork,
+        uow: UnitOfWork,
         organization_id: UUID,
         file: UploadFile,
         background_tasks: BackgroundTasks,
@@ -76,7 +79,7 @@ class Organizations(
 
     async def delete_image(
         self,
-        uow: core.uow.UnitOfWork,
+        uow: UnitOfWork,
         organization_id: UUID,
         background_tasks: BackgroundTasks,
     ) -> schemas.organizations.Read:

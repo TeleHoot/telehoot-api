@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -6,6 +7,9 @@ from src.app import schemas
 from src.app.api.v1 import dependencies
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+FiltersQuery = Annotated[schemas.users.Filters, Depends()]
+SortingQuery = Annotated[schemas.users.SortParams, Depends()]
 
 
 @router.get(
@@ -16,9 +20,11 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def get_users(
     uow: dependencies.PostgresUOW,
     users_service: dependencies.UsersService,
-    filter_query: dependencies.PageLimitQuery,
+    filters: FiltersQuery,
+    sorting: SortingQuery,
+    pagination: dependencies.PaginationQuery,
 ):
-    return await users_service.read_many(uow, filter_query.page, filter_query.limit)
+    return await users_service.read_many(uow, filters, sorting, pagination)
 
 
 @router.get("/me")
