@@ -1,11 +1,11 @@
 import logging
 from collections.abc import Sequence
-from datetime import UTC, datetime
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from beanie import Document, SortDirection
 
-from src.core import custom_types, repositories, schemas, UnitOfWork, repositories, models
+from src.core import custom_types, repositories, schemas
+from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 
 MongoModelType = TypeVar("MongoModelType", bound=Document)
@@ -21,11 +21,10 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
         }
 
     @log_operation
-    async def create(self, uow: UnitOfWork, data: dict) -> MongoModelType:
+    async def create(self, uow: UnitOfWork, data: dict[str, Any]) -> MongoModelType:
         try:
-            session = uow.mongo_session
-            instance = self.model(**data)
-            await instance.create(session=session)
+            instance: MongoModelType = self.model(**data)
+            await instance.create(session=uow.mongo_session)
             return instance
         except Exception as e:
             if "duplicate" in (err_info := str(e)):
@@ -37,11 +36,12 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
             ) from e
 
     @log_operation
-    async def create_many(self, uow: UnitOfWork, data_list: list[dict]) -> list[MongoModelType]:
+    async def create_many(
+        self, uow: UnitOfWork, data_list: list[dict[str, Any]]
+    ) -> list[MongoModelType]:
         try:
-            session = uow.mongo_session
             instances = [self.model(**data) for data in data_list]
-            await self.model.insert_many(instances, session=session)
+            await self.model.insert_many(instances, session=uow.mongo_session)
             return instances
         except Exception as e:
             if "duplicate" in (err_info := str(e)):
@@ -59,8 +59,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
         entity_id: custom_types.EntityID,
     ) -> MongoModelType | None:
         try:
-            session = uow.mongo_session
-            entity = await self.model.get(entity_id, session=session)
+            entity = await self.model.get(entity_id, session=uow.mongo_session)
             if not entity:
                 self.logger.info("Entity not found", extra={"exists": False})
             return entity
@@ -69,6 +68,51 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
                 self.__class__.__name__,
                 str(e),
             ) from e
+
+    @staticmethod
+    def _process_filters(filters: dict[str, Any]) -> dict[str, Any]:
+        """
+        Returns:
+            example output:
+        {'created_at':
+            {'$gte': datetime.datetime(2025, 1, 1, 0, 0),
+            '$lte': datetime.datetime(2025, 5, 1, 0, 0)}}
+        """
+        processed = {}
+        for key, value in filters.items():
+            if key.endswith("_from"):
+                field = key[:-5]
+                operator = "$gte"
+            elif key.endswith("_to"):
+                field = key[:-3]
+                operator = "$lte"
+            else:
+                processed[key] = value
+                continue
+
+            if field not in processed:
+                processed[field] = {}
+            processed[field][operator] = value
+        return processed
+
+    @staticmethod
+    def _process_sort_param(sort: dict[str, Any] | None) -> list[tuple[str, SortDirection]] | None:
+        return (
+            (
+                [
+                    (
+                        sort_by,
+                        SortDirection.DESCENDING
+                        if sort.get("order_by") == schemas.SortOrderField.DESCENDING
+                        else SortDirection.ASCENDING,
+                    )
+                ]
+                if (sort_by := sort.get("sort_by")) is not None
+                else None
+            )
+            if sort
+            else None
+        )
 
     @log_operation
     async def read_many(
@@ -80,24 +124,19 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
         limit: int = 10,
     ) -> Sequence[MongoModelType]:
         try:
-            session = uow.mongo_session
+            processed_filters = self._process_filters(filters or {})
+            processed_sort_param = self._process_sort_param(sorting)
 
-            query_filters = filters or {}
+            skip = (page - 1) * limit
 
-            query = self.model.find(query_filters, session=session)
+            return await self.model.find_many(
+                processed_filters,
+                session=uow.mongo_session,
+                sort=processed_sort_param,
+                skip=skip,
+                limit=limit,
+            ).to_list()
 
-            if sorting and (sort_by := sorting.get("sort_by")) is not None:
-                order_by = sorting.get("order_by", "asc")
-                sort_direction = (
-                    SortDirection.DESCENDING
-                    if order_by == schemas.SortOrderField.DESCENDING
-                    else SortDirection.ASCENDING
-                )
-                query = query.sort([(sort_by, sort_direction)])
-
-            query = query.skip((page - 1) * limit).limit(limit)
-
-            return await query.to_list()
         except Exception as e:
             raise repositories.exceptions.DatabaseError(
                 self.__class__.__name__,
@@ -109,15 +148,14 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
         self,
         uow: UnitOfWork,
         entity_id: custom_types.EntityID,
-        data: dict,
+        data: dict[str, Any],
     ) -> MongoModelType | None:
         try:
-            session = uow.mongo_session
-            instance = await self.read_by_id(uow, entity_id)
+            instance: MongoModelType = await self.read_by_id(uow, entity_id)
             if instance:
                 for key, value in data.items():
                     setattr(instance, key, value)
-                await instance.save(session=session)
+                await instance.save(session=uow.mongo_session)
             else:
                 self.logger.warning("Update target not found", extra={"updated": False})
             return instance
@@ -132,21 +170,15 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
     @log_operation
     async def delete_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> bool:
         try:
-            session = uow.mongo_session
             instance = await self.read_by_id(uow, entity_id)
             if not instance:
                 self.logger.warning("Delete target not found", extra={"deleted": False})
                 return False
 
-            # Soft delete (если модель поддерживает)
-            if issubclass(self.model, models.mongo.SoftDelete):
-                if instance.deleted_at is None:
-                    instance.deleted_at = datetime.now(UTC)
-                    await instance.save(session=session)
-                return True
+            # soft deletes document if it is an instance of DocumentWithSoftDelete,
+            # otherwise hard deletes
+            await instance.delete(session=uow.mongo_session)
 
-            # Hard delete
-            await instance.delete(session=session)
             return True
 
         except Exception as e:

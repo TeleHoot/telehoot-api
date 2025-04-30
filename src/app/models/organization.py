@@ -14,7 +14,7 @@ class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelet
     __tablename__ = "organizations"
     repr_cols = ("id", "name", "is_verified")
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
 
     name: Mapped[str] = mapped_column(String(64))
     description: Mapped[str | None] = mapped_column(String(500))

@@ -29,8 +29,8 @@ class Create(Base):
 
 class Read(Base):
     id: UUID
-    deleted_at: datetime | None = None
     created_at: datetime
+    deleted_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

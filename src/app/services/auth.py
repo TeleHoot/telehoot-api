@@ -55,7 +55,7 @@ class Authentication:
         return schemas.auth.Token(access_token=token)
 
     @log_operation
-    async def read_user_by_token(self, uow: core.uow.UnitOfWork, token: str) -> schemas.users.Read:
+    async def read_user_by_token(self, uow: UnitOfWork, token: str) -> schemas.users.Read:
         user_data = self.decode_token(token)
         return await self.users_service.read_by_id(uow, user_data["user_id"])
 

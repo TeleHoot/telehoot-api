@@ -78,7 +78,7 @@ async def update_question(
     "/{entity_id}",
     dependencies=[Depends(dependencies.get_active_user)],
 )
-async def delete_membership(
+async def delete_question(
     entity_id: PydanticObjectId,
     uow: dependencies.MongoUOW,
     service: dependencies.QuestionsService,

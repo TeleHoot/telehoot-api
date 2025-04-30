@@ -13,8 +13,6 @@ from . import (
     utils,
 )
 
-from .uow import UnitOfWork
-
 __all__ = [
     "config",
     "custom_types",
@@ -27,6 +25,5 @@ __all__ = [
     "schemas",
     "services",
     "settings",
-    "UnitOfWork",
     "utils",
 ]

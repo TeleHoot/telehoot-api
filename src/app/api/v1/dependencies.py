@@ -7,6 +7,7 @@ from fastapi.security import APIKeyCookie
 from src import core
 from src.app import schemas, services
 from src.core.config import get_settings
+from src.core.uow import UnitOfWork
 
 UsersService = Annotated[services.Users, Depends()]
 OrganizationService = Annotated[services.Organizations, Depends()]
@@ -23,19 +24,17 @@ def get_uow_factory(
     *,
     use_postgres: bool = True,
     use_mongodb: bool = False,
-) -> Callable[[], AsyncGenerator[core.uow.UnitOfWork]]:
-    async def _get_uow() -> AsyncGenerator[core.uow.UnitOfWork]:
-        async with core.uow.UnitOfWork(use_postgres=use_postgres, use_mongodb=use_mongodb) as uow:
+) -> Callable[[], AsyncGenerator[UnitOfWork]]:
+    async def _get_uow() -> AsyncGenerator[UnitOfWork]:
+        async with UnitOfWork(use_postgres=use_postgres, use_mongodb=use_mongodb) as uow:
             yield uow
 
     return _get_uow
 
 
-PostgresUOW = Annotated[core.uow.UnitOfWork, Depends(get_uow_factory(use_postgres=True))]
-MongoUOW = Annotated[core.uow.UnitOfWork, Depends(get_uow_factory(use_mongodb=True))]
-FullUOW = Annotated[
-    core.uow.UnitOfWork, Depends(get_uow_factory(use_postgres=True, use_mongodb=True))
-]
+PostgresUOW = Annotated[UnitOfWork, Depends(get_uow_factory(use_postgres=True))]
+MongoUOW = Annotated[UnitOfWork, Depends(get_uow_factory(use_mongodb=True))]
+FullUOW = Annotated[UnitOfWork, Depends(get_uow_factory(use_postgres=True, use_mongodb=True))]
 
 AuthService = Annotated[services.Authentication, Depends()]
 

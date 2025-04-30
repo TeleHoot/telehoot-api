@@ -75,8 +75,8 @@ class BaseCRUD[
         sorting: TSorting | None = None,
         pagination: schemas.PaginationParams | None = None,
     ) -> list[TRead]:
-        filters_data = await self._dump_data(filters) if filters else None
-        sorting_data = await self._dump_data(sorting) if sorting else None
+        sorting_data = sorting.model_dump(exclude_none=True) if sorting else None
+        filters_data = filters.model_dump(exclude_none=True) if filters else None
 
         page, limit = (pagination.page, pagination.limit) if pagination else (1, 10)
 

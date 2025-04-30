@@ -78,7 +78,6 @@ async def init_mongo(aggregator: Callable[[], Sequence[type[Document]]]) -> None
     try:
         mongo_manager = get_mongo_manager()
         await mongo_manager.initialize()
-
         await init_beanie(
             database=mongo_manager.client[settings.MONGO.INITDB_DATABASE],
             document_models=aggregator(),

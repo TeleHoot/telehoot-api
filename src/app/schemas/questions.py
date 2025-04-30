@@ -1,34 +1,32 @@
 import enum
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Self
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pydantic_core.core_schema import FieldValidationInfo, ValidationInfo
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src import core
 from src.app.models.questions import MediaType, QuestionType
 
-QuizId = Annotated[UUID, Field(...)]
 Order = Annotated[int, Field(ge=0, le=1000)]
 Title = Annotated[str, Field(min_length=1, max_length=200)]
 Type = Annotated[QuestionType, Field(description="Тип вопроса")]
 Description = Annotated[str, Field(min_length=1, max_length=1000)]
 AnswerText = Annotated[str, Field(min_length=1, max_length=500)]
+Answers = Annotated[list["AnswerBase"], Field(min_length=1, max_length=4)]
 
 
 class ContentBase(BaseModel):
     description: Description
     media_type: MediaType = MediaType.NONE
-    media_path: str | None = Field(None, description="Путь к медиафайлу")
+    media_path: Annotated[str | None, Field(description="Путь к медиафайлу")] = None
 
-    @field_validator("media_path")
-    @classmethod
-    def validate_media_path(cls, v: str | None, info: FieldValidationInfo) -> str | None:
-        if info.data.get("media_type") != MediaType.NONE and not v:
+    @model_validator(mode="after")
+    def validate_media_path(self) -> Self:
+        if self.media_type != MediaType.NONE and not self.media_path:
             raise ValueError("Media path is required when media_type is specified")
-        return v
+        return self
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -46,27 +44,24 @@ class AnswerBase(BaseModel):
 
 
 class QuestionBase(BaseModel):
-    quiz_id: QuizId
+    quiz_id: UUID
     order: Order
     title: Title
     type: Type
     question_content: ContentBase
-    answers: Annotated[list[AnswerBase], Field(min_length=1, max_length=4)]
+    answers: Answers
 
-    @field_validator("answers")
-    @classmethod
-    def validate_answers(cls, v: list[AnswerBase], info: ValidationInfo) -> list[AnswerBase]:
-        question_type = info.data.get("type")
-
-        if question_type in {QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE}:
-            correct_answers = [ans for ans in v if ans.is_correct]
+    @model_validator(mode="after")
+    def validate_answers(self) -> Self:
+        if self.type in {QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE}:
+            correct_answers = [ans for ans in self.answers if ans.is_correct]
             if not correct_answers:
                 raise ValueError("At least one correct answer is required for choice questions")
-            if question_type == QuestionType.SINGLE_CHOICE and len(correct_answers) > 1:
+            if self.type == QuestionType.SINGLE_CHOICE and len(correct_answers) > 1:
                 raise ValueError("Single choice questions can have only one correct answer")
-        elif question_type == QuestionType.TEXT and len(v) != 1:
+        elif self.type == QuestionType.TEXT and len(self.answers) != 1:
             raise ValueError("Text questions must have exactly one answer")
-        return v
+        return self
 
 
 class Create(QuestionBase):
@@ -74,23 +69,21 @@ class Create(QuestionBase):
 
 
 class Update(BaseModel):
-    quiz_id: QuizId | None = None
+    quiz_id: UUID | None = None
     order: Order | None = None
     title: Title | None = None
     type: Type | None = None
     question_content: ContentBase | None = None
-    answers: Annotated[list[AnswerBase] | None, Field(min_length=1, max_length=4)] = None
+    answers: Answers | None = None
 
 
 class Read(QuestionBase):
-    id: Annotated[PydanticObjectId, Field(alias="_id")]
+    id: PydanticObjectId
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None
 
     model_config = ConfigDict(
-        json_encoders={PydanticObjectId: str},
-        populate_by_name=True,
         from_attributes=True,
     )
 

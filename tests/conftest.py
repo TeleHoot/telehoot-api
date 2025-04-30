@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import core
 from src.app import models, schemas
 from src.app.api.v1 import dependencies
+from src.core.uow import UnitOfWork
 from src.main import app
 
 postgres_manager = core.db.get_postgres_manager()
@@ -41,8 +42,8 @@ async def client(
     async def patched_aexit(*args, **kwargs):
         pass
 
-    monkeypatch.setattr(core.uow.UnitOfWork, "__aenter__", patched_aenter)
-    monkeypatch.setattr(core.uow.UnitOfWork, "__aexit__", patched_aexit)
+    monkeypatch.setattr(UnitOfWork, "__aenter__", patched_aenter)
+    monkeypatch.setattr(UnitOfWork, "__aexit__", patched_aexit)
 
     async with AsyncClient(
         transport=ASGITransport(app=app),

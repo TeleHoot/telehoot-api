@@ -14,7 +14,7 @@ class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "users"
     repr_cols = ("id", "telegram_username")
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
     username: Mapped[str | None] = mapped_column(String(255))
 
     is_admin: Mapped[bool] = mapped_column(default=False)

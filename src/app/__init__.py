@@ -18,6 +18,8 @@ def create_app() -> FastAPI:
         core.db.init_replica_set()
         await core.db.init_mongo(gather_documents)
         yield
+        if mongo_client := core.db.get_mongo_manager().client:
+            mongo_client.close()
 
     app = FastAPI(
         debug=settings.DEBUG,

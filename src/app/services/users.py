@@ -1,5 +1,6 @@
 from src import core
 from src.app import models, repositories, schemas
+from src.core.uow import UnitOfWork
 
 
 class Users(
@@ -23,7 +24,7 @@ class Users(
         self.repo = repositories.Users()
 
     @core.utils.decorators.log_operation
-    async def read_by_telegram_id(self, uow: core.uow.UnitOfWork, telegram_id: int):
+    async def read_by_telegram_id(self, uow: UnitOfWork, telegram_id: int):
         user = await self.repo.read_by_telegram_id(uow, telegram_id)
 
         if not user:
