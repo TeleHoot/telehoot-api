@@ -40,14 +40,10 @@ async def get_my_organizations(
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
     current_user: dependencies.ActiveUser,
-    sort_query: dependencies.OrganizationsSortQuery,
+    pagination: dependencies.PaginationQuery,
 ):
     memberships = await memberships_service.read_many(
-        uow,
-        user_id=current_user.id,
-        organization_id=None,
-        page=sort_query.page,
-        limit=sort_query.limit,
+        uow, filters=schemas.memberships.Filters(user_id=current_user.id), pagination=pagination
     )
 
     return [membership.organization for membership in memberships]
@@ -60,11 +56,11 @@ async def get_my_organizations(
 async def get_my_memberships(
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
-    sort_query: dependencies.OrganizationsSortQuery,
     current_user: dependencies.ActiveUser,
+    pagination: dependencies.PaginationQuery,
 ):
     return await memberships_service.read_many(
-        uow, None, current_user.id, sort_query.page, sort_query.limit
+        uow, filters=schemas.memberships.Filters(user_id=current_user.id), pagination=pagination
     )
 
 

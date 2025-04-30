@@ -108,9 +108,13 @@ class Organizations(
         return await self._inject_image(entity)
 
     async def read_many(
-        self, uow: UnitOfWork, page: int = 1, limit: int = 10, filters: dict | None = None
+        self,
+        uow: UnitOfWork,
+        filters: schemas.organizations.Filters | None = None,
+        sorting: schemas.organizations.SortParams | None = None,
+        pagination: core.schemas.PaginationParams | None = None,
     ) -> list[schemas.organizations.Read]:
-        entities = await super().read_many(uow, page, limit, filters)
+        entities = await super().read_many(uow, filters, sorting, pagination)
         return [await self._inject_image(entity) for entity in entities]
 
     async def update_by_id(
