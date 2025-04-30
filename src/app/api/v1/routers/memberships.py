@@ -46,7 +46,6 @@ async def get_memberships(
 @router.get(
     "/{organization_id}/{user_id}",
     response_model=schemas.memberships.Read,
-    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_membership(
@@ -63,7 +62,6 @@ async def get_membership(
 @router.patch(
     "/{organization_id}/{user_id}",
     response_model=schemas.memberships.Read,
-    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def update_membership(
@@ -82,7 +80,6 @@ async def update_membership(
 
 @router.delete(
     "/{organization_id}/{user_id}",
-    status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def delete_membership(

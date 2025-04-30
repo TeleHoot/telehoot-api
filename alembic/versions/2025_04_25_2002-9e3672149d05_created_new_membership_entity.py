@@ -1,7 +1,7 @@
 """created new membership entity
 
 Revision ID: 9e3672149d05
-Revises: 
+Revises:
 Create Date: 2025-04-25 20:02:12.837847
 
 """

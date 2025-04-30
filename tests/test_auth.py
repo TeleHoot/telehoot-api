@@ -20,15 +20,14 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 def fake_telegram_data(
     telegram_id: int = 1337228,
     username: str = "brainrot_1337",
-    fitst_name: str = "Lirali",
+    first_name: str = "Lirali",
     last_name: str = "Larila",
     photo_url: str = "https://example.com/photo.jpg",
 ) -> dict:
     data = {
-        "telegram_id": telegram_id,
+        "id": telegram_id,
         "username": username,
-        "telegram_username": username,
-        "first_name": fitst_name,
+        "first_name": first_name,
         "last_name": last_name,
         "photo_url": photo_url,
         "auth_date": int(datetime.now(tz=UTC).timestamp()),
@@ -56,16 +55,16 @@ async def test_auth_new_user(
 
     # Check that user was created in the database
     user: models.User | None = await db_session.scalar(
-        select(models.User).where(models.User.telegram_id == fake_telegram_data["telegram_id"])
+        select(models.User).where(models.User.telegram_id == fake_telegram_data["id"])
     )
 
     assert user is not None
-    assert user.telegram_username == fake_telegram_data["telegram_username"]
+    assert user.telegram_username == fake_telegram_data["username"]
 
     # Check that organization was created in the database
     org: models.Organization | None = await db_session.scalar(
         select(models.Organization).where(
-            models.Organization.name == fake_telegram_data["telegram_username"].capitalize()
+            models.Organization.name == fake_telegram_data["username"].capitalize()
         )
     )
     assert org is not None

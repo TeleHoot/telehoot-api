@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, String
+from sqlalchemy import UUID, BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_v7.base import uuid7
 
@@ -19,7 +19,7 @@ class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
 
     is_admin: Mapped[bool] = mapped_column(default=False)
 
-    telegram_id: Mapped[int] = mapped_column(unique=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     telegram_username: Mapped[str] = mapped_column(String(255))
     first_name: Mapped[str] = mapped_column(String(255))
     last_name: Mapped[str | None] = mapped_column(String(255))
