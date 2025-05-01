@@ -1,13 +1,14 @@
 from typing import Annotated
+from uuid import UUID
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from src import core
 from src.app import schemas
 from src.app.api.v1 import dependencies
 
-router = APIRouter(prefix="/questions", tags=["questions"])
+router = APIRouter(prefix="/quizzes/{quiz_id}/questions", tags=["questions"])
 settings = core.config.get_settings()
 
 FiltersQuery = Annotated[schemas.questions.Filters, Depends()]
@@ -20,12 +21,18 @@ SortingQuery = Annotated[schemas.questions.SortParams, Depends()]
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(dependencies.get_active_user)],
 )
-async def create_question(
+async def create_quiz_question(
+    quiz_id: UUID,
     entity: schemas.questions.Create,
-    uow: dependencies.MongoUOW,
+    uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
+    quiz_service: dependencies.QuizzesService,
 ):
-    return await service.create(uow, entity)
+    quiz = await quiz_service.read_by_id(uow, quiz_id)
+    if not quiz:
+        raise core.services.exceptions.EntityNotFoundError("Quizzes", str(quiz_id))
+
+    return await service.create(uow, entity, additional_data={"quiz_id": quiz_id})
 
 
 @router.get(
@@ -33,13 +40,15 @@ async def create_question(
     response_model=list[schemas.questions.Read],
     dependencies=[Depends(dependencies.get_active_user)],
 )
-async def get_questions(
+async def get_quiz_questions(
+    quiz_id: UUID,
     uow: dependencies.MongoUOW,
     service: dependencies.QuestionsService,
     filters: FiltersQuery,
     sorting: SortingQuery,
     pagination: dependencies.PaginationQuery,
 ):
+    # quiz_id is a required path parameter AND it is also automatically set for the filter query
     return await service.read_many(uow, filters, sorting, pagination)
 
 
@@ -48,12 +57,24 @@ async def get_questions(
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
-async def get_question(
+async def get_quiz_question(
+    quiz_id: UUID,
     entity_id: PydanticObjectId,
-    uow: dependencies.MongoUOW,
+    uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
+    quiz_service: dependencies.QuizzesService,
 ):
-    return await service.read_by_id(uow, entity_id)
+    quiz = await quiz_service.read_by_id(uow, quiz_id)
+    if not quiz:
+        raise core.services.exceptions.EntityNotFoundError("Quizzes", str(quiz_id))
+
+    question = await service.read_by_id(uow, entity_id)
+    if question.quiz_id != quiz_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Question doesn't belong to the quiz"
+        )
+
+    return question
 
 
 @router.patch(
@@ -61,12 +82,18 @@ async def get_question(
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
-async def update_question(
+async def update_quiz_question(
+    quiz_id: UUID,
     entity_id: PydanticObjectId,
     entity: schemas.questions.Update,
-    uow: dependencies.MongoUOW,
+    uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
+    quiz_service: dependencies.QuizzesService,
 ):
+    quiz = await quiz_service.read_by_id(uow, quiz_id)
+    if not quiz:
+        raise core.services.exceptions.EntityNotFoundError("Quizzes", str(quiz_id))
+
     return await service.update_by_id(
         uow=uow,
         entity_id=entity_id,
@@ -78,9 +105,15 @@ async def update_question(
     "/{entity_id}",
     dependencies=[Depends(dependencies.get_active_user)],
 )
-async def delete_question(
+async def delete_quiz_question(
+    quiz_id: UUID,
     entity_id: PydanticObjectId,
-    uow: dependencies.MongoUOW,
+    uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
+    quiz_service: dependencies.QuizzesService,
 ):
+    quiz = await quiz_service.read_by_id(uow, quiz_id)
+    if not quiz:
+        raise core.services.exceptions.EntityNotFoundError("Quizzes", str(quiz_id))
+
     return {"is_success": await service.delete_by_id(uow, entity_id)}

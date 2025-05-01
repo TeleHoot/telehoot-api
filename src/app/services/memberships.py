@@ -15,7 +15,7 @@ class Memberships(
     def __init__(self):
         self.repo = repositories.Memberships()
         super().__init__(
-            self.repo,
+            repo=self.repo,
             create_schema=schemas.memberships.Create,
             read_schema=schemas.memberships.Read,
             update_schema=schemas.memberships.Update,

@@ -44,7 +44,6 @@ class AnswerBase(BaseModel):
 
 
 class QuestionBase(BaseModel):
-    quiz_id: UUID
     order: Order
     title: Title
     type: Type
@@ -69,7 +68,6 @@ class Create(QuestionBase):
 
 
 class Update(BaseModel):
-    quiz_id: UUID | None = None
     order: Order | None = None
     title: Title | None = None
     type: Type | None = None
@@ -79,6 +77,7 @@ class Update(BaseModel):
 
 class Read(QuestionBase):
     id: PydanticObjectId
+    quiz_id: UUID
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = None
@@ -89,6 +88,7 @@ class Read(QuestionBase):
 
 
 class Filters(core.schemas.BaseFilters):
+    quiz_id: UUID | None
     type: Type | None = None
 
 

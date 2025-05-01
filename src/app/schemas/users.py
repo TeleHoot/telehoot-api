@@ -32,8 +32,9 @@ class Create(Base):
 class Read(Base):
     id: UUID
     telegram_id: int
+    is_admin: bool
     created_at: datetime
-    deleted_at: datetime | None = None
+    deleted_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 

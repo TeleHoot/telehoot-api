@@ -23,7 +23,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
     @log_operation
     async def create(self, uow: UnitOfWork, data: dict[str, Any]) -> MongoModelType:
         try:
-            instance: MongoModelType = self.model(**data)
+            instance: MongoModelType | None = self.model(**data)
             await instance.create(session=uow.mongo_session)
             return instance
         except Exception as e:
@@ -151,11 +151,11 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
         data: dict[str, Any],
     ) -> MongoModelType | None:
         try:
-            instance: MongoModelType = await self.read_by_id(uow, entity_id)
+            instance: MongoModelType | None = await self.read_by_id(uow, entity_id)
             if instance:
                 for key, value in data.items():
                     setattr(instance, key, value)
-                await instance.save(session=uow.mongo_session)
+                await instance.replace(session=uow.mongo_session)
             else:
                 self.logger.warning("Update target not found", extra={"updated": False})
             return instance
@@ -170,7 +170,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
     @log_operation
     async def delete_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> bool:
         try:
-            instance = await self.read_by_id(uow, entity_id)
+            instance: MongoModelType | None = await self.read_by_id(uow, entity_id)
             if not instance:
                 self.logger.warning("Delete target not found", extra={"deleted": False})
                 return False

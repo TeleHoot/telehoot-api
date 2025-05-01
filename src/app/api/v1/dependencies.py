@@ -66,3 +66,13 @@ def get_active_user(current_user: CurrentUser) -> schemas.users.Read:
 
 
 ActiveUser = Annotated[schemas.users.Read, Depends(get_active_user)]
+
+
+def get_admin_user(active_user: ActiveUser) -> schemas.users.Read:
+    if not active_user.is_admin:
+        raise core.services.exceptions.PermissionDeniedError("Admin permissions are required")
+
+    return active_user
+
+
+AdminUser = Annotated[schemas.users.Read, Depends(get_admin_user)]

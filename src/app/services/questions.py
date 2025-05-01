@@ -13,8 +13,9 @@ class Questions(
     ]
 ):
     def __init__(self):
+        self.repo = repositories.Questions()
         super().__init__(
-            repo=repositories.Questions(),
+            repo=self.repo,
             create_schema=schemas.questions.Create,
             read_schema=schemas.questions.Read,
             update_schema=schemas.questions.Update,

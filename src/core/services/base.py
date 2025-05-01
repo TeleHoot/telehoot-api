@@ -1,5 +1,5 @@
 import logging
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
@@ -40,8 +40,14 @@ class BaseCRUD[
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
     @log_operation
-    async def create(self, uow: UnitOfWork, create_schema: TCreate) -> TRead:
-        data = await self._dump_data(create_schema)
+    async def create(
+        self,
+        uow: UnitOfWork,
+        create_schema: TCreate,
+        *,
+        additional_data: dict[str, Any] | None = None,
+    ) -> TRead:
+        data = await self._dump_data(create_schema, additional_data)
         entity = await self.repo.create(uow, data)
         return await self._validate_data(entity)
 
@@ -119,5 +125,8 @@ class BaseCRUD[
         return self.read_schema.model_validate(entity)
 
     @staticmethod
-    async def _dump_data(schema: BaseModel) -> dict:
-        return schema.model_dump(exclude_unset=True)
+    async def _dump_data(schema: BaseModel, additional_data: dict | None = None) -> dict:
+        dumped = schema.model_dump(exclude_unset=True)
+        if additional_data:
+            dumped.update(additional_data)
+        return dumped

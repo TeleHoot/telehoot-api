@@ -14,14 +14,14 @@ class Users(
     ]
 ):
     def __init__(self):
+        self.repo = repositories.Users()
         super().__init__(
-            repositories.Users(),
+            repo=self.repo,
             create_schema=schemas.users.Create,
             read_schema=schemas.users.Read,
             update_schema=schemas.users.Update,
             filters_schema=schemas.users.Filters,
         )
-        self.repo = repositories.Users()
 
     @core.utils.decorators.log_operation
     async def read_by_telegram_id(self, uow: UnitOfWork, telegram_id: int):
