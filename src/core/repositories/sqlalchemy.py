@@ -106,8 +106,20 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                 for field, value in filters.items():
                     if value is None:
                         continue
-                    column = getattr(self.model, field)
-                    query = query.where(column == value)
+                    if field.endswith("_from"):
+                        field_name = field[:-5]
+                        column = getattr(self.model, field_name)
+                        query = query.where(column >= value)
+                    elif field.endswith("_to"):
+                        field_name = field[:-3]
+                        column = getattr(self.model, field_name)
+                        query = query.where(column <= value)
+                    else:
+                        column = getattr(self.model, field)
+                        if isinstance(value, list):
+                            query = query.where(column.in_(value))
+                        else:
+                            query = query.where(column == value)
 
             if sorting and (sort_by := sorting.get("sort_by")) is not None:
                 order_by = sorting.get("order_by", "asc")
