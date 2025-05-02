@@ -1,7 +1,5 @@
 from src import core
 from src.app import models, repositories, schemas
-from src.core import custom_types, services
-from src.core.uow import UnitOfWork
 
 
 class Quizzes(
@@ -25,18 +23,20 @@ class Quizzes(
             filters_schema=schemas.quizzes.Filters,
         )
 
-    async def read_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> schemas.quizzes.Read:
+    async def read_by_id(
+        self, uow: core.UnitOfWork, entity_id: core.custom_types.EntityID
+    ) -> schemas.quizzes.Read:
         entity = await super().read_by_id(uow, entity_id)
         data = await self._dump_data(entity)
         data["questions_count"] = await self.question_repo.get_count(uow, quiz_id=entity_id)
         return self.read_schema.model_validate(data)
 
     async def read_many(
-            self,
-            uow: UnitOfWork,
-            filters: schemas.quizzes.Filters | None = None,
-            sorting: schemas.quizzes.SortParams | None = None,
-            pagination: core.schemas.PaginationParams | None = None,
+        self,
+        uow: core.UnitOfWork,
+        filters: schemas.quizzes.Filters | None = None,
+        sorting: schemas.quizzes.SortParams | None = None,
+        pagination: core.schemas.PaginationParams | None = None,
     ) -> list[schemas.quizzes.Read]:
         entities = await super().read_many(uow, filters, sorting, pagination)
         dumped_entities = [await self._dump_data(entity) for entity in entities]

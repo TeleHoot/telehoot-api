@@ -2,10 +2,10 @@ import enum
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict
 
 from src import core
-from src.app import models, schemas
+from src.app import schemas
 
 
 class Base(BaseModel):

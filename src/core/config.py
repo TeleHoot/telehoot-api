@@ -46,5 +46,5 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=settings.env_config.ENV_FILE_PATH, extra="ignore")
 
 
-def get_settings():
+def get_settings() -> Settings:
     return Settings()

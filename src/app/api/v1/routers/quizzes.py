@@ -23,9 +23,11 @@ async def create_quiz(
     quiz_data: schemas.quizzes.Create,
     uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
-    current_user: dependencies.ActiveUser
+    current_user: dependencies.ActiveUser,
 ):
-    return await quizzes_service.create(uow, quiz_data, additional_data={"author_id": current_user.id})
+    return await quizzes_service.create(
+        uow, quiz_data, additional_data={"author_id": current_user.id}
+    )
 
 
 @router.get(

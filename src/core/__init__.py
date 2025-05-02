@@ -12,8 +12,10 @@ from . import (
     settings,
     utils,
 )
+from .uow import UnitOfWork
 
 __all__ = [
+    "UnitOfWork",
     "config",
     "custom_types",
     "db",
