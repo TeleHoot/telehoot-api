@@ -180,3 +180,4 @@ minio/
 mongodb.key
 
 .vscode
+*.code-workspace
