@@ -42,9 +42,7 @@ class Quizzes(
         entities = await super().read_many(uow, filters, sorting, pagination)
 
         for entity in entities:
-            questions_count = await self.question_repo.get_count_by_quiz_id(
-                uow, quiz_id=entity.id
-            )
+            questions_count = await self.question_repo.get_count_by_quiz_id(uow, quiz_id=entity.id)
             entity.questions_count = questions_count
 
         return entities

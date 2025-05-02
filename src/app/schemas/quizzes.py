@@ -15,7 +15,7 @@ class Base(BaseModel):
 
 
 class Create(Base):
-    organization_id: UUID
+    pass
 
 
 class Update(BaseModel):

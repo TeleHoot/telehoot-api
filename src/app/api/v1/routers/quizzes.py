@@ -7,7 +7,7 @@ from src import core
 from src.app import schemas
 from src.app.api.v1 import dependencies
 
-router = APIRouter(prefix="/quizzes", tags=["quizzes"])
+router = APIRouter(prefix="/organizations/{organization_id}/quizzes", tags=["quizzes"])
 settings = core.config.get_settings()
 
 FiltersQuery = Annotated[schemas.quizzes.Filters, Depends()]
@@ -20,13 +20,21 @@ SortingQuery = Annotated[schemas.quizzes.SortParams, Depends()]
     status_code=status.HTTP_201_CREATED,
 )
 async def create_quiz(
+    organization_id: UUID,
     quiz_data: schemas.quizzes.Create,
     uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
+    org_service: dependencies.OrganizationService,
     current_user: dependencies.ActiveUser,
 ):
+    await org_service.read_by_id(uow, organization_id)
     return await quizzes_service.create(
-        uow, quiz_data, additional_data={"author_id": current_user.id}
+        uow,
+        quiz_data,
+        additional_data={
+            "author_id": current_user.id,
+            "organization_id": organization_id,
+        },
     )
 
 
@@ -36,6 +44,7 @@ async def create_quiz(
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_quizzes(
+    organization_id: UUID,
     uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
     filters: FiltersQuery,
@@ -51,10 +60,13 @@ async def get_quizzes(
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_quiz(
+    organization_id: UUID,
     quiz_id: UUID,
     uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
+    org_service: dependencies.OrganizationService,
 ):
+    await org_service.read_by_id(uow, organization_id)
     return await quizzes_service.read_by_id(uow=uow, entity_id=quiz_id)
 
 
@@ -64,11 +76,14 @@ async def get_quiz(
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def update_quiz(
+    organization_id: UUID,
     quiz_id: UUID,
     quiz_data: schemas.quizzes.Update,
     uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
+    org_service: dependencies.OrganizationService,
 ):
+    await org_service.read_by_id(uow, organization_id)
     return await quizzes_service.update_by_id(
         uow=uow,
         entity_id=quiz_id,
@@ -81,10 +96,13 @@ async def update_quiz(
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def delete_quiz(
+    organization_id: UUID,
     quiz_id: UUID,
     uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
+    org_service: dependencies.OrganizationService,
 ):
+    await org_service.read_by_id(uow, organization_id)
     return {
         "is_success": await quizzes_service.delete_by_id(
             uow=uow,
