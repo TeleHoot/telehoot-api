@@ -12,10 +12,10 @@ from src.app.models.question import QuestionType
 Order = Annotated[int, Field(ge=0, le=1000)]
 Title = Annotated[str, Field(min_length=1, max_length=200)]
 Type = Annotated[QuestionType, Field(description="Тип вопроса")]
-Description = Annotated[str | None, Field(min_length=1, max_length=1000)]
 AnswerText = Annotated[str, Field(min_length=1, max_length=500)]
 Answers = Annotated[list["AnswerBase"], Field(min_length=1, max_length=4)]
 Weight = Annotated[int, Field(ge=0, le=100)]
+Description = Annotated[str | None, Field(min_length=1, max_length=1000)]
 Media = Annotated[str | None, Field(description="Путь к медиафайлу")]
 
 
@@ -23,10 +23,7 @@ class AnswerBase(BaseModel):
     text: AnswerText
     is_correct: bool
     order: Annotated[int, Field(ge=0, le=100, description="Порядок ответа")]
-
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuestionBase(BaseModel):
@@ -34,9 +31,11 @@ class QuestionBase(BaseModel):
     title: Title
     type: Type
     weight: Weight = 0
-    description: Description
-    media_path: Media
+    description: Description = None
+    media_path: Media = None
     answers: Answers
+
+    model_config = ConfigDict(validate_assignment=True, extra="forbid")
 
     @model_validator(mode="after")
     def validate_answers(self) -> Self:
@@ -60,7 +59,7 @@ class Update(BaseModel):
     title: Title | None = None
     type: Type | None = None
     weight: Weight | None = None
-    description: Description | None
+    description: Description = None
     media_path: Media = None
     answers: Answers | None = None
 
@@ -72,9 +71,7 @@ class Read(QuestionBase):
     updated_at: datetime
     deleted_at: datetime | None = None
 
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Filters(core.schemas.BaseFilters):

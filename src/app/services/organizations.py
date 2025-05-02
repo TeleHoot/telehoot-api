@@ -1,5 +1,3 @@
-import uuid
-from datetime import UTC, datetime
 from io import BytesIO
 from uuid import UUID
 
@@ -39,7 +37,7 @@ class Organizations(
     ) -> schemas.organizations.Read:
         organization = await self.read_by_id(uow, organization_id)
 
-        s3_path = f"{datetime.now(tz=UTC).strftime('%Y/%m/%d')}/{uuid.uuid4()}"
+        s3_path = await self.s3.generate_upload_path()
 
         file_content = await file.read()
 
@@ -47,17 +45,13 @@ class Organizations(
             self._process_image_upload,
             file_content=file_content,
             s3_path=s3_path,
-            content_type=file.content_type if file.content_type else "image/jpeg",
+            content_type=file.content_type or "image/jpeg",
             old_image_path=organization.image_path,
         )
 
-        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": s3_path})
-        if not updated_org:
-            raise core.services.exceptions.EntityNotFoundError(
-                self.__class__.__name__,
-                f"entity_id: {organization_id}",
-            )
-        return await self._validate_data(updated_org)
+        return await self.update_by_id(
+            uow, organization_id, schemas.organizations.Update(image_path=s3_path)
+        )
 
     async def _process_image_upload(
         self,
@@ -90,14 +84,9 @@ class Organizations(
 
         background_tasks.add_task(self._delete_file_in_background, organization.image_path)
 
-        updated_org = await self.repo.update_by_id(uow, organization_id, {"image_path": None})
-        if not updated_org:
-            raise core.services.exceptions.EntityNotFoundError(
-                self.__class__.__name__,
-                f"entity_id: {organization_id}",
-            )
-
-        return await self._validate_data(updated_org)
+        return await self.update_by_id(
+            uow, organization_id, schemas.organizations.Update(image_path=None)
+        )
 
     async def _delete_file_in_background(self, s3_path: str) -> None:
         async with self.s3:
@@ -129,16 +118,15 @@ class Organizations(
         return await self._inject_image(entity)
 
     async def _inject_image(
-        self, entity: schemas.organizations.Read
+        self, organization: schemas.organizations.Read
     ) -> schemas.organizations.Read:
-        data = await self._dump_data(entity)
-
-        if hasattr(entity, "image_path") and entity.image_path:
-            data["image_path"] = await self._get_image_url(str(entity.id), entity.image_path)
-        else:
-            data["image_path"] = None
-
-        return self.read_schema.model_validate(data)
+        image_url = (
+            await self._get_image_url(str(organization.id), organization.image_path)
+            if organization.image_path
+            else None
+        )
+        organization.image_path = image_url
+        return organization
 
     async def _get_image_url(self, org_id: str, image_path: str) -> str | None:
         try:

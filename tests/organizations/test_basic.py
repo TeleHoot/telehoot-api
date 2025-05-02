@@ -19,25 +19,28 @@ async def create_test_helper(
     session: AsyncSession | None = None,
 ) -> str | None:
     response: httpx.Response = await client.post("/organizations/", json=data)
+    response_data = response.json()
+
+    if 200 <= status_code < 300:  # noqa: PLR2004
+        assert "detail" not in response_data
+    else:
+        assert "detail" in response_data
+        return None
+
     assert response.status_code == status_code
 
-    response_data = response.json()
-    if response.is_success:
+    for given_field, given_value in data.items():
+        assert response_data.get(given_field) == given_value
+    assert "id" in response_data
+    org_id: str = response_data["id"]
+    if session:
+        organization = await session.get(models.Organization, org_id)
+
+        assert organization is not None
+
         for given_field, given_value in data.items():
-            assert response_data.get(given_field) == given_value
-        assert "id" in response_data
-        org_id: str = response_data["id"]
-        if session:
-            organization = await session.get(models.Organization, org_id)
-
-            assert organization is not None
-
-            for given_field, given_value in data.items():
-                assert getattr(organization, given_field) == given_value
-        return org_id
-
-    assert "detail" in response_data
-    return None
+            assert getattr(organization, given_field) == given_value
+    return org_id
 
 
 async def test_create_organizations_success(

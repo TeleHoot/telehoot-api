@@ -1,5 +1,3 @@
-import uuid
-from datetime import UTC, datetime
 from io import BytesIO
 
 from beanie import PydanticObjectId
@@ -39,7 +37,7 @@ class Questions(
     ) -> schemas.questions.Read:
         question = await self.read_by_id(uow, question_id)
 
-        s3_path = f"{datetime.now(tz=UTC).strftime('%Y/%m/%d')}/{uuid.uuid4()}"
+        s3_path = await self.s3.generate_upload_path()
 
         file_content = await file.read()
 
@@ -47,22 +45,13 @@ class Questions(
             self._process_media_upload,
             file_content=file_content,
             s3_path=s3_path,
-            content_type=file.content_type if file.content_type else "application/octet-stream",
+            content_type=file.content_type or "application/octet-stream",
             old_media_path=question.media_path,
         )
 
-        question.media_path = s3_path
-        dumped_question = await self._dump_data(question)
-
-        updated_question = await self.repo.update_by_id(uow, question_id, dumped_question)
-
-        if not updated_question:
-            raise core.services.exceptions.EntityNotFoundError(
-                self.__class__.__name__,
-                f"entity_id: {question_id}",
-            )
-        valideted_question = await self._validate_data(updated_question)
-        return await self._inject_media_url(valideted_question)
+        return await self.update_by_id(
+            uow, question_id, schemas.questions.Update(media_path=s3_path)
+        )
 
     async def _process_media_upload(
         self,
@@ -95,28 +84,17 @@ class Questions(
 
         background_tasks.add_task(self._delete_file_in_background, question.media_path)
 
-        question.media_path = None
-        dumped_question = await self._dump_data(question)
-
-        updated_question = await self.repo.update_by_id(uow, question_id, dumped_question)
-
-        if not updated_question:
-            raise core.services.exceptions.EntityNotFoundError(
-                self.__class__.__name__,
-                f"entity_id: {question_id}",
-            )
-
-        return await self._validate_data(updated_question)
+        return await self.update_by_id(uow, question_id, schemas.questions.Update(media_path=None))
 
     async def _delete_file_in_background(self, s3_path: str) -> None:
         async with self.s3:
             await self.s3.delete_file(s3_path)
 
     async def read_by_id(
-        self, uow: core.UnitOfWork, entity_id: PydanticObjectId
+        self, uow: core.UnitOfWork, question_id: PydanticObjectId
     ) -> schemas.questions.Read:
-        entity = await super().read_by_id(uow, entity_id)
-        return await self._inject_media_url(entity)
+        question = await super().read_by_id(uow, question_id)
+        return await self._inject_media_url(question)
 
     async def read_many(
         self,
@@ -125,27 +103,26 @@ class Questions(
         sorting: schemas.questions.SortParams | None = None,
         pagination: core.schemas.PaginationParams | None = None,
     ) -> list[schemas.questions.Read]:
-        entities = await super().read_many(uow, filters, sorting, pagination)
-        return [await self._inject_media_url(entity) for entity in entities]
+        questions = await super().read_many(uow, filters, sorting, pagination)
+        return [await self._inject_media_url(question) for question in questions]
 
     async def update_by_id(
         self,
         uow: core.UnitOfWork,
-        entity_id: PydanticObjectId,
+        question_id: PydanticObjectId,
         update_schema: schemas.questions.Update,
     ) -> schemas.questions.Read:
-        entity = await super().update_by_id(uow, entity_id, update_schema)
-        return await self._inject_media_url(entity)
+        question = await super().update_by_id(uow, question_id, update_schema)
+        return await self._inject_media_url(question)
 
-    async def _inject_media_url(self, entity: schemas.questions.Read) -> schemas.questions.Read:
-        data = await self._dump_data(entity)
-
-        if hasattr(entity, "media_path") and entity.media_path:
-            data["media_path"] = await self._get_media_url(str(entity.id), entity.media_path)
-        else:
-            data["media_path"] = None
-
-        return self.read_schema.model_validate(data)
+    async def _inject_media_url(self, question: schemas.questions.Read) -> schemas.questions.Read:
+        media_url = (
+            await self._get_media_url(str(question.id), question.media_path)
+            if question.media_path
+            else None
+        )
+        question.media_path = media_url
+        return question
 
     async def _get_media_url(self, question_id: str, media_path: str) -> str | None:
         try:

@@ -23,14 +23,14 @@ SortingQuery = Annotated[schemas.questions.SortParams, Depends()]
 )
 async def create_quiz_question(
     quiz_id: UUID,
-    entity: schemas.questions.Create,
+    question: schemas.questions.Create,
     uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
     quiz_service: dependencies.QuizzesService,
 ):
     await quiz_service.read_by_id(uow, quiz_id)
 
-    return await service.create(uow, entity, additional_data={"quiz_id": quiz_id})
+    return await service.create(uow, question, additional_data={"quiz_id": quiz_id})
 
 
 @router.get(
@@ -51,20 +51,20 @@ async def get_quiz_questions(
 
 
 @router.get(
-    "/{entity_id}",
+    "/{question_id}",
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_quiz_question(
     quiz_id: UUID,
-    entity_id: PydanticObjectId,
+    question_id: PydanticObjectId,
     uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
     quiz_service: dependencies.QuizzesService,
 ):
     await quiz_service.read_by_id(uow, quiz_id)
 
-    question = await service.read_by_id(uow, entity_id)
+    question = await service.read_by_id(uow, question_id)
     if question.quiz_id != quiz_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Question doesn't belong to the quiz"
@@ -74,13 +74,13 @@ async def get_quiz_question(
 
 
 @router.patch(
-    "/{entity_id}",
+    "/{question_id}",
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def update_quiz_question(
     quiz_id: UUID,
-    entity_id: PydanticObjectId,
+    question_id: PydanticObjectId,
     entity: schemas.questions.Update,
     uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
@@ -90,25 +90,25 @@ async def update_quiz_question(
 
     return await service.update_by_id(
         uow=uow,
-        entity_id=entity_id,
+        question_id=question_id,
         update_schema=entity,
     )
 
 
 @router.delete(
-    "/{entity_id}",
+    "/{question_id}",
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def delete_quiz_question(
     quiz_id: UUID,
-    entity_id: PydanticObjectId,
+    question_id: PydanticObjectId,
     uow: dependencies.FullUOW,
     service: dependencies.QuestionsService,
     quiz_service: dependencies.QuizzesService,
 ):
     await quiz_service.read_by_id(uow, quiz_id)
 
-    return {"is_success": await service.delete_by_id(uow, entity_id)}
+    return {"is_success": await service.delete_by_id(uow, question_id)}
 
 
 @router.post(

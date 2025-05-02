@@ -67,7 +67,7 @@ async def get_quiz(
     org_service: dependencies.OrganizationService,
 ):
     await org_service.read_by_id(uow, organization_id)
-    return await quizzes_service.read_by_id(uow=uow, entity_id=quiz_id)
+    return await quizzes_service.read_by_id(uow=uow, quiz_id=quiz_id)
 
 
 @router.patch(

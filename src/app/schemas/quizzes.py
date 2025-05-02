@@ -13,6 +13,8 @@ class Base(BaseModel):
     description: str | None = None
     is_public: bool = False
 
+    model_config = ConfigDict(validate_assignment=True, extra="forbid")
+
 
 class Create(Base):
     pass
@@ -32,10 +34,7 @@ class Read(Base):
     updated_at: datetime
     questions_count: int = 0
 
-    model_config = ConfigDict(
-        from_attributes=True,
-        arbitrary_types_allowed=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Filters(core.schemas.BaseFilters):
