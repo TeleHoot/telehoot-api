@@ -7,7 +7,7 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src import core
-from src.app.models.question import MediaType, QuestionType
+from src.app.models.question import QuestionType
 
 Order = Annotated[int, Field(ge=0, le=1000)]
 Title = Annotated[str, Field(min_length=1, max_length=200)]
@@ -19,14 +19,7 @@ Answers = Annotated[list["AnswerBase"], Field(min_length=1, max_length=4)]
 
 class ContentBase(BaseModel):
     description: Description
-    media_type: MediaType = MediaType.NONE
     media_path: Annotated[str | None, Field(description="Путь к медиафайлу")] = None
-
-    @model_validator(mode="after")
-    def validate_media_path(self) -> Self:
-        if self.media_type != MediaType.NONE and not self.media_path:
-            raise ValueError("Media path is required when media_type is specified")
-        return self
 
     model_config = ConfigDict(
         from_attributes=True,

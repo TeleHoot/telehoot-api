@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 
 from src import core
 from src.app import schemas
@@ -117,3 +117,51 @@ async def delete_quiz_question(
         raise core.services.exceptions.EntityNotFoundError("Quizzes", str(quiz_id))
 
     return {"is_success": await service.delete_by_id(uow, entity_id)}
+
+
+@router.post(
+    "/{question_id}/image",
+    response_model=schemas.questions.Read,
+    dependencies=[Depends(dependencies.get_active_user)],
+)
+async def upload_organization_image(
+        question_id: PydanticObjectId,
+        quiz_id: UUID,
+        uow: dependencies.FullUOW,
+        service: dependencies.QuestionsService,
+        quiz_service: dependencies.QuizzesService,
+        background_tasks: BackgroundTasks,
+        file: Annotated[UploadFile, File(description="Question media")],
+):
+    if not file.content_type or file.content_type not in settings.ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Only image files are allowed. Valid types: "
+            f"{', '.join(settings.ALLOWED_IMAGE_TYPES)}",
+        )
+
+    quiz = await quiz_service.read_by_id(uow, quiz_id)
+    if not quiz:
+        raise core.services.exceptions.EntityNotFoundError("Quizzes", str(quiz_id))
+
+    return await service.upload_question_media(uow, question_id, file, background_tasks)
+
+
+@router.delete(
+    "/{question_id}/image",
+    response_model=schemas.questions.Read,
+    dependencies=[Depends(dependencies.get_active_user)],
+)
+async def delete_organization_image(
+        question_id: PydanticObjectId,
+        quiz_id: UUID,
+        uow: dependencies.FullUOW,
+        service: dependencies.QuestionsService,
+        quiz_service: dependencies.QuizzesService,
+        background_tasks: BackgroundTasks,
+):
+    quiz = await quiz_service.read_by_id(uow, quiz_id)
+    if not quiz:
+        raise core.services.exceptions.EntityNotFoundError("Quizzes", str(quiz_id))
+
+    return await service.delete_question_media(uow, question_id, background_tasks)

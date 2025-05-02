@@ -8,13 +8,6 @@ from pydantic import BaseModel, Field
 from src import core
 
 
-class MediaType(enum.StrEnum):
-    IMAGE = "image"
-    VIDEO = "video"
-    AUDIO = "audio"
-    NONE = "none"
-
-
 class QuestionType(enum.StrEnum):
     SINGLE_CHOICE = "single_choice"
     MULTIPLE_CHOICE = "multiple_choice"
