@@ -7,7 +7,6 @@ from fastapi import BackgroundTasks, UploadFile
 
 from src import core
 from src.app import models, repositories, schemas
-from src.core.uow import UnitOfWork
 
 
 class Questions(
@@ -33,7 +32,7 @@ class Questions(
 
     async def upload_question_media(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         question_id: PydanticObjectId,
         file: UploadFile,
         background_tasks: BackgroundTasks,
@@ -85,7 +84,7 @@ class Questions(
 
     async def delete_question_media(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         question_id: PydanticObjectId,
         background_tasks: BackgroundTasks,
     ) -> schemas.questions.Read:
@@ -94,16 +93,12 @@ class Questions(
         if not question.media_path:
             return question
 
-        background_tasks.add_task(
-            self._delete_file_in_background, question.media_path
-        )
+        background_tasks.add_task(self._delete_file_in_background, question.media_path)
 
         question.media_path = None
         dumped_question = await self._dump_data(question)
 
-        updated_question = await self.repo.update_by_id(
-            uow, question_id, dumped_question
-        )
+        updated_question = await self.repo.update_by_id(uow, question_id, dumped_question)
 
         if not updated_question:
             raise core.services.exceptions.EntityNotFoundError(
@@ -118,14 +113,14 @@ class Questions(
             await self.s3.delete_file(s3_path)
 
     async def read_by_id(
-        self, uow: UnitOfWork, entity_id: PydanticObjectId
+        self, uow: core.UnitOfWork, entity_id: PydanticObjectId
     ) -> schemas.questions.Read:
         entity = await super().read_by_id(uow, entity_id)
         return await self._inject_media_url(entity)
 
     async def read_many(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         filters: schemas.questions.Filters | None = None,
         sorting: schemas.questions.SortParams | None = None,
         pagination: core.schemas.PaginationParams | None = None,
@@ -135,7 +130,7 @@ class Questions(
 
     async def update_by_id(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         entity_id: PydanticObjectId,
         update_schema: schemas.questions.Update,
     ) -> schemas.questions.Read:
@@ -146,9 +141,7 @@ class Questions(
         data = await self._dump_data(entity)
 
         if hasattr(entity, "media_path") and entity.media_path:
-            data["media_path"] = await self._get_media_url(
-                str(entity.id), entity.media_path
-            )
+            data["media_path"] = await self._get_media_url(str(entity.id), entity.media_path)
         else:
             data["media_path"] = None
 

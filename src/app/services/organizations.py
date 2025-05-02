@@ -7,7 +7,6 @@ from fastapi import BackgroundTasks, UploadFile
 
 from src import core
 from src.app import models, repositories, schemas
-from src.core.uow import UnitOfWork
 
 
 class Organizations(
@@ -33,7 +32,7 @@ class Organizations(
 
     async def upload_image(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         organization_id: UUID,
         file: UploadFile,
         background_tasks: BackgroundTasks,
@@ -80,7 +79,7 @@ class Organizations(
 
     async def delete_image(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         organization_id: UUID,
         background_tasks: BackgroundTasks,
     ) -> schemas.organizations.Read:
@@ -104,13 +103,15 @@ class Organizations(
         async with self.s3:
             await self.s3.delete_file(s3_path)
 
-    async def read_by_id(self, uow: UnitOfWork, entity_id: UUID) -> schemas.organizations.Read:
+    async def read_by_id(
+        self, uow: core.UnitOfWork, entity_id: UUID
+    ) -> schemas.organizations.Read:
         entity = await super().read_by_id(uow, entity_id)
         return await self._inject_image(entity)
 
     async def read_many(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         filters: schemas.organizations.Filters | None = None,
         sorting: schemas.organizations.SortParams | None = None,
         pagination: core.schemas.PaginationParams | None = None,
@@ -120,7 +121,7 @@ class Organizations(
 
     async def update_by_id(
         self,
-        uow: UnitOfWork,
+        uow: core.UnitOfWork,
         entity_id: UUID,
         update_schema: schemas.organizations.Update,
     ) -> schemas.organizations.Read:

@@ -2,7 +2,6 @@ from sqlalchemy import select
 
 from src import core
 from src.app import models
-from src.core.uow import UnitOfWork
 
 
 class Users(core.repositories.sqlalchemy.BaseCRUD[models.User]):
@@ -10,7 +9,9 @@ class Users(core.repositories.sqlalchemy.BaseCRUD[models.User]):
         super().__init__(models.User)
 
     @core.utils.decorators.log_operation
-    async def read_by_telegram_id(self, uow: UnitOfWork, telegram_id: int) -> models.User | None:
+    async def read_by_telegram_id(
+        self, uow: core.UnitOfWork, telegram_id: int
+    ) -> models.User | None:
         try:
             session = uow.postgres_session
             query = select(self.model).where(self.model.telegram_id == telegram_id)

@@ -7,8 +7,6 @@ from jose import JWTError, jwt
 
 from src import core
 from src.app import models, schemas, services
-from src.core.uow import UnitOfWork
-from src.core.utils.decorators import log_operation
 
 settings = core.config.get_settings()
 
@@ -27,7 +25,7 @@ class Authentication:
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
     async def auth_user(
-        self, uow: UnitOfWork, telegram_data: schemas.users.TelegramAuth
+        self, uow: core.UnitOfWork, telegram_data: schemas.users.TelegramAuth
     ) -> schemas.auth.Token:
         if not self.check_correct_hash(telegram_data):
             raise core.services.exceptions.AuthenticationError("Invalid hash")
@@ -54,8 +52,8 @@ class Authentication:
         token = self.encode_token({"user_id": str(user.id)})
         return schemas.auth.Token(access_token=token)
 
-    @log_operation
-    async def read_user_by_token(self, uow: UnitOfWork, token: str) -> schemas.users.Read:
+    @core.utils.decorators.log_operation
+    async def read_user_by_token(self, uow: core.UnitOfWork, token: str) -> schemas.users.Read:
         user_data = self.decode_token(token)
         return await self.users_service.read_by_id(uow, user_data["user_id"])
 
