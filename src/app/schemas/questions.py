@@ -12,18 +12,11 @@ from src.app.models.question import QuestionType
 Order = Annotated[int, Field(ge=0, le=1000)]
 Title = Annotated[str, Field(min_length=1, max_length=200)]
 Type = Annotated[QuestionType, Field(description="Тип вопроса")]
-Description = Annotated[str, Field(min_length=1, max_length=1000)]
+Description = Annotated[str | None, Field(min_length=1, max_length=1000)]
 AnswerText = Annotated[str, Field(min_length=1, max_length=500)]
 Answers = Annotated[list["AnswerBase"], Field(min_length=1, max_length=4)]
-
-
-class ContentBase(BaseModel):
-    description: Description
-    media_path: Annotated[str | None, Field(description="Путь к медиафайлу")] = None
-
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+Weight = Annotated[int, Field(ge=0, le=100)]
+Media = Annotated[str | None, Field(description="Путь к медиафайлу")]
 
 
 class AnswerBase(BaseModel):
@@ -40,7 +33,9 @@ class QuestionBase(BaseModel):
     order: Order
     title: Title
     type: Type
-    question_content: ContentBase
+    weight: Weight = 0
+    description: Description
+    media_path: Media
     answers: Answers
 
     @model_validator(mode="after")
@@ -64,7 +59,9 @@ class Update(BaseModel):
     order: Order | None = None
     title: Title | None = None
     type: Type | None = None
-    question_content: ContentBase | None = None
+    weight: Weight | None = None
+    description: Description | None
+    media_path: Media = None
     answers: Answers | None = None
 
 
@@ -89,6 +86,7 @@ class SortFields(enum.StrEnum):
     ORDER = "order"
     TITLE = "title"
     TYPE = "type"
+    WEIGHT = "weight"
 
 
 class SortParams(core.schemas.SortParams):

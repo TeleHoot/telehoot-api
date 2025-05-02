@@ -15,11 +15,6 @@ class QuestionType(enum.StrEnum):
     ORDERING = "ordering"
 
 
-class QuestionContent(BaseModel):
-    description: Annotated[str, Field(min_length=1, max_length=1000)]
-    media_path: str | None = None
-
-
 class QuestionAnswer(BaseModel):
     text: Annotated[str, Field(min_length=1, max_length=500)]
     order: Annotated[int, Field(ge=0, le=100)]
@@ -30,6 +25,8 @@ class Question(core.models.mongo.BaseMixin, DocumentWithSoftDelete):
     quiz_id: UUID
     order: Annotated[int, Field(ge=0, le=1000)]
     title: Annotated[str, Field(min_length=1, max_length=200)]
+    weight: Annotated[int, Field(ge=0, le=100)] = 0
     type: QuestionType
-    question_content: QuestionContent
+    description: Annotated[str | None, Field(min_length=1, max_length=1000)] = None
+    media_path: str | None = None
     answers: Annotated[list[QuestionAnswer], Field(min_length=1, max_length=4)]

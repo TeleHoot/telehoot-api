@@ -49,13 +49,10 @@ class Questions(
             file_content=file_content,
             s3_path=s3_path,
             content_type=file.content_type if file.content_type else "application/octet-stream",
-            old_media_path=question.question_content.media_path,
+            old_media_path=question.media_path,
         )
 
-        updated_content = question.question_content.model_copy()
-        updated_content.media_path = s3_path
-
-        question.question_content = updated_content
+        question.media_path = s3_path
         dumped_question = await self._dump_data(question)
 
         updated_question = await self.repo.update_by_id(uow, question_id, dumped_question)
@@ -94,18 +91,18 @@ class Questions(
     ) -> schemas.questions.Read:
         question = await self.read_by_id(uow, question_id)
 
-        if not question.question_content.media_path:
+        if not question.media_path:
             return question
 
         background_tasks.add_task(
-            self._delete_file_in_background, question.question_content.media_path
+            self._delete_file_in_background, question.media_path
         )
 
-        updated_content = question.question_content.model_copy()
-        updated_content.media_path = None
+        question.media_path = None
+        dumped_question = await self._dump_data(question)
 
         updated_question = await self.repo.update_by_id(
-            uow, question_id, {"question_content": updated_content.model_dump()}
+            uow, question_id, dumped_question
         )
 
         if not updated_question:
@@ -148,12 +145,12 @@ class Questions(
     async def _inject_media_url(self, entity: schemas.questions.Read) -> schemas.questions.Read:
         data = await self._dump_data(entity)
 
-        if hasattr(entity.question_content, "media_path") and entity.question_content.media_path:
-            data["question_content"]["media_path"] = await self._get_media_url(
-                str(entity.id), entity.question_content.media_path
+        if hasattr(entity, "media_path") and entity.media_path:
+            data["media_path"] = await self._get_media_url(
+                str(entity.id), entity.media_path
             )
         else:
-            data["question_content"]["media_path"] = None
+            data["media_path"] = None
 
         return self.read_schema.model_validate(data)
 
