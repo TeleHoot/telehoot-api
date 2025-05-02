@@ -27,9 +27,10 @@ class Quizzes(
         self, uow: core.UnitOfWork, entity_id: core.custom_types.EntityID
     ) -> schemas.quizzes.Read:
         entity = await super().read_by_id(uow, entity_id)
-        data = await self._dump_data(entity)
-        data["questions_count"] = await self.question_repo.get_count(uow, quiz_id=entity_id)
-        return self.read_schema.model_validate(data)
+        entity.questions_count = await self.question_repo.get_count_by_quiz_id(
+            uow, quiz_id=entity_id
+        )
+        return entity
 
     async def read_many(
         self,
@@ -39,12 +40,11 @@ class Quizzes(
         pagination: core.schemas.PaginationParams | None = None,
     ) -> list[schemas.quizzes.Read]:
         entities = await super().read_many(uow, filters, sorting, pagination)
-        dumped_entities = [await self._dump_data(entity) for entity in entities]
 
-        updated_entities = []
-        for entity in dumped_entities:
-            questions_count = await self.question_repo.get_count(uow, quiz_id=entity["id"])
-            updated_entity = {**entity, "questions_count": questions_count}
-            updated_entities.append(updated_entity)
+        for entity in entities:
+            questions_count = await self.question_repo.get_count_by_quiz_id(
+                uow, quiz_id=entity.id
+            )
+            entity.questions_count = questions_count
 
-        return [self.read_schema.model_validate(data) for data in updated_entities]
+        return entities
