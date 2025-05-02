@@ -2,9 +2,10 @@ import enum
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from src import core
+from src.app import models, schemas
 
 
 class Base(BaseModel):
@@ -26,14 +27,20 @@ class Update(BaseModel):
 class Read(Base):
     id: UUID
     organization_id: UUID
+    author: schemas.users.Read
     created_at: datetime
     updated_at: datetime
+    questions_count: int = 0
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        arbitrary_types_allowed=True,
+    )
 
 
 class Filters(core.schemas.BaseFilters):
     organization_id: UUID | None = None
+    author_id: UUID | None = None
     name: str | None = None
     is_public: bool | None = None
 

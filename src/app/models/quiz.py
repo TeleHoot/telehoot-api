@@ -7,7 +7,7 @@ from uuid_v7.base import uuid7
 from src import core
 
 if TYPE_CHECKING:
-    from src.app.models import Organization
+    from src.app.models import Organization, User
 
 
 class Quiz(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
@@ -19,9 +19,13 @@ class Quiz(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE")
     )
+    author_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE")
+    )
 
     name: Mapped[str] = mapped_column(String(64))
     description: Mapped[str | None] = mapped_column(String(500))
     is_public: Mapped[bool] = mapped_column(default=False)
 
     organization: Mapped["Organization"] = relationship(back_populates="quizzes", lazy="selectin")
+    author: Mapped["User"] = relationship(back_populates="quizzes", lazy="selectin")

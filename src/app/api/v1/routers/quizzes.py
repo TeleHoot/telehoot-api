@@ -18,14 +18,14 @@ SortingQuery = Annotated[schemas.quizzes.SortParams, Depends()]
     "/",
     response_model=schemas.quizzes.Read,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(dependencies.get_active_user)],
 )
 async def create_quiz(
     quiz_data: schemas.quizzes.Create,
-    uow: dependencies.PostgresUOW,
+    uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
+    current_user: dependencies.ActiveUser
 ):
-    return await quizzes_service.create(uow, quiz_data)
+    return await quizzes_service.create(uow, quiz_data, additional_data={"author_id": current_user.id})
 
 
 @router.get(
@@ -34,7 +34,7 @@ async def create_quiz(
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_quizzes(
-    uow: dependencies.PostgresUOW,
+    uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
     filters: FiltersQuery,
     sorting: SortingQuery,
@@ -50,7 +50,7 @@ async def get_quizzes(
 )
 async def get_quiz(
     quiz_id: UUID,
-    uow: dependencies.PostgresUOW,
+    uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
 ):
     return await quizzes_service.read_by_id(uow=uow, entity_id=quiz_id)
@@ -64,7 +64,7 @@ async def get_quiz(
 async def update_quiz(
     quiz_id: UUID,
     quiz_data: schemas.quizzes.Update,
-    uow: dependencies.PostgresUOW,
+    uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
 ):
     return await quizzes_service.update_by_id(
@@ -80,7 +80,7 @@ async def update_quiz(
 )
 async def delete_quiz(
     quiz_id: UUID,
-    uow: dependencies.PostgresUOW,
+    uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
 ):
     return {

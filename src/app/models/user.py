@@ -7,7 +7,7 @@ from uuid_v7.base import uuid7
 from src import core
 
 if TYPE_CHECKING:
-    from src.app.models import Membership
+    from src.app.models import Membership, Quiz
 
 
 class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
@@ -26,3 +26,4 @@ class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     photo_url: Mapped[str | None] = mapped_column(String(255))
 
     memberships: Mapped[list["Membership"]] = relationship(back_populates="user", lazy="selectin")
+    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="author", lazy="selectin")
