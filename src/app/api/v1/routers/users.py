@@ -39,6 +39,7 @@ async def get_me(current_user: dependencies.ActiveUser):
 async def get_my_organizations(
     uow: dependencies.PostgresUOW,
     memberships_service: dependencies.MembershipsService,
+    organizations_service: dependencies.OrganizationService,
     current_user: dependencies.ActiveUser,
     pagination: dependencies.PaginationQuery,
 ):
@@ -46,7 +47,10 @@ async def get_my_organizations(
         uow, filters=schemas.memberships.Filters(user_id=current_user.id), pagination=pagination
     )
 
-    return [membership.organization for membership in memberships]
+    return [
+        await organizations_service.read_by_id(uow, membership.organization.id)
+        for membership in memberships
+    ]
 
 
 @router.get(

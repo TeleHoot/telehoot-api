@@ -128,7 +128,7 @@ class Questions(
         try:
             async with self.s3:
                 return await self.s3.generate_download_url(
-                    media_path, f"question_{question_id}_media", expiration_minutes=5
+                    media_path, f"question_{question_id}_media", expiration_minutes=180
                 )
         except Exception as e:  # noqa: BLE001
             self.logger.warning("Failed to generate media URL: %s", e)

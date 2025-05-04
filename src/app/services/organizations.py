@@ -132,7 +132,7 @@ class Organizations(
         try:
             async with self.s3:
                 return await self.s3.generate_download_url(
-                    image_path, f"organization_{org_id}_image.jpg", expiration_minutes=5
+                    image_path, f"organization_{org_id}_image.jpg", expiration_minutes=180
                 )
         except Exception as e:  # noqa: BLE001
             self.logger.warning("Failed to generate image URL: %s", e)
