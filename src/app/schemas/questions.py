@@ -10,12 +10,15 @@ from src import core
 from src.app.models.question import QuestionType
 
 Order = Annotated[int, Field(ge=0, le=1000)]
-Title = Annotated[str, Field(min_length=1, max_length=200)]
-Type = Annotated[QuestionType, Field(description="Тип вопроса")]
-AnswerText = Annotated[str, Field(min_length=1, max_length=500)]
-Answers = Annotated[list["AnswerBase"], Field(min_length=1, max_length=4)]
 Weight = Annotated[int, Field(ge=0, le=100)]
-Description = Annotated[str | None, Field(min_length=1, max_length=1000)]
+
+Title = Annotated[str, Field(min_length=1, max_length=200)]
+AnswerText = Annotated[str, Field(min_length=1, max_length=500)]
+
+Answers = Annotated[list["AnswerBase"], Field(max_length=4)]
+Type = Annotated[QuestionType, Field(description="Тип вопроса")]
+
+Description = Annotated[str | None, Field(max_length=500)]
 Media = Annotated[str | None, Field(description="Путь к медиафайлу")]
 
 
@@ -69,7 +72,7 @@ class Read(QuestionBase):
     quiz_id: UUID
     created_at: datetime
     updated_at: datetime
-    deleted_at: datetime | None = None
+    deleted_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -84,6 +87,8 @@ class SortFields(enum.StrEnum):
     TITLE = "title"
     TYPE = "type"
     WEIGHT = "weight"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
 
 
 class SortParams(core.schemas.SortParams):

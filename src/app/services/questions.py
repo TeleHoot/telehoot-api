@@ -91,9 +91,9 @@ class Questions(
             await self.s3.delete_file(s3_path)
 
     async def read_by_id(
-        self, uow: core.UnitOfWork, question_id: PydanticObjectId
+        self, uow: core.UnitOfWork, question_id: PydanticObjectId, *, include_deleted: bool = False
     ) -> schemas.questions.Read:
-        question = await super().read_by_id(uow, question_id)
+        question = await super().read_by_id(uow, question_id, include_deleted=include_deleted)
         return await self._inject_media_url(question)
 
     async def read_many(
@@ -102,8 +102,12 @@ class Questions(
         filters: schemas.questions.Filters | None = None,
         sorting: schemas.questions.SortParams | None = None,
         pagination: core.schemas.PaginationParams | None = None,
+        *,
+        include_deleted: bool = False,
     ) -> list[schemas.questions.Read]:
-        questions = await super().read_many(uow, filters, sorting, pagination)
+        questions = await super().read_many(
+            uow, filters, sorting, pagination, include_deleted=include_deleted
+        )
         return [await self._inject_media_url(question) for question in questions]
 
     async def update_by_id(

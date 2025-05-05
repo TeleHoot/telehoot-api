@@ -1,3 +1,6 @@
+from src.core import custom_types
+
+
 class RepositoryError(Exception):
     """Base exception class for repository errors."""
 
@@ -34,7 +37,7 @@ class EntityReadError(RepositoryError):
         self,
         repo_name: str,
         table_name: str,
-        identifier: int | str,
+        identifier: custom_types.EntityID,
         message: str,
     ):
         super().__init__(
@@ -50,7 +53,7 @@ class EntityUpdateError(RepositoryError):
         self,
         repo_name: str,
         table_name: str,
-        identifier: int | str,
+        identifier: custom_types.EntityID,
         message: str,
     ):
         super().__init__(
@@ -66,7 +69,7 @@ class EntityDeleteError(RepositoryError):
         self,
         repo_name: str,
         table_name: str,
-        identifier: int | str,
+        identifier: custom_types.EntityID,
         message: str,
     ):
         super().__init__(

@@ -2,7 +2,7 @@ import logging
 from collections.abc import Sequence
 from typing import TypeVar
 
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select
 from sqlalchemy.exc import IntegrityError
 
 from src.core import custom_types, models, repositories, schemas
@@ -72,16 +72,24 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
 
     @log_operation
     async def read_by_id(
-        self,
-        uow: UnitOfWork,
-        entity_id: custom_types.EntityID,
+        self, uow: UnitOfWork, entity_id: custom_types.EntityID, *, include_deleted: bool = False
     ) -> SQLModelType | None:
         try:
             session = uow.postgres_session
-            entity = await session.get(self.model, entity_id)
-            if not entity:
-                self.logger.info("Entity not found", extra={"exists": False})
-            return entity
+            query = select(self.model)
+
+            pk_columns: tuple = inspect(self.model).primary_key
+
+            if isinstance(entity_id, dict):
+                for column in pk_columns:
+                    query = query.where(column == entity_id[column.name])
+            else:
+                query = query.where(pk_columns[0] == entity_id)
+
+            if not include_deleted and issubclass(self.model, models.sqlalchemy.SoftDelete):
+                query = query.where(self.model.deleted_at.is_(None))
+
+            return await session.scalar(query)
         except Exception as e:
             raise repositories.exceptions.DatabaseError(
                 self.__class__.__name__,
@@ -96,11 +104,16 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
         sorting: dict | None = None,
         page: int = 1,
         limit: int = 10,
+        *,
+        include_deleted: bool = False,
     ) -> Sequence[SQLModelType]:
         try:
             session = uow.postgres_session
 
             query = select(self.model)
+
+            if not include_deleted and issubclass(self.model, models.sqlalchemy.SoftDelete):
+                query = query.where(self.model.deleted_at.is_(None))
 
             if filters:
                 for field, value in filters.items():

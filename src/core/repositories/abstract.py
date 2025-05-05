@@ -18,9 +18,7 @@ class BaseCRUD[ModelType](ABC):
 
     @abstractmethod
     async def read_by_id(
-        self,
-        uow: UnitOfWork,
-        entity_id: Any,
+        self, uow: UnitOfWork, entity_id: Any, *, include_deleted: bool = False
     ) -> ModelType | None:
         raise NotImplementedError
 
@@ -32,16 +30,13 @@ class BaseCRUD[ModelType](ABC):
         sorting: dict | None = None,
         page: int = 1,
         limit: int = 10,
+        *,
+        include_deleted: bool = False,
     ) -> Sequence[ModelType]:
         raise NotImplementedError
 
     @abstractmethod
-    async def update_by_id(
-        self,
-        uow: UnitOfWork,
-        entity_id: Any,
-        data: dict,
-    ) -> ModelType | None:
+    async def update_by_id(self, uow: UnitOfWork, entity_id: Any, data: dict) -> ModelType | None:
         raise NotImplementedError
 
     @abstractmethod

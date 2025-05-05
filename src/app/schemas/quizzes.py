@@ -1,16 +1,19 @@
 import enum
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
 from src.app import schemas
 
+Description = Annotated[str | None, Field(max_length=500)]
+
 
 class Base(BaseModel):
     name: str
-    description: str | None = None
+    description: Description = None
     is_public: bool = False
 
     model_config = ConfigDict(validate_assignment=True, extra="forbid")
@@ -22,7 +25,7 @@ class Create(Base):
 
 class Update(BaseModel):
     name: str | None = None
-    description: str | None = None
+    description: Description = None
     is_public: bool | None = None
 
 
@@ -45,10 +48,10 @@ class Filters(core.schemas.BaseFilters):
 
 
 class SortFields(enum.StrEnum):
-    CREATED_AT = "created_at"
-    UPDATED_AT = "updated_at"
     NAME = "name"
     IS_PUBLIC = "is_public"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
 
 
 class SortParams(core.schemas.SortParams):

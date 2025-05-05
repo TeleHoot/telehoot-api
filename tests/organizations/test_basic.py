@@ -98,7 +98,7 @@ async def test_update_organizations_success(
 
     update_org_data = {"name": "Trippi Troppa"}
     response: httpx.Response = await user_client.patch(
-        f"/organizations/{org_id}", json=update_org_data
+        f"/organizations/{org_id}/", json=update_org_data
     )
 
     response_data = response.json()

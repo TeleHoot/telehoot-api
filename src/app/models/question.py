@@ -27,6 +27,6 @@ class Question(core.models.mongo.BaseMixin, DocumentWithSoftDelete):
     title: Annotated[str, Field(min_length=1, max_length=200)]
     weight: Annotated[int, Field(ge=0, le=100)] = 0
     type: QuestionType
-    description: Annotated[str | None, Field(min_length=1, max_length=1000)] = None
+    description: Annotated[str | None, Field(max_length=500)] = None
     media_path: str | None = None
     answers: Annotated[list[QuestionAnswer], Field(min_length=1, max_length=4)]

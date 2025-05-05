@@ -63,8 +63,10 @@ class BaseCRUD[
         return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
-    async def read_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> TRead:
-        entity = await self.repo.read_by_id(uow, entity_id)
+    async def read_by_id(
+        self, uow: UnitOfWork, entity_id: custom_types.EntityID, *, include_deleted: bool = False
+    ) -> TRead:
+        entity = await self.repo.read_by_id(uow, entity_id, include_deleted=include_deleted)
         if not entity:
             raise services.exceptions.EntityNotFoundError(
                 self.__class__.__name__,
@@ -80,13 +82,17 @@ class BaseCRUD[
         filters: TFilters | None = None,
         sorting: TSorting | None = None,
         pagination: schemas.PaginationParams | None = None,
+        *,
+        include_deleted: bool = False,
     ) -> list[TRead]:
         sorting_data = sorting.model_dump(exclude_none=True) if sorting else None
         filters_data = filters.model_dump(exclude_none=True) if filters else None
 
         page, limit = (pagination.page, pagination.limit) if pagination else (1, 10)
 
-        entities = await self.repo.read_many(uow, filters_data, sorting_data, page, limit)
+        entities = await self.repo.read_many(
+            uow, filters_data, sorting_data, page, limit, include_deleted=include_deleted
+        )
 
         return [await self._validate_data(entity) for entity in entities]
 

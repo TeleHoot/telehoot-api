@@ -51,7 +51,7 @@ async def get_quiz_questions(
 
 
 @router.get(
-    "/{question_id}",
+    "/{question_id}/",
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
@@ -74,7 +74,7 @@ async def get_quiz_question(
 
 
 @router.patch(
-    "/{question_id}",
+    "/{question_id}/",
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
@@ -96,7 +96,7 @@ async def update_quiz_question(
 
 
 @router.delete(
-    "/{question_id}",
+    "/{question_id}/",
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def delete_quiz_question(
@@ -112,7 +112,7 @@ async def delete_quiz_question(
 
 
 @router.post(
-    "/{question_id}/image",
+    "/{question_id}/image/",
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
@@ -138,7 +138,7 @@ async def upload_question_image(
 
 
 @router.delete(
-    "/{question_id}/image",
+    "/{question_id}/image/",
     response_model=schemas.questions.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )

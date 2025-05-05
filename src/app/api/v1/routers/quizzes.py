@@ -41,7 +41,6 @@ async def create_quiz(
 @router.get(
     "/",
     response_model=list[schemas.quizzes.Read],
-    dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_quizzes(
     organization_id: UUID,
@@ -50,14 +49,16 @@ async def get_quizzes(
     filters: FiltersQuery,
     sorting: SortingQuery,
     pagination: dependencies.PaginationQuery,
+    current_user: dependencies.ActiveUser,
 ):
-    return await quizzes_service.read_many(uow, filters, sorting, pagination)
+    return await quizzes_service.read_many(
+        uow, filters, sorting, pagination, include_deleted=current_user.is_admin
+    )
 
 
 @router.get(
-    "/{quiz_id}",
+    "/{quiz_id}/",
     response_model=schemas.quizzes.Read,
-    dependencies=[Depends(dependencies.get_active_user)],
 )
 async def get_quiz(
     organization_id: UUID,
@@ -65,13 +66,14 @@ async def get_quiz(
     uow: dependencies.FullUOW,
     quizzes_service: dependencies.QuizzesService,
     org_service: dependencies.OrganizationService,
+    current_user: dependencies.ActiveUser,
 ):
-    await org_service.read_by_id(uow, organization_id)
-    return await quizzes_service.read_by_id(uow=uow, quiz_id=quiz_id)
+    await org_service.read_by_id(uow, organization_id, include_deleted=current_user.is_admin)
+    return await quizzes_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
 
 
 @router.patch(
-    "/{quiz_id}",
+    "/{quiz_id}/",
     response_model=schemas.quizzes.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
@@ -85,14 +87,14 @@ async def update_quiz(
 ):
     await org_service.read_by_id(uow, organization_id)
     return await quizzes_service.update_by_id(
-        uow=uow,
-        entity_id=quiz_id,
-        update_schema=quiz_data,
+        uow,
+        quiz_id,
+        quiz_data,
     )
 
 
 @router.delete(
-    "/{quiz_id}",
+    "/{quiz_id}/",
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def delete_quiz(
@@ -105,7 +107,7 @@ async def delete_quiz(
     await org_service.read_by_id(uow, organization_id)
     return {
         "is_success": await quizzes_service.delete_by_id(
-            uow=uow,
-            entity_id=quiz_id,
+            uow,
+            quiz_id,
         )
     }

@@ -22,7 +22,7 @@ class Create(Base):
 
 class Update(BaseModel):
     name: Name | None = None
-    description: Description | None = None
+    description: Description = None
     image_path: str | None = None
 
 

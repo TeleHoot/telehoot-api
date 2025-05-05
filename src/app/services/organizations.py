@@ -93,9 +93,9 @@ class Organizations(
             await self.s3.delete_file(s3_path)
 
     async def read_by_id(
-        self, uow: core.UnitOfWork, entity_id: UUID
+        self, uow: core.UnitOfWork, entity_id: UUID, *, include_deleted: bool = False
     ) -> schemas.organizations.Read:
-        entity = await super().read_by_id(uow, entity_id)
+        entity = await super().read_by_id(uow, entity_id, include_deleted=include_deleted)
         return await self._inject_image(entity)
 
     async def read_many(
@@ -104,8 +104,12 @@ class Organizations(
         filters: schemas.organizations.Filters | None = None,
         sorting: schemas.organizations.SortParams | None = None,
         pagination: core.schemas.PaginationParams | None = None,
+        *,
+        include_deleted: bool = False,
     ) -> list[schemas.organizations.Read]:
-        entities = await super().read_many(uow, filters, sorting, pagination)
+        entities = await super().read_many(
+            uow, filters, sorting, pagination, include_deleted=include_deleted
+        )
         return [await self._inject_image(entity) for entity in entities]
 
     async def update_by_id(

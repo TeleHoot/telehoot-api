@@ -32,11 +32,11 @@ async def create_organization(
     organization_create: schemas.organizations.Create,
     uow: dependencies.PostgresUOW,
     org_service: dependencies.OrganizationService,
-    user_org_service: dependencies.MembershipsService,
+    memberships_service: dependencies.MembershipsService,
     current_user: dependencies.ActiveUser,
 ):
     org = await org_service.create(uow, organization_create)
-    await user_org_service.create(
+    await memberships_service.create(
         uow,
         schemas.memberships.Create(
             organization_id=org.id,
@@ -59,7 +59,7 @@ async def read_organizations(
     return await service.read_many(uow, filters, sorting, pagination)
 
 
-@router.get("/{organization_id}", response_model=schemas.organizations.Read)
+@router.get("/{organization_id}/", response_model=schemas.organizations.Read)
 async def read_organization(
     organization_id: UUID,
     uow: dependencies.PostgresUOW,
@@ -69,7 +69,7 @@ async def read_organization(
 
 
 @router.patch(
-    "/{organization_id}",
+    "/{organization_id}/",
     response_model=schemas.organizations.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
@@ -83,8 +83,7 @@ async def update_organization(
 
 
 @router.delete(
-    "/{organization_id}",
-    response_model=bool,
+    "/{organization_id}/",
     dependencies=[Depends(dependencies.get_active_user)],
 )
 async def delete_organization(
@@ -92,11 +91,11 @@ async def delete_organization(
     uow: dependencies.PostgresUOW,
     service: dependencies.OrganizationService,
 ):
-    return await service.delete_by_id(uow, organization_id)
+    return {"is_success": await service.delete_by_id(uow, organization_id)}
 
 
 @router.post(
-    "/{organization_id}/image",
+    "/{organization_id}/image/",
     response_model=schemas.organizations.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )
@@ -118,7 +117,7 @@ async def upload_organization_image(
 
 
 @router.delete(
-    "/{organization_id}/image",
+    "/{organization_id}/image/",
     response_model=schemas.organizations.Read,
     dependencies=[Depends(dependencies.get_active_user)],
 )

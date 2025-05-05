@@ -25,5 +25,5 @@ class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     last_name: Mapped[str | None] = mapped_column(String(255))
     photo_url: Mapped[str | None] = mapped_column(String(255))
 
-    memberships: Mapped[list["Membership"]] = relationship(back_populates="user", lazy="selectin")
-    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="author", lazy="selectin")
+    memberships: Mapped[list["Membership"]] = relationship(back_populates="user")
+    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="author")
