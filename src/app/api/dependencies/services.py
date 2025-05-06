@@ -1,0 +1,13 @@
+from typing import Annotated
+
+from fastapi import Depends
+
+from src.app import services
+
+Users = Annotated[services.Users, Depends()]
+Organizations = Annotated[services.Organizations, Depends()]
+Memberships = Annotated[services.Memberships, Depends()]
+Questions = Annotated[services.Questions, Depends()]
+Quizzes = Annotated[services.Quizzes, Depends()]
+
+Auth = Annotated[services.Authentication, Depends()]

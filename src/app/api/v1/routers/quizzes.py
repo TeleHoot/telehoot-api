@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 
 from src import core
 from src.app import schemas
-from src.app.api.v1 import dependencies
+from src.app.api import dependencies
 
 router = APIRouter(prefix="/organizations/{organization_id}/quizzes", tags=["quizzes"])
 settings = core.config.get_settings()
@@ -22,10 +22,10 @@ SortingQuery = Annotated[schemas.quizzes.SortParams, Depends()]
 async def create_quiz(
     organization_id: UUID,
     quiz_data: schemas.quizzes.Create,
-    uow: dependencies.FullUOW,
-    quizzes_service: dependencies.QuizzesService,
-    org_service: dependencies.OrganizationService,
-    current_user: dependencies.ActiveUser,
+    uow: dependencies.uow.Full,
+    quizzes_service: dependencies.services.Quizzes,
+    org_service: dependencies.services.Organizations,
+    current_user: dependencies.permissions.ActiveUser,
 ):
     await org_service.read_by_id(uow, organization_id)
     return await quizzes_service.create(
@@ -44,12 +44,12 @@ async def create_quiz(
 )
 async def get_quizzes(
     organization_id: UUID,
-    uow: dependencies.FullUOW,
-    quizzes_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    quizzes_service: dependencies.services.Quizzes,
     filters: FiltersQuery,
     sorting: SortingQuery,
-    pagination: dependencies.PaginationQuery,
-    current_user: dependencies.ActiveUser,
+    pagination: dependencies.queries.Pagination,
+    current_user: dependencies.permissions.ActiveUser,
 ):
     return await quizzes_service.read_many(
         uow, filters, sorting, pagination, include_deleted=current_user.is_admin
@@ -63,10 +63,10 @@ async def get_quizzes(
 async def get_quiz(
     organization_id: UUID,
     quiz_id: UUID,
-    uow: dependencies.FullUOW,
-    quizzes_service: dependencies.QuizzesService,
-    org_service: dependencies.OrganizationService,
-    current_user: dependencies.ActiveUser,
+    uow: dependencies.uow.Full,
+    quizzes_service: dependencies.services.Quizzes,
+    org_service: dependencies.services.Organizations,
+    current_user: dependencies.permissions.ActiveUser,
 ):
     await org_service.read_by_id(uow, organization_id, include_deleted=current_user.is_admin)
     return await quizzes_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
@@ -75,15 +75,15 @@ async def get_quiz(
 @router.patch(
     "/{quiz_id}/",
     response_model=schemas.quizzes.Read,
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def update_quiz(
     organization_id: UUID,
     quiz_id: UUID,
     quiz_data: schemas.quizzes.Update,
-    uow: dependencies.FullUOW,
-    quizzes_service: dependencies.QuizzesService,
-    org_service: dependencies.OrganizationService,
+    uow: dependencies.uow.Full,
+    quizzes_service: dependencies.services.Quizzes,
+    org_service: dependencies.services.Organizations,
 ):
     await org_service.read_by_id(uow, organization_id)
     return await quizzes_service.update_by_id(
@@ -95,14 +95,14 @@ async def update_quiz(
 
 @router.delete(
     "/{quiz_id}/",
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def delete_quiz(
     organization_id: UUID,
     quiz_id: UUID,
-    uow: dependencies.FullUOW,
-    quizzes_service: dependencies.QuizzesService,
-    org_service: dependencies.OrganizationService,
+    uow: dependencies.uow.Full,
+    quizzes_service: dependencies.services.Quizzes,
+    org_service: dependencies.services.Organizations,
 ):
     await org_service.read_by_id(uow, organization_id)
     return {

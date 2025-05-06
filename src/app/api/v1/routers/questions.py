@@ -6,7 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Up
 
 from src import core
 from src.app import schemas
-from src.app.api.v1 import dependencies
+from src.app.api import dependencies
 
 router = APIRouter(prefix="/quizzes/{quiz_id}/questions", tags=["questions"])
 settings = core.config.get_settings()
@@ -19,14 +19,14 @@ SortingQuery = Annotated[schemas.questions.SortParams, Depends()]
     "/",
     response_model=schemas.questions.Read,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def create_quiz_question(
     quiz_id: UUID,
     question: schemas.questions.Create,
-    uow: dependencies.FullUOW,
-    service: dependencies.QuestionsService,
-    quiz_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    service: dependencies.services.Questions,
+    quiz_service: dependencies.services.Quizzes,
 ):
     await quiz_service.read_by_id(uow, quiz_id)
 
@@ -36,15 +36,15 @@ async def create_quiz_question(
 @router.get(
     "/",
     response_model=list[schemas.questions.Read],
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def get_quiz_questions(
     quiz_id: UUID,
-    uow: dependencies.MongoUOW,
-    service: dependencies.QuestionsService,
+    uow: dependencies.uow.Mongo,
+    service: dependencies.services.Questions,
     filters: FiltersQuery,
     sorting: SortingQuery,
-    pagination: dependencies.PaginationQuery,
+    pagination: dependencies.queries.Pagination,
 ):
     # quiz_id is a required path parameter AND it is also automatically set for the filter query
     return await service.read_many(uow, filters, sorting, pagination)
@@ -53,14 +53,14 @@ async def get_quiz_questions(
 @router.get(
     "/{question_id}/",
     response_model=schemas.questions.Read,
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def get_quiz_question(
     quiz_id: UUID,
     question_id: PydanticObjectId,
-    uow: dependencies.FullUOW,
-    service: dependencies.QuestionsService,
-    quiz_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    service: dependencies.services.Questions,
+    quiz_service: dependencies.services.Quizzes,
 ):
     await quiz_service.read_by_id(uow, quiz_id)
 
@@ -76,15 +76,15 @@ async def get_quiz_question(
 @router.patch(
     "/{question_id}/",
     response_model=schemas.questions.Read,
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def update_quiz_question(
     quiz_id: UUID,
     question_id: PydanticObjectId,
     entity: schemas.questions.Update,
-    uow: dependencies.FullUOW,
-    service: dependencies.QuestionsService,
-    quiz_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    service: dependencies.services.Questions,
+    quiz_service: dependencies.services.Quizzes,
 ):
     await quiz_service.read_by_id(uow, quiz_id)
 
@@ -97,14 +97,14 @@ async def update_quiz_question(
 
 @router.delete(
     "/{question_id}/",
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def delete_quiz_question(
     quiz_id: UUID,
     question_id: PydanticObjectId,
-    uow: dependencies.FullUOW,
-    service: dependencies.QuestionsService,
-    quiz_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    service: dependencies.services.Questions,
+    quiz_service: dependencies.services.Quizzes,
 ):
     await quiz_service.read_by_id(uow, quiz_id)
 
@@ -114,14 +114,14 @@ async def delete_quiz_question(
 @router.post(
     "/{question_id}/image/",
     response_model=schemas.questions.Read,
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def upload_question_image(
     question_id: PydanticObjectId,
     quiz_id: UUID,
-    uow: dependencies.FullUOW,
-    service: dependencies.QuestionsService,
-    quiz_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    service: dependencies.services.Questions,
+    quiz_service: dependencies.services.Quizzes,
     background_tasks: BackgroundTasks,
     file: Annotated[UploadFile, File(description="Question media")],
 ):
@@ -140,14 +140,14 @@ async def upload_question_image(
 @router.delete(
     "/{question_id}/image/",
     response_model=schemas.questions.Read,
-    dependencies=[Depends(dependencies.get_active_user)],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def delete_question_image(
     question_id: PydanticObjectId,
     quiz_id: UUID,
-    uow: dependencies.FullUOW,
-    service: dependencies.QuestionsService,
-    quiz_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    service: dependencies.services.Questions,
+    quiz_service: dependencies.services.Quizzes,
     background_tasks: BackgroundTasks,
 ):
     await quiz_service.read_by_id(uow, quiz_id)

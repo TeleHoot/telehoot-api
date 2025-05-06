@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from src.app import schemas
-from src.app.api.v1 import dependencies
+from src.app.api import dependencies
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -19,12 +19,12 @@ SortingQuery = Annotated[schemas.quizzes.SortParams, Depends()]
 
 @router.get("/quizzes/", response_model=list[schemas.quizzes.Read], tags=["quizzes"])
 async def get_quizzes(
-    uow: dependencies.FullUOW,
-    quizzes_service: dependencies.QuizzesService,
+    uow: dependencies.uow.Full,
+    quizzes_service: dependencies.services.Quizzes,
     filters: FiltersQuery,
     sorting: SortingQuery,
-    pagination: dependencies.PaginationQuery,
-    current_user: dependencies.ActiveUser,
+    pagination: dependencies.queries.Pagination,
+    current_user: dependencies.permissions.ActiveUser,
 ):
     if not current_user.is_admin:
         filters.is_public = True
