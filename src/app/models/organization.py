@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "organizations"
+    __soft_delete_cascades__ = ("quizzes", "memberships")
     repr_cols = ("id", "name", "is_verified")
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
@@ -21,7 +22,5 @@ class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelet
     is_verified: Mapped[bool] = mapped_column(default=False)
     image_path: Mapped[str | None] = mapped_column(String(255))
 
-    memberships: Mapped[list["Membership"]] = relationship(
-        back_populates="organization", lazy="selectin"
-    )
-    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="organization", lazy="selectin")
+    memberships: Mapped[list["Membership"]] = relationship(back_populates="organization")
+    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="organization")

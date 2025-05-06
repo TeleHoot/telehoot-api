@@ -2,7 +2,7 @@ import logging
 from collections.abc import Sequence
 from typing import TypeVar
 
-from sqlalchemy import func, inspect, select
+from sqlalchemy import func, inspect, select, update
 from sqlalchemy.exc import IntegrityError
 
 from src.core import custom_types, models, repositories, schemas
@@ -188,14 +188,14 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                 self.logger.warning("Delete target not found", extra={"deleted": False})
                 return False
 
-            # Soft delete
             if issubclass(self.model, models.sqlalchemy.SoftDelete):
                 if instance.deleted_at is None:
                     instance.deleted_at = func.timezone("UTC", func.now())
                     await session.flush()
+
+                    await self._soft_delete_cascades(uow, instance)
                 return True
 
-            # Hard delete
             await session.delete(instance)
             await session.flush()
             return True
@@ -207,3 +207,38 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                 f"entity_id: {entity_id}",
                 str(e),
             ) from e
+
+    async def _soft_delete_cascades(self, uow: UnitOfWork, instance: SQLModelType) -> None:
+        """Cascading soft deletes. Examples are with Organizations and Quizzes."""
+
+        if not hasattr(self.model, "__soft_delete_cascades__"):
+            return
+
+        for relation_name in self.model.__soft_delete_cascades__:  # type: ignore[attr-defined]
+            # Organization.quizzes
+            relation = getattr(self.model, relation_name)
+
+            # <class 'src.app.models.quiz.Quiz'>
+            target_cls = relation.mapper.class_
+
+            # quizzes.id, quizzes.organization_id, quizzes.author_id, quizzes.name etc.
+            rel_table_cols = relation.mapper.columns
+
+            # Construct cascade conditions (WHERE quizzes.organization_id = .......)
+            # Also filter out unnecessary foreign keys
+            # For Quiz model there are organization_id (target) and author_id (not needed)
+            conditions = [
+                col == getattr(instance, fk.column.name)
+                for col in rel_table_cols
+                if col.foreign_keys
+                for fk in col.foreign_keys
+                if fk.column.table.name == instance.__tablename__
+            ]
+
+            if conditions and issubclass(target_cls, models.sqlalchemy.SoftDelete):
+                stmt = (
+                    update(target_cls)
+                    .where(*conditions)
+                    .values(deleted_at=func.timezone("UTC", func.now()))
+                )
+                await uow.postgres_session.execute(stmt)
