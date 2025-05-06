@@ -15,7 +15,7 @@ Weight = Annotated[int, Field(ge=0, le=100)]
 Title = Annotated[str, Field(min_length=1, max_length=200)]
 AnswerText = Annotated[str, Field(min_length=1, max_length=500)]
 
-Answers = Annotated[list["AnswerBase"], Field(max_length=4)]
+Answers = Annotated[list["AnswerBase"], Field(min_length=1, max_length=4)]
 Type = Annotated[QuestionType, Field(description="Тип вопроса")]
 
 Description = Annotated[str | None, Field(max_length=500)]
