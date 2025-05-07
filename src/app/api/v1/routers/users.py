@@ -13,7 +13,7 @@ SortingQuery = Annotated[schemas.users.SortParams, Depends()]
 
 
 @router.get(
-    "/",
+    "",
     dependencies=[Depends(dependencies.permissions.get_active_user)],
     response_model=list[schemas.users.Read],
 )
@@ -27,13 +27,13 @@ async def get_users(
     return await users_service.read_many(uow, filters, sorting, pagination)
 
 
-@router.get("/me/")
+@router.get("/me")
 async def get_me(current_user: dependencies.permissions.ActiveUser):
     return current_user
 
 
 @router.get(
-    "/me/organizations/",
+    "/me/organizations",
     response_model=list[schemas.organizations.Read],
 )
 async def get_my_organizations(
@@ -54,7 +54,7 @@ async def get_my_organizations(
 
 
 @router.get(
-    "/me/memberships/",
+    "/me/memberships",
     response_model=list[schemas.memberships.Read],
 )
 async def get_my_memberships(
@@ -69,7 +69,7 @@ async def get_my_memberships(
 
 
 @router.get(
-    "/{user_id}/",
+    "/{user_id}",
     dependencies=[Depends(dependencies.permissions.get_active_user)],
     response_model=schemas.users.Read,
 )

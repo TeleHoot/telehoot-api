@@ -15,7 +15,7 @@ SortingQuery = Annotated[schemas.quizzes.SortParams, Depends()]
 
 
 @router.post(
-    "/",
+    "",
     response_model=schemas.quizzes.Read,
     status_code=status.HTTP_201_CREATED,
 )
@@ -39,7 +39,7 @@ async def create_quiz(
 
 
 @router.get(
-    "/",
+    "",
     response_model=list[schemas.quizzes.Read],
 )
 async def get_quizzes(
@@ -57,7 +57,7 @@ async def get_quizzes(
 
 
 @router.get(
-    "/{quiz_id}/",
+    "/{quiz_id}",
     response_model=schemas.quizzes.Read,
 )
 async def get_quiz(
@@ -73,7 +73,7 @@ async def get_quiz(
 
 
 @router.patch(
-    "/{quiz_id}/",
+    "/{quiz_id}",
     response_model=schemas.quizzes.Read,
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
@@ -94,7 +94,7 @@ async def update_quiz(
 
 
 @router.delete(
-    "/{quiz_id}/",
+    "/{quiz_id}",
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def delete_quiz(

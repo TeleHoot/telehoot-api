@@ -51,7 +51,7 @@ async def test_create_quiz_success(
     user: models.User,
 ):
     data = schemas.quizzes.Create(name="Brainrot Quiz")
-    path = f"/organizations/{organization.id}/quizzes/"
+    path = f"/organizations/{organization.id}/quizzes"
     await create_test_helper(
         path=path,
         data=data.model_dump(),

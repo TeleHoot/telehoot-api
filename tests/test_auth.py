@@ -47,7 +47,7 @@ def fake_telegram_data(
 async def test_auth_new_user(
     client: AsyncClient, fake_telegram_data: dict, db_session: AsyncSession
 ):
-    response: httpx.Response = await client.post("/auth/login/", json=fake_telegram_data)
+    response: httpx.Response = await client.post("/auth/login", json=fake_telegram_data)
 
     assert "detail" not in response.json()
     assert response.status_code == status.HTTP_200_OK

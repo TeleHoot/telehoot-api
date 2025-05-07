@@ -24,7 +24,7 @@ SortingQuery = Annotated[schemas.organizations.SortParams, Depends()]
 
 
 @router.post(
-    "/",
+    "",
     response_model=schemas.organizations.Read,
     status_code=status.HTTP_201_CREATED,
 )
@@ -48,7 +48,7 @@ async def create_organization(
     return org
 
 
-@router.get("/", response_model=list[schemas.organizations.Read])
+@router.get("", response_model=list[schemas.organizations.Read])
 async def read_organizations(
     uow: dependencies.uow.Postgres,
     service: dependencies.services.Organizations,
@@ -59,7 +59,7 @@ async def read_organizations(
     return await service.read_many(uow, filters, sorting, pagination)
 
 
-@router.get("/{organization_id}/", response_model=schemas.organizations.Read)
+@router.get("/{organization_id}", response_model=schemas.organizations.Read)
 async def read_organization(
     organization_id: UUID,
     uow: dependencies.uow.Postgres,
@@ -69,7 +69,7 @@ async def read_organization(
 
 
 @router.patch(
-    "/{organization_id}/",
+    "/{organization_id}",
     response_model=schemas.organizations.Read,
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
@@ -83,7 +83,7 @@ async def update_organization(
 
 
 @router.delete(
-    "/{organization_id}/",
+    "/{organization_id}",
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def delete_organization(
@@ -95,7 +95,7 @@ async def delete_organization(
 
 
 @router.post(
-    "/{organization_id}/image/",
+    "/{organization_id}/image",
     response_model=schemas.organizations.Read,
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
@@ -117,7 +117,7 @@ async def upload_organization_image(
 
 
 @router.delete(
-    "/{organization_id}/image/",
+    "/{organization_id}/image",
     response_model=schemas.organizations.Read,
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )

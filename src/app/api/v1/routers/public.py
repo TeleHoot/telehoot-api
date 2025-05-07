@@ -8,7 +8,7 @@ from src.app.api import dependencies
 router = APIRouter(prefix="/public", tags=["public"])
 
 
-@router.get("/healthcheck/")
+@router.get("/healthcheck")
 async def healthcheck():
     return {"is_success": True}
 
@@ -17,7 +17,7 @@ FiltersQuery = Annotated[schemas.quizzes.Filters, Depends()]
 SortingQuery = Annotated[schemas.quizzes.SortParams, Depends()]
 
 
-@router.get("/quizzes/", response_model=list[schemas.quizzes.Read], tags=["quizzes"])
+@router.get("/quizzes", response_model=list[schemas.quizzes.Read], tags=["quizzes"])
 async def get_quizzes(
     uow: dependencies.uow.Full,
     quizzes_service: dependencies.services.Quizzes,

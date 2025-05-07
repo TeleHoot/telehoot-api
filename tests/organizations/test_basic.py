@@ -18,7 +18,7 @@ async def create_test_helper(
     client: httpx.AsyncClient,
     session: AsyncSession | None = None,
 ) -> str | None:
-    response: httpx.Response = await client.post("/organizations/", json=data)
+    response: httpx.Response = await client.post("/organizations", json=data)
     response_data = response.json()
 
     if 200 <= status_code < 300:  # noqa: PLR2004
@@ -68,7 +68,7 @@ async def test_create_organizations_length(
 
 
 async def test_read_organizations_empty_db(client: httpx.AsyncClient):
-    response: httpx.Response = await client.get("/organizations/")
+    response: httpx.Response = await client.get("/organizations")
 
     assert response.json() == []
 
@@ -76,9 +76,9 @@ async def test_read_organizations_empty_db(client: httpx.AsyncClient):
 async def test_read_many_organizations(user_client: httpx.AsyncClient, db_session: AsyncSession):
     num_created, org_data = 3, {"name": "TestName"}
     for _ in range(num_created):
-        await user_client.post("/organizations/", json=org_data)
+        await user_client.post("/organizations", json=org_data)
 
-    response: httpx.Response = await user_client.get("/organizations/")
+    response: httpx.Response = await user_client.get("/organizations")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -98,7 +98,7 @@ async def test_update_organizations_success(
 
     update_org_data = {"name": "Trippi Troppa"}
     response: httpx.Response = await user_client.patch(
-        f"/organizations/{org_id}/", json=update_org_data
+        f"/organizations/{org_id}", json=update_org_data
     )
 
     response_data = response.json()
