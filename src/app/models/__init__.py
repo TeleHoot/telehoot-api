@@ -9,6 +9,7 @@ from .membership import Statuses as MembershipStatuses
 from .organization import Organization
 from .question import Question
 from .quiz import Quiz
+from .session import Session, SessionStatus
 from .user import User
 
 __all__ = [
@@ -17,6 +18,8 @@ __all__ = [
     "Organization",
     "Question",
     "Quiz",
+    "Session",
+    "SessionStatus",
     "User",
     "UserRoles",
     "gather_documents",

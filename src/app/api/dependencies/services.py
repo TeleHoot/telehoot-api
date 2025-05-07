@@ -9,5 +9,6 @@ Organizations = Annotated[services.Organizations, Depends()]
 Memberships = Annotated[services.Memberships, Depends()]
 Questions = Annotated[services.Questions, Depends()]
 Quizzes = Annotated[services.Quizzes, Depends()]
+Sessions = Annotated[services.Sessions, Depends()]
 
 Auth = Annotated[services.Authentication, Depends()]
