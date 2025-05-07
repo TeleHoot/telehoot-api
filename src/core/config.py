@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     MONGO: settings.MongoDBSettings = settings.MongoDBSettings()
     S3: settings.S3ServiceSettings = settings.S3ServiceSettings()
     TG: settings.TelegramOAuthSettings = settings.TelegramOAuthSettings()
+    REDIS: settings.RedisSettings = settings.RedisSettings()
 
     API_PREFIX: str = "/api"
 

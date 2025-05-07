@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, WebSocket
 
 from src.app import schemas
 from src.app.api import dependencies
@@ -32,3 +32,10 @@ async def get_quizzes(
     return await quizzes_service.read_many(
         uow, filters, sorting, pagination, include_deleted=current_user.is_admin
     )
+
+
+@router.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await websocket.accept()
+    connection_id = await dependencies.websocket.manager.accept_connection(websocket, client_id)
+    await dependencies.websocket.manager.handle_client(websocket, connection_id)

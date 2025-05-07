@@ -173,6 +173,7 @@ cython_debug/
 pgdata/
 mongodata/
 minio/
+redisdata/
 
 .ruff_cache/
 .DS_store
