@@ -7,20 +7,20 @@ from uuid_v7.base import uuid7
 from src import core
 
 if TYPE_CHECKING:
-    from src.app.models import Membership
+    from src.app.models import Membership, Quiz
 
 
 class Organization(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "organizations"
+    __soft_delete_cascades__ = ("quizzes", "memberships")
     repr_cols = ("id", "name", "is_verified")
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
 
     name: Mapped[str] = mapped_column(String(64))
     description: Mapped[str | None] = mapped_column(String(500))
     is_verified: Mapped[bool] = mapped_column(default=False)
     image_path: Mapped[str | None] = mapped_column(String(255))
 
-    memberships: Mapped[list["Membership"]] = relationship(
-        back_populates="organization", lazy="selectin"
-    )
+    memberships: Mapped[list["Membership"]] = relationship(back_populates="organization")
+    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="organization")

@@ -2,11 +2,10 @@ import logging
 from collections.abc import Sequence
 from typing import TypeVar
 
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select, update
 from sqlalchemy.exc import IntegrityError
 
-from src.core import models, repositories, schemas
-from src.core.services.base import EntityID
+from src.core import custom_types, models, repositories, schemas
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 
@@ -73,16 +72,24 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
 
     @log_operation
     async def read_by_id(
-        self,
-        uow: UnitOfWork,
-        entity_id: EntityID,
+        self, uow: UnitOfWork, entity_id: custom_types.EntityID, *, include_deleted: bool = False
     ) -> SQLModelType | None:
         try:
             session = uow.postgres_session
-            entity = await session.get(self.model, entity_id)
-            if not entity:
-                self.logger.info("Entity not found", extra={"exists": False})
-            return entity
+            query = select(self.model)
+
+            pk_columns: tuple = inspect(self.model).primary_key
+
+            if isinstance(entity_id, dict):
+                for column in pk_columns:
+                    query = query.where(column == entity_id[column.name])
+            else:
+                query = query.where(pk_columns[0] == entity_id)
+
+            if not include_deleted and issubclass(self.model, models.sqlalchemy.SoftDelete):
+                query = query.where(self.model.deleted_at.is_(None))
+
+            return await session.scalar(query)
         except Exception as e:
             raise repositories.exceptions.DatabaseError(
                 self.__class__.__name__,
@@ -97,18 +104,35 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
         sorting: dict | None = None,
         page: int = 1,
         limit: int = 10,
+        *,
+        include_deleted: bool = False,
     ) -> Sequence[SQLModelType]:
         try:
             session = uow.postgres_session
 
             query = select(self.model)
 
+            if not include_deleted and issubclass(self.model, models.sqlalchemy.SoftDelete):
+                query = query.where(self.model.deleted_at.is_(None))
+
             if filters:
                 for field, value in filters.items():
                     if value is None:
                         continue
-                    column = getattr(self.model, field)
-                    query = query.where(column == value)
+                    if field.endswith("_from"):
+                        field_name = field[:-5]
+                        column = getattr(self.model, field_name)
+                        query = query.where(column >= value)
+                    elif field.endswith("_to"):
+                        field_name = field[:-3]
+                        column = getattr(self.model, field_name)
+                        query = query.where(column <= value)
+                    else:
+                        column = getattr(self.model, field)
+                        if isinstance(value, list):
+                            query = query.where(column.in_(value))
+                        else:
+                            query = query.where(column == value)
 
             if sorting and (sort_by := sorting.get("sort_by")) is not None:
                 order_by = sorting.get("order_by", "asc")
@@ -133,7 +157,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
     async def update_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: EntityID,
+        entity_id: custom_types.EntityID,
         data: dict,
     ) -> SQLModelType | None:
         try:
@@ -156,22 +180,22 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
             ) from e
 
     @log_operation
-    async def delete_by_id(self, uow: UnitOfWork, entity_id: EntityID) -> bool:
+    async def delete_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> bool:
         try:
             session = uow.postgres_session
-            instance = await self.read_by_id(session, entity_id)
+            instance = await self.read_by_id(uow, entity_id)
             if not instance:
                 self.logger.warning("Delete target not found", extra={"deleted": False})
                 return False
 
-            # Soft delete
             if issubclass(self.model, models.sqlalchemy.SoftDelete):
                 if instance.deleted_at is None:
                     instance.deleted_at = func.timezone("UTC", func.now())
                     await session.flush()
+
+                    await self._soft_delete_cascades(uow, instance)
                 return True
 
-            # Hard delete
             await session.delete(instance)
             await session.flush()
             return True
@@ -183,3 +207,38 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                 f"entity_id: {entity_id}",
                 str(e),
             ) from e
+
+    async def _soft_delete_cascades(self, uow: UnitOfWork, instance: SQLModelType) -> None:
+        """Cascading soft deletes. Examples are with Organizations and Quizzes."""
+
+        if not hasattr(self.model, "__soft_delete_cascades__"):
+            return
+
+        for relation_name in self.model.__soft_delete_cascades__:  # type: ignore[attr-defined]
+            # Organization.quizzes
+            relation = getattr(self.model, relation_name)
+
+            # <class 'src.app.models.quiz.Quiz'>
+            target_cls = relation.mapper.class_
+
+            # quizzes.id, quizzes.organization_id, quizzes.author_id, quizzes.name etc.
+            rel_table_cols = relation.mapper.columns
+
+            # Construct cascade conditions (WHERE quizzes.organization_id = .......)
+            # Also filter out unnecessary foreign keys
+            # For Quiz model there are organization_id (target) and author_id (not needed)
+            conditions = [
+                col == getattr(instance, fk.column.name)
+                for col in rel_table_cols
+                if col.foreign_keys
+                for fk in col.foreign_keys
+                if fk.column.table.name == instance.__tablename__
+            ]
+
+            if conditions and issubclass(target_cls, models.sqlalchemy.SoftDelete):
+                stmt = (
+                    update(target_cls)
+                    .where(*conditions)
+                    .values(deleted_at=func.timezone("UTC", func.now()))
+                )
+                await uow.postgres_session.execute(stmt)

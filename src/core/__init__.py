@@ -1,5 +1,6 @@
 from . import (
     config,
+    custom_types,
     db,
     error_handlers,
     logger,
@@ -9,12 +10,14 @@ from . import (
     schemas,
     services,
     settings,
-    uow,
     utils,
 )
+from .uow import UnitOfWork
 
 __all__ = [
+    "UnitOfWork",
     "config",
+    "custom_types",
     "db",
     "error_handlers",
     "logger",
@@ -24,6 +27,5 @@ __all__ = [
     "schemas",
     "services",
     "settings",
-    "uow",
     "utils",
 ]

@@ -10,13 +10,13 @@ from src import core
 Username = Annotated[str, Field(min_length=5, max_length=32)]
 TelegramUsername = Annotated[str, Field(min_length=5, max_length=32)]
 FirstName = Annotated[str, Field(min_length=1, max_length=50)]
-LastName = Annotated[str, Field(min_length=1, max_length=50)]
+LastName = Annotated[str | None, Field(min_length=1, max_length=50)]
 
 
 class Base(BaseModel):
-    username: Annotated[str, Field(min_length=5, max_length=32)]
-    first_name: Annotated[str, Field(min_length=1, max_length=50)]
-    last_name: Annotated[str | None, Field(min_length=1, max_length=50)] = None
+    username: Username
+    first_name: FirstName
+    last_name: LastName = None
     photo_url: str | None = None
 
 
@@ -32,8 +32,9 @@ class Create(Base):
 class Read(Base):
     id: UUID
     telegram_id: int
-    deleted_at: datetime | None = None
+    is_admin: bool
     created_at: datetime
+    deleted_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -42,7 +43,7 @@ class Update(BaseModel):
     username: Username | None = None
     telegram_username: TelegramUsername | None = None
     first_name: FirstName | None = None
-    last_name: LastName | None = None
+    last_name: LastName = None
     photo_url: str | None = None
 
 

@@ -10,13 +10,12 @@ class Users(core.repositories.sqlalchemy.BaseCRUD[models.User]):
 
     @core.utils.decorators.log_operation
     async def read_by_telegram_id(
-        self, uow: core.uow.UnitOfWork, telegram_id: int
+        self, uow: core.UnitOfWork, telegram_id: int
     ) -> models.User | None:
         try:
             session = uow.postgres_session
             query = select(self.model).where(self.model.telegram_id == telegram_id)
-            result = await session.scalars(query)
-            user = result.first()
+            user = await session.scalar(query)
 
             if not user:
                 self.logger.info(

@@ -1,10 +1,9 @@
 import logging
-from typing import TypeVar
-from uuid import UUID
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
-from src.core import repositories, schemas, services
+from src.core import custom_types, repositories, schemas, services
 from src.core.uow import UnitOfWork
 from src.core.utils.decorators import log_operation
 
@@ -14,8 +13,6 @@ TUpdate = TypeVar("TUpdate", bound=BaseModel)
 TFilters = TypeVar("TFilters", bound=schemas.BaseFilters)
 TSorting = TypeVar("TSorting", bound=schemas.SortParams)
 TModel = TypeVar("TModel")
-
-type EntityID = int | str | UUID | dict[str, str]
 
 
 class BaseCRUD[
@@ -43,8 +40,14 @@ class BaseCRUD[
         self.logger = logging.getLogger(f"services.{self.__class__.__name__.lower()}")
 
     @log_operation
-    async def create(self, uow: UnitOfWork, create_schema: TCreate) -> TRead:
-        data = await self._dump_data(create_schema)
+    async def create(
+        self,
+        uow: UnitOfWork,
+        create_schema: TCreate,
+        *,
+        additional_data: dict[str, Any] | None = None,
+    ) -> TRead:
+        data = await self._dump_data(create_schema, additional_data)
         entity = await self.repo.create(uow, data)
         return await self._validate_data(entity)
 
@@ -60,8 +63,10 @@ class BaseCRUD[
         return [await self._validate_data(entity) for entity in entities]
 
     @log_operation
-    async def read_by_id(self, uow: UnitOfWork, entity_id: EntityID) -> TRead:
-        entity = await self.repo.read_by_id(uow, entity_id)
+    async def read_by_id(
+        self, uow: UnitOfWork, entity_id: custom_types.EntityID, *, include_deleted: bool = False
+    ) -> TRead:
+        entity = await self.repo.read_by_id(uow, entity_id, include_deleted=include_deleted)
         if not entity:
             raise services.exceptions.EntityNotFoundError(
                 self.__class__.__name__,
@@ -77,13 +82,17 @@ class BaseCRUD[
         filters: TFilters | None = None,
         sorting: TSorting | None = None,
         pagination: schemas.PaginationParams | None = None,
+        *,
+        include_deleted: bool = False,
     ) -> list[TRead]:
-        filters_data = await self._dump_data(filters) if filters else None
-        sorting_data = await self._dump_data(sorting) if sorting else None
+        sorting_data = sorting.model_dump(exclude_none=True) if sorting else None
+        filters_data = filters.model_dump(exclude_none=True) if filters else None
 
         page, limit = (pagination.page, pagination.limit) if pagination else (1, 10)
 
-        entities = await self.repo.read_many(uow, filters_data, sorting_data, page, limit)
+        entities = await self.repo.read_many(
+            uow, filters_data, sorting_data, page, limit, include_deleted=include_deleted
+        )
 
         return [await self._validate_data(entity) for entity in entities]
 
@@ -91,7 +100,7 @@ class BaseCRUD[
     async def update_by_id(
         self,
         uow: UnitOfWork,
-        entity_id: EntityID,
+        entity_id: custom_types.EntityID,
         update_schema: TUpdate,
     ) -> TRead:
         data = await self._dump_data(update_schema)
@@ -107,7 +116,7 @@ class BaseCRUD[
         return await self._validate_data(updated_entity)
 
     @log_operation
-    async def delete_by_id(self, uow: UnitOfWork, entity_id: EntityID) -> bool:
+    async def delete_by_id(self, uow: UnitOfWork, entity_id: custom_types.EntityID) -> bool:
         is_deleted = await self.repo.delete_by_id(uow, entity_id)
 
         if not is_deleted:
@@ -122,5 +131,8 @@ class BaseCRUD[
         return self.read_schema.model_validate(entity)
 
     @staticmethod
-    async def _dump_data(schema: BaseModel) -> dict:
-        return schema.model_dump(exclude_unset=True)
+    async def _dump_data(schema: BaseModel, additional_data: dict | None = None) -> dict:
+        dumped = schema.model_dump(exclude_unset=True)
+        if additional_data:
+            dumped.update(additional_data)
+        return dumped

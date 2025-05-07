@@ -7,14 +7,14 @@ from uuid_v7.base import uuid7
 from src import core
 
 if TYPE_CHECKING:
-    from src.app.models import Membership
+    from src.app.models import Membership, Quiz
 
 
 class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "users"
     repr_cols = ("id", "telegram_username")
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
     username: Mapped[str | None] = mapped_column(String(255))
 
     is_admin: Mapped[bool] = mapped_column(default=False)
@@ -25,4 +25,5 @@ class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     last_name: Mapped[str | None] = mapped_column(String(255))
     photo_url: Mapped[str | None] = mapped_column(String(255))
 
-    memberships: Mapped[list["Membership"]] = relationship(back_populates="user", lazy="selectin")
+    memberships: Mapped[list["Membership"]] = relationship(back_populates="user")
+    quizzes: Mapped[list["Quiz"]] = relationship(back_populates="author")

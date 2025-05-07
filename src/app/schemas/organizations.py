@@ -8,12 +8,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 
 Name = Annotated[str, Field(min_length=2, max_length=64)]
-Description = Annotated[str, Field(max_length=500)]
+Description = Annotated[str | None, Field(max_length=500)]
 
 
 class Base(BaseModel):
     name: Name
-    description: Description | None = None
+    description: Description = None
 
 
 class Create(Base):
@@ -22,7 +22,8 @@ class Create(Base):
 
 class Update(BaseModel):
     name: Name | None = None
-    description: Description | None = None
+    description: Description = None
+    image_path: str | None = None
 
 
 class Read(Base):

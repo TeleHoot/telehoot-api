@@ -176,3 +176,8 @@ minio/
 
 .ruff_cache/
 .DS_store
+
+mongodb.key
+
+.vscode
+*.code-workspace

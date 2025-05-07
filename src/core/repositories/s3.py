@@ -114,3 +114,7 @@ class Base:
             Params=params,
             ExpiresIn=expiration_minutes * 60,
         )
+
+    @staticmethod
+    async def generate_upload_path() -> str:
+        return f"{datetime.now(tz=UTC).strftime('%Y/%m/%d')}/{uuid.uuid4()}"

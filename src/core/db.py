@@ -4,6 +4,8 @@ from typing import TypeVar
 
 from beanie import Document, init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorClientSession
+from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 from sqlalchemy import AsyncAdaptedQueuePool
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -76,7 +78,6 @@ async def init_mongo(aggregator: Callable[[], Sequence[type[Document]]]) -> None
     try:
         mongo_manager = get_mongo_manager()
         await mongo_manager.initialize()
-
         await init_beanie(
             database=mongo_manager.client[settings.MONGO.INITDB_DATABASE],
             document_models=aggregator(),
@@ -85,3 +86,39 @@ async def init_mongo(aggregator: Callable[[], Sequence[type[Document]]]) -> None
     except Exception as e:
         logger.exception("Failed to initialize MongoDB connection", extra={"error": str(e)})
         raise
+
+
+def init_replica_set():
+    client = None
+    try:
+        client = MongoClient(
+            f"mongodb://{settings.MONGO.HOST}:{settings.MONGO.PORT}/",
+            directConnection=True,
+            username=settings.MONGO.INITDB_ROOT_USERNAME,
+            password=settings.MONGO.INITDB_ROOT_PASSWORD,
+            authSource="admin",
+        )
+
+        try:
+            status = client.admin.command("replSetGetStatus")
+            logger.info("Replica Set are already initialized: %s", status["set"])
+            return
+        except PyMongoError as e:
+            if "NotYetInitialized" not in str(e):
+                raise
+
+        cfg = {
+            "_id": "overleaf",
+            "members": [{"_id": 0, "host": f"{settings.MONGO.HOST}:{settings.MONGO.PORT}"}],
+        }
+
+        logger.info("Initializing Replica Set...")
+        client.admin.command("replSetInitiate", cfg)
+        logger.info("Replica Set are successfully initialized")
+
+    except Exception:
+        logger.exception("Error while initializing Replica Set")
+        raise
+    finally:
+        if client:
+            client.close()

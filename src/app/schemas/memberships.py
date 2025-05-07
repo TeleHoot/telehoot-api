@@ -13,6 +13,8 @@ class Base(BaseModel):
     role: models.UserRoles
     status: models.MembershipStatuses
 
+    model_config = ConfigDict(validate_assignment=True, extra="forbid")
+
 
 class Create(Base):
     organization_id: UUID

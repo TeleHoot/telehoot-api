@@ -2,17 +2,17 @@ from fastapi import APIRouter, Response
 
 from src import core
 from src.app import schemas
-from src.app.api.v1 import dependencies
+from src.app.api import dependencies
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = core.config.get_settings()
 
 
-@router.post("/login")
+@router.post("/login/")
 async def get_token(
     telegram_data: schemas.users.TelegramAuth,
-    uow: dependencies.PostgresUOW,
-    auth_service: dependencies.AuthService,
+    uow: dependencies.uow.Postgres,
+    auth_service: dependencies.services.Auth,
     response: Response,
 ):
     auth_data = await auth_service.auth_user(uow, telegram_data)
@@ -29,7 +29,7 @@ async def get_token(
     return {"is_success": True}
 
 
-@router.post("/logout")
+@router.post("/logout/")
 async def logout(response: Response):
     response.delete_cookie(settings.SESSION_COOKIE_NAME)
     return {"is_success": True}

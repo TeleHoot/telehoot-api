@@ -9,6 +9,7 @@ MAKEFLAGS += --no-print-directory
 DOCKER_COMPOSE = docker-compose
 DOCKER_COMPOSE_PROD = docker-compose -f docker-compose.prod.yml
 DOCKER_COMPOSE_TEST = docker-compose -f docker-compose.tests.yml
+DOCKER = docker
 ALEMBIC = alembic
 UV = uv
 PRE_COMMIT = pre-commit
@@ -55,6 +56,8 @@ help:
 	@echo "  winit              - Windows setup: install deps + create .env"
 	@echo "  create-env-unix    - Create .env from example (Unix)"
 	@echo "  create-env-windows - Create .env from example (Windows)"
+	@echo "  keyfile-windows    - Create keyfile for mongodb (Windows)"
+	@echo "  keyfile-unix       - Create keyfile for mongodb (Unix)"
 	@echo ""
 	@echo "== Miscellaneous =="
 	@echo "  help               - Show this help message"
@@ -137,14 +140,25 @@ create-env-windows:
 	)
 
 # Initialize the project on Unix systems (install dependencies, create .env file)
-uinit: install-deps create-env-unix
+uinit: install-deps create-env-unix keyfile-unix
 	@echo "Project initialized for Unix systems."
 
 # Initialize the project on Windows systems (install dependencies, create .env file)
-winit: install-deps create-env-windows
+winit: install-deps create-env-windows keyfile-windows
 	@echo "Project initialized for Windows systems."
 
 # Start the development environment and the app
 dev: up migrate start
 
-.PHONY: help up down up-prod down-prod migrate install-deps pre-commit pre-commit-install lint format type-check pytest test test-docker start create-env-unix create-env-windows init-unix init-windows dev
+# Create keyfile for mongodb
+keyfile-unix:
+	@echo "Creating keyfile in project root"; \
+	$(DOCKER) build -t mongo-keygen -f docker/Dockerfile.keygen docker/; \
+	$(DOCKER) run --rm -v .:/data mongo-keygen
+
+keyfile-windows:
+	@echo "Creating keyfile in project root"
+	$(DOCKER) build -t mongo-keygen -f docker/Dockerfile.keygen docker/
+	$(DOCKER) run --rm -v .:/data mongo-keygen
+
+.PHONY: help up down up-prod down-prod migrate install-deps pre-commit pre-commit-install lint format type-check pytest test test-docker start create-env-unix create-env-windows uinit winit dev keyfile-windows keyfile-unix
