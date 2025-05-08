@@ -127,7 +127,7 @@ async def upload_question_image(
 ):
     if not file.content_type or file.content_type not in settings.ALLOWED_IMAGE_TYPES:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Only image files are allowed. Valid types: "
             f"{', '.join(settings.ALLOWED_IMAGE_TYPES)}",
         )

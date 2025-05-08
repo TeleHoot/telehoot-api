@@ -10,5 +10,7 @@ Memberships = Annotated[services.Memberships, Depends()]
 Questions = Annotated[services.Questions, Depends()]
 Quizzes = Annotated[services.Quizzes, Depends()]
 Sessions = Annotated[services.Sessions, Depends()]
+Participants = Annotated[services.Participants, Depends()]
+ParticipantAnswers = Annotated[services.ParticipantAnswers, Depends()]
 
 Auth = Annotated[services.Authentication, Depends()]

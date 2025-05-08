@@ -10,7 +10,7 @@ from uuid_v7.base import uuid7
 from src import core
 
 if TYPE_CHECKING:
-    from src.app.models import Quiz
+    from src.app.models import Participant, Quiz
 
 
 class SessionStatus(enum.StrEnum):
@@ -34,6 +34,7 @@ class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     )
 
     quiz: Mapped["Quiz"] = relationship(back_populates="sessions", lazy="selectin")
+    participants: Mapped["Participant"] = relationship(back_populates="session", lazy="selectin")
 
     __table_args__ = (
         Index(
