@@ -6,7 +6,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
-from src.app import models, schemas
+from src.app import models
+from src.app.schemas import quizzes
 
 
 class Base(BaseModel):
@@ -26,7 +27,7 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
-    quiz: schemas.quizzes.Read
+    quiz: quizzes.Read
     created_at: datetime
     updated_at: datetime
 
