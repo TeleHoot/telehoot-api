@@ -13,7 +13,7 @@ class TelegramOAuthSettings(BaseSettings):
 
     @property
     def BOT_SECRET(self) -> bytes:
-        return hashlib.sha256(self.BOT_TOKEN.encode("utf-8")).digest()
+        return hashlib.sha256(self.BOT_TOKEN.encode()).digest()
 
     @property
     def MINI_APP_SECRET_KEY(self) -> bytes:

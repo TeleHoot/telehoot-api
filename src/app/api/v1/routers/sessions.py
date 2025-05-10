@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, status
 
 from src import core
 from src.app import schemas
@@ -178,3 +178,36 @@ async def delete_session(
             session_id,
         )
     }
+
+
+@router.websocket("/{session_id}")
+async def start_session(
+    websocket: WebSocket,
+    organization_id: UUID,
+    quiz_id: UUID,
+    session_id: UUID,
+    uow: dependencies.uow.Full,
+    sessions_service: dependencies.services.Sessions,
+    quizzes_service: dependencies.services.Quizzes,
+    org_service: dependencies.services.Organizations,
+    current_user: dependencies.permissions.WsUser,
+):
+    await websocket.accept()
+
+    await org_service.read_by_id(uow, organization_id)
+    quiz = await quizzes_service.read_by_id(uow, quiz_id)
+    if str(quiz.organization_id) != str(organization_id):
+        await websocket.send_json({"error": "Quiz does not belong to this organization"})
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+
+    session = await sessions_service.read_by_id(uow, session_id)
+    if str(session.quiz.id) != str(quiz_id):
+        await websocket.send_json({"error": "Session not found for this quiz"})
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+
+    connection_id = await dependencies.websocket.manager.accept_connection(
+        websocket, current_user.id
+    )
+    await dependencies.websocket.manager.handle_client(
+        websocket, uow, connection_id, session_id, current_user
+    )

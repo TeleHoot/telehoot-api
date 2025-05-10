@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 from src.app import models
 from src.app.schemas import quizzes
+from src.core.schemas import websocket
 
 
 class Base(BaseModel):
@@ -49,3 +50,26 @@ class SortFields(enum.StrEnum):
 
 class SortParams(core.schemas.SortParams):
     sort_by: SortFields | None = None
+
+
+class SessionEventType(enum.StrEnum):
+    JOIN = "join"
+    LEAVE = "leave"
+    START = "start"
+    ANSWER = "answer"
+    NEXT = "next"
+    FINISH = "finish"
+    ERROR = "error"
+    END = "end"
+
+
+class SessionEvent(websocket.Event):
+    type: SessionEventType
+
+
+class UserJoinedEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.JOIN
+    user_id: UUID
+    username: str
+    photo_url: str
+    role: models.ParticipantRole

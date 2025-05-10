@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, WebSocket, status
 from fastapi.security import APIKeyCookie
 
 from src import core
@@ -46,3 +46,18 @@ def get_admin_user(active_user: ActiveUser) -> schemas.users.Read:
 
 
 AdminUser = Annotated[schemas.users.Read, Depends(get_admin_user)]
+
+
+async def get_ws_user(
+    websocket: WebSocket,
+    uow: uow.Postgres,
+    auth_service: services.Auth,
+) -> schemas.users.Read:
+    token = websocket.cookies.get(settings.SESSION_COOKIE_NAME)
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        raise core.services.exceptions.AuthenticationError("No session found")
+    return await auth_service.read_user_by_token(uow, token)
+
+
+WsUser = Annotated[schemas.users.Read, Depends(get_ws_user)]
