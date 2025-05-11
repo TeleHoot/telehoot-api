@@ -70,6 +70,20 @@ class SessionEvent(websocket.Event):
 class UserJoinedEvent(SessionEvent):
     type: SessionEventType = SessionEventType.JOIN
     user_id: UUID
+    participant_id: UUID | None = None
     username: str
     photo_url: str
     role: models.ParticipantRole
+
+
+class UserLeftEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.LEAVE
+    user_id: UUID
+    participant_id: UUID
+
+
+class ErrorEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.ERROR
+    error_code: str
+    message: str | None = None
+    code: int

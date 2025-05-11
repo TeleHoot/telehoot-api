@@ -39,50 +39,74 @@ class Manager:
 
     async def connect(self):
         """Initialize Redis connection and pub/sub"""
-        self.redis = Redis.from_url(self.redis_url)
-        self.pubsub = self.redis.pubsub()
-        await self.pubsub.subscribe(self.connection_channel)
-        self._listener_task = asyncio.create_task(self._listen_to_redis())
+        self.logger.info("Connecting to Redis...")
+        try:
+            self.redis = Redis.from_url(self.redis_url)
+            self.pubsub = self.redis.pubsub()
+            await self.pubsub.subscribe(self.connection_channel)
+            self._listener_task = asyncio.create_task(self._listen_to_redis())
+            self.logger.info("Successfully connected to Redis and started listener")
+        except Exception:
+            self.logger.exception("Failed to connect to Redis:")
+            raise
 
     async def disconnect(self):
         """Cleanup Redis connection"""
-        if self._listener_task:
-            self._listener_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._listener_task
+        self.logger.info("Disconnecting from Redis...")
+        try:
+            if self._listener_task:
+                self._listener_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._listener_task
+                self.logger.debug("Listener task cancelled")
 
-        if self.redis:
-            await self.redis.close()
+            if self.redis:
+                await self.redis.close()
+                self.logger.info("Redis connection closed")
+        except Exception:
+            self.logger.exception("Error during disconnection:")
+        finally:
+            self.redis = None
+            self.pubsub = None
+            self._listener_task = None
 
     async def _listen_to_redis(self):
         """Listen for messages from Redis pub/sub"""
+        self.logger.debug("Starting Redis listener")
         if not self.pubsub:
+            self.logger.warning("PubSub not initialized, cannot listen to Redis")
             return
 
-        async for message in self.pubsub.listen():
-            if message["type"] != "message":
-                continue
+        try:
+            async for message in self.pubsub.listen():
+                if message["type"] != "message":
+                    continue
 
-            data = json.loads(message["data"])
+                data = json.loads(message["data"])
 
-            # Decode the channel from bytes to string
-            channel = (
-                message["channel"].decode("utf-8")
-                if isinstance(message["channel"], bytes)
-                else message["channel"]
-            )
+                # Decode the channel from bytes to string
+                channel = (
+                    message["channel"].decode("utf-8")
+                    if isinstance(message["channel"], bytes)
+                    else message["channel"]
+                )
 
-            # Handle connection events
-            if channel == self.connection_channel:
-                if data["type"] == "disconnect":
-                    connection_id = data["connection_id"]
-                    if connection_id in self.local_connections:
-                        await self._local_disconnect(connection_id)
+                self.logger.debug("Received message on channel %s: %s", channel, data)
 
-            # Handle message events
-            elif channel.startswith(self.message_channel_prefix):
-                channel_name = channel[len(self.message_channel_prefix) :]
-                await self._broadcast_to_local(channel_name, data["message"])
+                # Handle connection events
+                if channel == self.connection_channel:
+                    if data["type"] == "disconnect":
+                        connection_id = data["connection_id"]
+                        if connection_id in self.local_connections:
+                            await self._local_disconnect(connection_id)
+
+                # Handle message events
+                elif channel.startswith(self.message_channel_prefix):
+                    channel_name = channel[len(self.message_channel_prefix) :]
+                    await self._broadcast_to_local(channel_name, data["message"])
+        except Exception:
+            self.logger.exception("Error in Redis listener:")
+            raise
 
     async def accept_connection(self, websocket: WebSocket, connection_id: UUID) -> UUID:
         """
@@ -95,14 +119,19 @@ class Manager:
         Returns:
             The connection ID
         """
+        self.logger.info("Accepting new connection with ID: %s", connection_id)
         self.local_connections[connection_id] = websocket
 
         # Notify other instances about new connection
         if self.redis:
-            await self.redis.publish(
-                self.connection_channel,
-                json.dumps({"type": "connect", "connection_id": str(connection_id)}),
-            )
+            try:
+                await self.redis.publish(
+                    self.connection_channel,
+                    json.dumps({"type": "connect", "connection_id": str(connection_id)}),
+                )
+                self.logger.debug("Published connection event for %s", connection_id)
+            except Exception:
+                self.logger.exception("Failed to publish connection event:")
 
         return connection_id
 
@@ -113,21 +142,32 @@ class Manager:
         Args:
             connection_id: The connection ID to disconnect
         """
+        self.logger.info("Disconnecting connection: %s", connection_id)
         if connection_id in self.local_connections:
             await self._local_disconnect(connection_id)
 
         # Notify other instances about disconnection
         if self.redis:
-            await self.redis.publish(
-                self.connection_channel,
-                json.dumps({"type": "disconnect", "connection_id": str(connection_id)}),
-            )
+            try:
+                await self.redis.publish(
+                    self.connection_channel,
+                    json.dumps({"type": "disconnect", "connection_id": str(connection_id)}),
+                )
+                self.logger.debug("Published disconnection event for %s", connection_id)
+            except Exception:
+                self.logger.exception("Failed to publish disconnection event:")
 
     async def _local_disconnect(self, connection_id: UUID):
         """Handle local disconnection cleanup"""
+        self.logger.debug("Processing local disconnect for %s", connection_id)
         if connection_id in self.local_connections:
             websocket = self.local_connections[connection_id]
-            await websocket.close()
+            try:
+                await websocket.close()
+                self.logger.debug("Closed WebSocket for %s", connection_id)
+            except Exception as e:  # noqa: BLE001
+                self.logger.warning("Error closing WebSocket for %s: %s", connection_id, e)
+
             del self.local_connections[connection_id]
 
             # Remove from all channel subscriptions
@@ -136,6 +176,7 @@ class Manager:
                     self.channel_subscriptions[channel].remove(connection_id)
                     if not self.channel_subscriptions[channel]:
                         del self.channel_subscriptions[channel]
+                        self.logger.debug("Removed empty channel: %s", channel)
 
     async def subscribe_to_channel(self, connection_id: UUID, channel: str):
         """
@@ -145,18 +186,27 @@ class Manager:
             connection_id: The connection ID
             channel: The channel to subscribe to
         """
+        self.logger.info("Subscribing %s to channel %s", connection_id, channel)
         if connection_id not in self.local_connections:
+            self.logger.warning("Connection %s not found", connection_id)
             return
 
         if not self.pubsub:
+            self.logger.warning("PubSub not initialized, cannot subscribe")
             return
 
         if channel not in self.channel_subscriptions:
             self.channel_subscriptions[channel] = set()
             if self.redis:
-                await self.pubsub.subscribe(f"{self.message_channel_prefix}{channel}")
+                try:
+                    await self.pubsub.subscribe(f"{self.message_channel_prefix}{channel}")
+                    self.logger.debug("Subscribed to Redis channel: %s", channel)
+                except Exception:
+                    self.logger.exception("Failed to subscribe to Redis channel")
+                    return
 
         self.channel_subscriptions[channel].add(connection_id)
+        self.logger.debug("Added %s to channel %s subscriptions", connection_id, channel)
 
     async def unsubscribe_from_channel(self, connection_id: UUID, channel: str):
         """
@@ -166,7 +216,9 @@ class Manager:
             connection_id: The connection ID
             channel: The channel to unsubscribe from
         """
+        self.logger.info("Unsubscribing %s from channel %s", connection_id, channel)
         if not self.pubsub:
+            self.logger.warning("PubSub not initialized, cannot unsubscribe")
             return
 
         if (
@@ -178,7 +230,11 @@ class Manager:
             if not self.channel_subscriptions[channel]:
                 del self.channel_subscriptions[channel]
                 if self.redis:
-                    await self.pubsub.unsubscribe(f"{self.message_channel_prefix}{channel}")
+                    try:
+                        await self.pubsub.unsubscribe(f"{self.message_channel_prefix}{channel}")
+                        self.logger.debug("Unsubscribed from Redis channel: %s", channel)
+                    except Exception:
+                        self.logger.exception("Failed to unsubscribe from Redis channel:")
 
     async def send_to_connection(self, connection_id: UUID, message: Any):
         """
@@ -188,9 +244,14 @@ class Manager:
             connection_id: The connection ID
             message: The message to send
         """
+        self.logger.debug("Sending message to connection %s", connection_id)
         if connection_id in self.local_connections:
             websocket = self.local_connections[connection_id]
-            await websocket.send_json(json.loads(message))
+            try:
+                await websocket.send_json(json.loads(message))
+            except Exception:
+                self.logger.exception("Failed to send message to %s:", connection_id)
+                await self.disconnect_connection(connection_id)
 
     async def broadcast_to_channel(self, channel: str, message: Any):
         """
@@ -200,22 +261,30 @@ class Manager:
             channel: The channel to broadcast to
             message: The message to send
         """
+        self.logger.info("Broadcasting message to channel %s", channel)
         # Publish to Redis for other instances
         if self.redis:
-            await self.redis.publish(
-                f"{self.message_channel_prefix}{channel}",
-                json.dumps({"channel": str(channel), "message": message}),
-            )
+            try:
+                await self.redis.publish(
+                    f"{self.message_channel_prefix}{channel}",
+                    json.dumps({"channel": str(channel), "message": message}),
+                )
+                self.logger.debug("Published message to Redis channel %s", channel)
+            except Exception:
+                self.logger.exception("Failed to publish to Redis channel %s:", channel)
         else:
             await self._broadcast_to_local(channel, message)
 
     async def _broadcast_to_local(self, channel: str, message: Any):
+        self.logger.debug("Broadcasting locally to channel %s", channel)
         if channel in self.channel_subscriptions:
             for connection_id in list(self.channel_subscriptions[channel]):
                 if connection_id in self.local_connections:
                     try:
                         await self.local_connections[connection_id].send_json(json.loads(message))
-                    except Exception:  # noqa: BLE001
+                        self.logger.debug("Sent message to %s", connection_id)
+                    except Exception as e:  # noqa: BLE001
+                        self.logger.warning("Failed to send to %s: %s", connection_id, e)
                         await self.disconnect_connection(connection_id)
 
     async def send_event_to_connection(self, connection_id: UUID, event: BaseModel):
@@ -226,6 +295,7 @@ class Manager:
             connection_id: The connection ID to send to
             event: Pydantic model representing the event
         """
+        self.logger.info("Sending event to connection %s", connection_id)
         await self.send_to_connection(connection_id, event.model_dump_json())
 
     async def broadcast_event_to_channel(self, channel: str, event: BaseModel):
@@ -236,21 +306,26 @@ class Manager:
             channel: The channel to broadcast to
             event: Pydantic model representing the event
         """
+        self.logger.info("Broadcasting event to channel %s", channel)
         await self.broadcast_to_channel(channel, event.model_dump_json())
 
     async def handle_client(
         self, websocket: WebSocket, uow, connection_id: UUID, session_id: UUID, user: BaseModel
     ):
+        self.logger.info("Handling client connection %s", connection_id)
         try:
             while True:
                 data = await websocket.receive_json()
+                self.logger.debug("Received message from %s: %s", connection_id, data)
                 await self.router.handle(websocket, uow, connection_id, session_id, data, user)
         except WebSocketDisconnect:
+            self.logger.info("Client %s disconnected", connection_id)
             await self.disconnect_connection(connection_id)
         except json.JSONDecodeError:
+            self.logger.warning("Invalid JSON received from %s", connection_id)
             await websocket.send_json({"error": "Invalid JSON"})
         except Exception:
-            self.logger.exception("WS ERROR")
+            self.logger.exception("Error in handle_client for %s", connection_id)
             await self.disconnect_connection(connection_id)
 
 
@@ -258,10 +333,12 @@ class Manager:
 class Router:
     def __init__(self):
         self.handlers: dict[str, Callable] = {}
+        self.logger = logging.getLogger(f"websocket.{self.__class__.__name__.lower()}")
 
     def on(self, message_type: str):
         def decorator(handler: Callable):
             self.handlers[message_type] = handler
+            self.logger.info("Registered handler for message type: %s", message_type)
             return handler
 
         return decorator
@@ -275,17 +352,22 @@ class Router:
         data: dict[str, Any],
         user: BaseModel,
     ):
+        self.logger.debug("Handling message for %s: %s", connection_id, data)
         if not isinstance(data, dict):
+            self.logger.warning("Invalid message format from %s", connection_id)
             await websocket.send_json({"error": "Invalid message format"})
             return
 
-        handler = self.handlers.get(data.get("type"))  # type: ignore[valid-type]
+        message_type = data.get("type")
+        handler = self.handlers.get(message_type)  # type: ignore[valid-type]
         if handler:
+            self.logger.info("Processing message type %s for %s", message_type, connection_id)
             await handler(websocket, uow, connection_id, session_id, data, user)
         else:
+            self.logger.warning("Unknown message type %s from %s", message_type, connection_id)
             await websocket.send_json({
                 "error": "Unknown message type",
-                "received_type": data.get("type"),
+                "received_type": message_type,
             })
 
 
