@@ -148,7 +148,7 @@ async def delete_session(
 
 
 @router.websocket("/{session_id}")
-async def start_session(
+async def connect_to_session(
     websocket: WebSocket,
     quiz: CurrentQuiz,
     session_id: UUID,
