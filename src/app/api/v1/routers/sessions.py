@@ -32,7 +32,26 @@ async def get_validated_quiz(
     return quiz
 
 
+async def get_validated_quiz_ws(
+    organization_id: UUID,
+    quiz_id: UUID,
+    uow: dependencies.uow.Full,
+    org_service: dependencies.services.Organizations,
+    quiz_service: dependencies.services.Quizzes,
+    current_user: dependencies.permissions.WsUser,
+) -> schemas.quizzes.Read:
+    await org_service.read_by_id(uow, organization_id)
+    quiz = await quiz_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
+    if str(quiz.organization_id) != str(organization_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Quiz does not belong to this organization",
+        )
+    return quiz
+
+
 CurrentQuiz = Annotated[schemas.quizzes.Read, Depends(get_validated_quiz)]
+CurrentQuizWs = Annotated[schemas.quizzes.Read, Depends(get_validated_quiz_ws)]
 
 FiltersQuery = Annotated[schemas.sessions.Filters, Depends()]
 SortingQuery = Annotated[schemas.sessions.SortParams, Depends()]
@@ -150,7 +169,7 @@ async def delete_session(
 @router.websocket("/{session_id}")
 async def connect_to_session(
     websocket: WebSocket,
-    quiz: CurrentQuiz,
+    quiz: CurrentQuizWs,
     session_id: UUID,
     uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
