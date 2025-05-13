@@ -11,7 +11,7 @@ from . import (
     services,
     settings,
     utils,
-    websocket,
+    websockets,
 )
 from .uow import UnitOfWork
 
@@ -29,5 +29,5 @@ __all__ = [
     "services",
     "settings",
     "utils",
-    "websocket",
+    "websockets",
 ]

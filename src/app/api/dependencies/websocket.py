@@ -1,4 +1,4 @@
 from src import core
 
-manager = core.websocket.get_websocket_manager()
-router = core.websocket.get_websocket_router()
+manager = core.websockets.get_websocket_manager()
+router = core.websockets.get_websocket_router()

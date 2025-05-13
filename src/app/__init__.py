@@ -11,7 +11,7 @@ from src.app.api.v1 import ws_handlers as ws_handlers  # noqa: PLC0414
 from src.app.models import gather_documents
 
 settings = core.config.get_settings()
-ws_manager = core.websocket.get_websocket_manager()
+ws_manager = core.websockets.get_websocket_manager()
 
 
 def create_app() -> FastAPI:

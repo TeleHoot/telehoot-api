@@ -1,7 +1,13 @@
 import time
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
-class Event(BaseModel):
-    timestamp: float = time.time()
+class SessionEventBase(BaseModel):
+    timestamp: float = Field(default_factory=time.time)
+
+
+class ErrorEvent(SessionEventBase):
+    error_code: str
+    message: str
+    code: int
