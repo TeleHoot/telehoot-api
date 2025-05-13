@@ -133,6 +133,7 @@ async def handle_session(
     session_id: UUID,
     uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
+    ws_controller: dependencies.websockets.Controller,
     current_user: dependencies.permissions.WsUser,
 ):
     await websocket.accept()
@@ -142,9 +143,7 @@ async def handle_session(
         await websocket.send_json({"error": "Session not found for this quiz"})
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
 
-    connection_id = await dependencies.websocket.manager.accept_connection(
-        websocket, current_user.id
-    )
-    await dependencies.websocket.manager.handle_client(
+    connection_id = await ws_controller.manager.accept_connection(websocket, current_user.id)
+    await ws_controller.manager.handle_client(
         websocket, uow, connection_id, session_id, current_user
     )

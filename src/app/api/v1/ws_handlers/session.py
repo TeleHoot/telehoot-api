@@ -5,10 +5,11 @@ from pydantic import ValidationError
 
 from src import core
 from src.app import models, schemas, services
-from src.app.api import dependencies
+
+ws_manager = core.websockets.get_websocket_manager()
 
 
-@dependencies.websocket.manager.router.on(schemas.sessions.SessionEventType.JOIN)
+@ws_manager.router.on(schemas.sessions.SessionEventType.JOIN)
 async def handle_join(
     websocket: WebSocket,
     uow: core.UnitOfWork,
@@ -25,7 +26,7 @@ async def handle_join(
 
         session = await sessions_service.read_by_id(uow, session_id)
         if session.status != models.session.SessionStatus.WAITING:
-            await dependencies.websocket.manager.send_event_to_connection(
+            await ws_manager.send_event_to_connection(
                 connection_id,
                 schemas.sessions.ErrorEvent(
                     error_code="invalid_session_status",
@@ -46,10 +47,10 @@ async def handle_join(
         )
         event.participant_id = participant.id
 
-        await dependencies.websocket.manager.subscribe_to_channel(user.id, str(session_id))
-        await dependencies.websocket.manager.broadcast_event_to_channel(str(session_id), event)
+        await ws_manager.subscribe_to_channel(user.id, str(session_id))
+        await ws_manager.broadcast_event_to_channel(str(session_id), event)
     except core.services.exceptions.EntityNotFoundError as e:
-        await dependencies.websocket.manager.send_event_to_connection(
+        await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
                 error_code="entity_not_found",
@@ -59,7 +60,7 @@ async def handle_join(
         )
         raise WebSocketDisconnect from e
     except ValidationError as e:
-        await dependencies.websocket.manager.send_event_to_connection(
+        await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
                 error_code="invalid_schema", message=str(e), code=status.WS_1003_UNSUPPORTED_DATA
@@ -67,7 +68,7 @@ async def handle_join(
         )
         raise WebSocketDisconnect from e
     except Exception as e:
-        await dependencies.websocket.manager.send_event_to_connection(
+        await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
                 error_code="internal_server_error",
@@ -78,7 +79,7 @@ async def handle_join(
         raise WebSocketDisconnect from e
 
 
-@dependencies.websocket.manager.router.on(schemas.sessions.SessionEventType.LEAVE)
+@ws_manager.router.on(schemas.sessions.SessionEventType.LEAVE)
 async def handle_leave(
     websocket: WebSocket,
     uow: core.UnitOfWork,
@@ -93,7 +94,7 @@ async def handle_leave(
         event = schemas.sessions.UserLeftEvent.model_validate(data)
         await participants_service.delete_by_id(uow, event.participant_id)
     except core.services.exceptions.EntityNotFoundError as e:
-        await dependencies.websocket.manager.send_event_to_connection(
+        await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
                 error_code="entity_not_found",
@@ -103,7 +104,7 @@ async def handle_leave(
         )
         raise WebSocketDisconnect from e
     except ValidationError as e:
-        await dependencies.websocket.manager.send_event_to_connection(
+        await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
                 error_code="invalid_schema", message=str(e), code=status.WS_1003_UNSUPPORTED_DATA
@@ -111,7 +112,7 @@ async def handle_leave(
         )
         raise WebSocketDisconnect from e
     except Exception as e:
-        await dependencies.websocket.manager.send_event_to_connection(
+        await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
                 error_code="internal_server_error",
@@ -121,6 +122,6 @@ async def handle_leave(
         )
         raise WebSocketDisconnect from e
 
-    await dependencies.websocket.manager.broadcast_event_to_channel(str(session_id), event)
-    await dependencies.websocket.manager.unsubscribe_from_channel(user.id, str(session_id))
+    await ws_manager.broadcast_event_to_channel(str(session_id), event)
+    await ws_manager.unsubscribe_from_channel(user.id, str(session_id))
     raise WebSocketDisconnect

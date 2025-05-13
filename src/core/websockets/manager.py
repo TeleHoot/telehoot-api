@@ -36,7 +36,7 @@ class Manager:
 
         self.logger = logging.getLogger(f"websocket.{self.__class__.__name__.lower()}")
 
-    async def connect(self):
+    async def connect_to_redis(self):
         """Initialize Redis connection and pub/sub"""
         self.logger.info("Connecting to Redis...")
         try:
@@ -49,7 +49,7 @@ class Manager:
             self.logger.exception("Failed to connect to Redis:")
             raise
 
-    async def disconnect(self):
+    async def disconnect_from_redis(self):
         """Cleanup Redis connection"""
         self.logger.info("Disconnecting from Redis...")
         try:

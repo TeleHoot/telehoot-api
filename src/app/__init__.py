@@ -19,9 +19,9 @@ def create_app() -> FastAPI:
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         core.db.init_replica_set()
         await core.db.init_mongo(gather_documents)
-        await ws_manager.connect()
+        await ws_manager.connect_to_redis()
         yield
-        await ws_manager.disconnect()
+        await ws_manager.disconnect_from_redis()
         if mongo_client := core.db.get_mongo_manager().client:
             mongo_client.close()
 
