@@ -7,7 +7,7 @@ from fastapi.responses import ORJSONResponse
 
 from src import core
 from src.app import api
-from src.app.api.v1 import handlers as handlers  # noqa: PLC0414
+from src.app.api.v1 import ws_handlers as ws_handlers  # noqa: PLC0414
 from src.app.models import gather_documents
 
 settings = core.config.get_settings()

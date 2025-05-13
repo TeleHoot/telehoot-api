@@ -13,46 +13,6 @@ router = APIRouter(
 
 settings = core.config.get_settings()
 
-
-async def get_validated_quiz(
-    organization_id: UUID,
-    quiz_id: UUID,
-    uow: dependencies.uow.Full,
-    org_service: dependencies.services.Organizations,
-    quiz_service: dependencies.services.Quizzes,
-    current_user: dependencies.permissions.ActiveUser,
-) -> schemas.quizzes.Read:
-    await org_service.read_by_id(uow, organization_id)
-    quiz = await quiz_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
-    if str(quiz.organization_id) != str(organization_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Quiz does not belong to this organization",
-        )
-    return quiz
-
-
-async def get_validated_quiz_ws(
-    organization_id: UUID,
-    quiz_id: UUID,
-    uow: dependencies.uow.Full,
-    org_service: dependencies.services.Organizations,
-    quiz_service: dependencies.services.Quizzes,
-    current_user: dependencies.permissions.WsUser,
-) -> schemas.quizzes.Read:
-    await org_service.read_by_id(uow, organization_id)
-    quiz = await quiz_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
-    if str(quiz.organization_id) != str(organization_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Quiz does not belong to this organization",
-        )
-    return quiz
-
-
-CurrentQuiz = Annotated[schemas.quizzes.Read, Depends(get_validated_quiz)]
-CurrentQuizWs = Annotated[schemas.quizzes.Read, Depends(get_validated_quiz_ws)]
-
 FiltersQuery = Annotated[schemas.sessions.Filters, Depends()]
 SortingQuery = Annotated[schemas.sessions.SortParams, Depends()]
 
@@ -64,7 +24,7 @@ SortingQuery = Annotated[schemas.sessions.SortParams, Depends()]
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def create_session(
-    quiz: CurrentQuiz,
+    quiz: dependencies.paths.CurrentQuiz,
     uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
 ):
@@ -80,7 +40,7 @@ async def create_session(
 @router.get(
     "",
     response_model=list[schemas.sessions.Read],
-    dependencies=[Depends(get_validated_quiz)],
+    dependencies=[Depends(dependencies.paths.get_validated_quiz)],
 )
 async def get_sessions(
     uow: dependencies.uow.Full,
@@ -100,7 +60,7 @@ async def get_sessions(
     response_model=schemas.sessions.Read,
 )
 async def get_session(
-    quiz: CurrentQuiz,
+    quiz: dependencies.paths.CurrentQuiz,
     session_id: UUID,
     uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
@@ -123,7 +83,7 @@ async def get_session(
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def update_session(
-    quiz: CurrentQuiz,
+    quiz: dependencies.paths.CurrentQuiz,
     session_id: UUID,
     session_data: schemas.sessions.Update,
     uow: dependencies.uow.Full,
@@ -147,7 +107,7 @@ async def update_session(
     dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def delete_session(
-    quiz: CurrentQuiz,
+    quiz: dependencies.paths.CurrentQuiz,
     session_id: UUID,
     uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
@@ -167,9 +127,9 @@ async def delete_session(
 
 
 @router.websocket("/{session_id}")
-async def connect_to_session(
+async def handle_session(
     websocket: WebSocket,
-    quiz: CurrentQuizWs,
+    quiz: dependencies.paths.CurrentQuizWs,
     session_id: UUID,
     uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,

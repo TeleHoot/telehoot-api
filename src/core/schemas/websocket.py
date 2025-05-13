@@ -1,8 +1,7 @@
 import time
-from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class Event(BaseModel):
-    timestamp: Annotated[float, Field(default_factory=lambda: time.time())]
+    timestamp: float = time.time()
