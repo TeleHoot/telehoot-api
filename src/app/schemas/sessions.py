@@ -63,7 +63,7 @@ class SessionEventType(enum.StrEnum):
     END = "end"
 
 
-class SessionEvent(websocket.SessionEventBase):
+class SessionEvent(websocket.EventBase):
     type: SessionEventType
 
 
