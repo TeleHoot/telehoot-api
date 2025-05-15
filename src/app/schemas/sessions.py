@@ -85,11 +85,12 @@ class UserLeftEvent(SessionEvent):
 
 class NextQuestionEvent(SessionEvent):
     type: SessionEventType = SessionEventType.NEXT
-    current_question: "schemas.questions.Read"
+    current_question_index: int
 
 
 class SessionStartedEvent(NextQuestionEvent):
     type: SessionEventType = SessionEventType.START
+    current_question_index: int = 1
 
 
 class SessionEndedEvent(SessionEvent):
