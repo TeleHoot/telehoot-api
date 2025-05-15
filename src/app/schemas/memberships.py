@@ -1,12 +1,13 @@
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
 from src import core
 from src.app import models
-from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from src.app import schemas
 
