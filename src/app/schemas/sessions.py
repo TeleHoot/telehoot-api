@@ -1,14 +1,15 @@
 import enum
 from datetime import datetime
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
 from src.app import models
-from src.app.schemas import quizzes
-from src.core.schemas import websocket
+
+if TYPE_CHECKING:
+    from src.app import schemas
 
 
 class Base(BaseModel):
@@ -28,7 +29,7 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
-    quiz: quizzes.Read
+    quiz: "schemas.quizzes.Read"
     created_at: datetime
     updated_at: datetime
 
@@ -63,7 +64,7 @@ class SessionEventType(enum.StrEnum):
     END = "end"
 
 
-class SessionEvent(websocket.EventBase):
+class SessionEvent(core.schemas.websocket.EventBase):
     type: SessionEventType
 
 
@@ -80,6 +81,20 @@ class UserLeftEvent(SessionEvent):
     type: SessionEventType = SessionEventType.LEAVE
     user_id: UUID
     participant_id: UUID
+
+
+class NextQuestionEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.NEXT
+
+
+class SessionStartedEvent(NextQuestionEvent):
+    type: SessionEventType = SessionEventType.START
+    current_question: "schemas.questions.Read"
+
+
+class SessionEndedEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.END
+    results: list["schemas.participant_answers.Read"] | None = None
 
 
 class ErrorEvent(SessionEvent):

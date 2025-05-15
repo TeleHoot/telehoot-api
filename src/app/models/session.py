@@ -2,7 +2,7 @@ import enum
 import secrets
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, ForeignKey, Index, String
+from sqlalchemy import UUID, ForeignKey, Index, Integer, String
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from uuid_v7.base import uuid7
@@ -25,6 +25,7 @@ class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     repr_cols = ("id", "quiz_id", "join_code", "status")
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
+    current_question_index: Mapped[int] = mapped_column(Integer, default=1)
     quiz_id: Mapped[UUID] = mapped_column(ForeignKey("quizzes.id", ondelete="CASCADE"))
     join_code: Mapped[str] = mapped_column(
         String(4), default=lambda: str(secrets.SystemRandom().randrange(0, 9999)).zfill(4)

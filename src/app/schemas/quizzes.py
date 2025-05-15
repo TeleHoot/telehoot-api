@@ -6,7 +6,9 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
-from src.app import schemas
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.app import schemas
 
 Description = Annotated[str | None, Field(max_length=500)]
 
@@ -32,7 +34,7 @@ class Update(BaseModel):
 class Read(Base):
     id: UUID
     organization_id: UUID
-    author: schemas.users.Read
+    author: "schemas.users.Read"
     created_at: datetime
     updated_at: datetime
     questions_count: int = 0

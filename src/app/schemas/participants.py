@@ -6,8 +6,10 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
-from src.app import models, schemas
-from src.app.schemas import sessions
+from src.app import models
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.app import schemas
 
 SessionNickname = Annotated[str, Field(max_length=64)]
 
@@ -32,8 +34,8 @@ class Read(Base):
     id: UUID
     user_id: UUID
     session_id: UUID
-    user: schemas.users.Read
-    session: sessions.Read
+    user: "schemas.users.Read"
+    session: "schemas.sessions.Read"
     created_at: datetime
     updated_at: datetime
 

@@ -6,7 +6,9 @@ from pydantic import BaseModel, ConfigDict
 
 from src import core
 from src.app import models
-from src.app.schemas import organizations, users
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.app import schemas
 
 
 class Base(BaseModel):
@@ -27,8 +29,8 @@ class Update(BaseModel):
 
 
 class Read(Base):
-    organization: organizations.Read
-    user: users.Read
+    organization: "schemas.organizations.Read"
+    user: "schemas.users.Read"
     created_at: datetime
     updated_at: datetime
 

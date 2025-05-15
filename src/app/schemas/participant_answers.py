@@ -7,7 +7,9 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
 from src import core
-from src.app.schemas import participants
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.app import schemas
 
 AnswerText = Annotated[str, Field(max_length=1000)]
 PointsFilter = Annotated[int | None, Field(ge=0)]
@@ -35,7 +37,7 @@ class Update(BaseModel):
 class Read(Base):
     participant_id: UUID
     question_id: PydanticObjectId
-    participant: participants.Read
+    participant: "schemas.participants.Read"
     created_at: datetime
     updated_at: datetime
 
