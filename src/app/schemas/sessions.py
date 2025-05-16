@@ -27,6 +27,7 @@ class Create(BaseModel):
 
 class Update(BaseModel):
     status: models.SessionStatus | None = None
+    current_question_index: int | None = None
 
 
 class Read(Base):

@@ -14,13 +14,10 @@ async def handle_start(
     uow: core.UnitOfWork,
     connection_id: UUID,
     session_id: UUID,
-    data: dict,
     user: schemas.users.Read,
 ):
     sessions_service = services.Sessions()
     participants_service = services.Participants()
-
-    event = schemas.sessions.SessionStartedEvent
 
     try:
         session = await sessions_service.read_by_id(uow, session_id)
@@ -35,20 +32,20 @@ async def handle_start(
         )
         raise WebSocketDisconnect from e
 
-    try:
-        participant = await participants_service.read_many(
-            uow, user_id=user.id, session_id=session_id
-        )[0]
-    except core.services.exceptions.EntityNotFoundError as e:
+    participant = await participants_service.read_many(uow, user_id=user.id, session_id=session_id)
+
+    if not participant:
         await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
                 error_code="entity_not_found",
-                message="Session not found",
+                message="Participant not found",
                 code=status.WS_1003_UNSUPPORTED_DATA,
             ),
         )
-        raise WebSocketDisconnect from e
+        raise WebSocketDisconnect
+
+    participant = participant[0]
 
     if session.status != models.session.SessionStatus.WAITING:
         await ws_manager.send_event_to_connection(
@@ -86,6 +83,8 @@ async def handle_start(
             ),
         )
         raise WebSocketDisconnect from e
+
+    event = schemas.sessions.SessionStartedEvent()
 
     await ws_manager.subscribe_to_channel(user.id, str(session_id))
     await ws_manager.broadcast_event_to_channel(str(session_id), event)
