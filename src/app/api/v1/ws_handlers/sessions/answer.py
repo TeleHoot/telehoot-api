@@ -16,7 +16,8 @@ async def handle_answer(
     data: dict,
     user: schemas.users.Read,
 ):
-    if not data["text"]:
+    answers: list = data.get("answers", [])
+    if not answers:
         await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
