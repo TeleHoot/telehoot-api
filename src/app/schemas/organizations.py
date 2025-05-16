@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
 from typing import Annotated
@@ -33,6 +35,9 @@ class Read(Base):
     image_path: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+Read.model_rebuild()
 
 
 class Filters(core.schemas.BaseFilters):

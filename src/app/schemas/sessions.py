@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -8,8 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 from src.app import models
 
-if TYPE_CHECKING:
-    from src.app import schemas
+from . import participant_answers as schemas_participant_answers
+from . import quizzes as schemas_quizzes
 
 
 class Base(BaseModel):
@@ -29,7 +31,7 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
-    quiz: "schemas.quizzes.Read"
+    quiz: schemas_quizzes.Read
     created_at: datetime
     updated_at: datetime
 
@@ -95,7 +97,7 @@ class SessionStartedEvent(NextQuestionEvent):
 
 class SessionEndedEvent(SessionEvent):
     type: SessionEventType = SessionEventType.END
-    results: list["schemas.participant_answers.Read"] | None = None
+    results: list["schemas_participant_answers.Read"] | None = None  # noqa: UP037
 
 
 class ErrorEvent(SessionEvent):

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -8,8 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 from src.app import models
 
-if TYPE_CHECKING:
-    from src.app import schemas
+from . import sessions as schemas_sessions
+from . import users as schemas_users
 
 SessionNickname = Annotated[str, Field(max_length=64)]
 
@@ -34,8 +36,8 @@ class Read(Base):
     id: UUID
     user_id: UUID
     session_id: UUID
-    user: "schemas.users.Read"
-    session: "schemas.sessions.Read"
+    user: schemas_users.Read
+    session: schemas_sessions.Read
     created_at: datetime
     updated_at: datetime
 

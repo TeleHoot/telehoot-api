@@ -1,14 +1,15 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
 
-if TYPE_CHECKING:
-    from src.app import schemas
+from . import users as schemas_users
 
 Description = Annotated[str | None, Field(max_length=500)]
 
@@ -34,7 +35,7 @@ class Update(BaseModel):
 class Read(Base):
     id: UUID
     organization_id: UUID
-    author: "schemas.users.Read"
+    author: schemas_users.Read
     created_at: datetime
     updated_at: datetime
     questions_count: int = 0

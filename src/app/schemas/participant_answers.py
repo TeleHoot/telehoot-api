@@ -1,15 +1,14 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 from uuid import UUID
 
 from beanie import PydanticObjectId
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
 from src import core
-
-if TYPE_CHECKING:
-    from src.app import schemas
 
 AnswerText = Annotated[str, Field(max_length=1000)]
 PointsFilter = Annotated[int | None, Field(ge=0)]
@@ -37,7 +36,6 @@ class Update(BaseModel):
 class Read(Base):
     participant_id: UUID
     question_id: PydanticObjectId
-    participant: "schemas.participants.Read"
     created_at: datetime
     updated_at: datetime
 
