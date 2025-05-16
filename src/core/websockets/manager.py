@@ -309,14 +309,14 @@ class Manager:
         await self.broadcast_to_channel(channel, event.model_dump_json())
 
     async def handle_client(
-        self, websocket: WebSocket, uow, connection_id: UUID, session_id: UUID, user: BaseModel
+        self, websocket: WebSocket, connection_id: UUID, session_id: UUID, user: BaseModel
     ):
         self.logger.info("Handling client connection %s", connection_id)
         try:
             while True:
                 data = await websocket.receive_json()
                 self.logger.debug("Received message from %s: %s", connection_id, data)
-                await self.router.handle(websocket, uow, connection_id, session_id, data, user)
+                await self.router.handle(websocket, connection_id, session_id, data, user)
         except WebSocketDisconnect:
             self.logger.info("Client %s disconnected", connection_id)
             await self.disconnect_connection(connection_id)

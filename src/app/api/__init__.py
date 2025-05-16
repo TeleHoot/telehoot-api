@@ -1,5 +1,6 @@
-from . import v1
+from . import dependencies, v1
 
 __all__ = [
+    "dependencies",
     "v1",
 ]

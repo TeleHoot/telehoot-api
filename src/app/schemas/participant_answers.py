@@ -5,8 +5,7 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from beanie import PydanticObjectId
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field
 
 from src import core
 
@@ -17,25 +16,25 @@ PointsFilter = Annotated[int | None, Field(ge=0)]
 class Base(BaseModel):
     text: AnswerText
     is_correct: bool = False
-    points: PositiveInt = Field(default=0, ge=0)
+    points: int = Field(default=0, ge=0)
 
     model_config = ConfigDict(validate_assignment=True, extra="forbid")
 
 
 class Create(Base):
     participant_id: UUID
-    question_id: PydanticObjectId
+    question_id: str
 
 
 class Update(BaseModel):
     text: AnswerText | None = None
     is_correct: bool | None = None
-    points: PositiveInt | None = Field(default=None, ge=0)
+    points: int | None = Field(default=None, ge=0)
 
 
 class Read(Base):
     participant_id: UUID
-    question_id: PydanticObjectId
+    question_id: str
     created_at: datetime
     updated_at: datetime
 
@@ -44,7 +43,7 @@ class Read(Base):
 
 class Filters(core.schemas.BaseFilters):
     participant_id: UUID | None = None
-    question_id: PydanticObjectId | None = None
+    question_id: str | None = None
     is_correct: bool | None = None
     points_from: PointsFilter = None
     points_to: PointsFilter = None

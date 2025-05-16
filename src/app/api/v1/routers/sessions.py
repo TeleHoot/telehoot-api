@@ -144,6 +144,4 @@ async def handle_session(
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
 
     connection_id = await ws_controller.manager.accept_connection(websocket, current_user.id)
-    await ws_controller.manager.handle_client(
-        websocket, uow, connection_id, session_id, current_user
-    )
+    await ws_controller.manager.handle_client(websocket, connection_id, session_id, current_user)

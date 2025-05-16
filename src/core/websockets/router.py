@@ -30,7 +30,6 @@ class Router:
     async def handle(
         self,
         websocket: WebSocket,
-        uow,
         connection_id: UUID,
         session_id: UUID,
         data: dict[str, Any],
@@ -46,7 +45,7 @@ class Router:
         handler = self.handlers.get(message_type)  # type: ignore[valid-type]
         if handler:
             self.logger.info("Processing message type %s for %s", message_type, connection_id)
-            await handler(websocket, uow, connection_id, session_id, data, user)
+            await handler(websocket, connection_id, session_id, data, user)
         else:
             self.logger.warning("Unknown message type %s from %s", message_type, connection_id)
             await websocket.send_json({

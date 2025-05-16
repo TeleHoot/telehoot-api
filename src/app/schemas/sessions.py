@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import enum
 from datetime import datetime
 from typing import Annotated
@@ -10,13 +8,19 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 from src.app import models
 
-from . import participant_answers as schemas_participant_answers
+from . import questions as schemas_questions
 from . import quizzes as schemas_quizzes
 
 
 class Base(BaseModel):
-    join_code: Annotated[str, Field(min_length=4, max_length=4)]
+    join_code: Annotated[
+        str,
+        Field(
+            min_length=4, max_length=4, pattern=r"^\d+$", description="Must be exactly 4 digits"
+        ),
+    ]
     status: models.SessionStatus = models.SessionStatus.WAITING
+    current_question_index: int = 0
 
 
 class Create(BaseModel):
@@ -62,7 +66,7 @@ class SessionEventType(enum.StrEnum):
     NEXT = "next"
     FINISH = "finish"
     ERROR = "error"
-    END = "end"
+    CANCEL = "cancel"
 
 
 class SessionEvent(core.schemas.websocket.EventBase):
@@ -71,32 +75,40 @@ class SessionEvent(core.schemas.websocket.EventBase):
 
 class UserJoinedEvent(SessionEvent):
     type: SessionEventType = SessionEventType.JOIN
-    user_id: UUID
+    user_id: UUID | None = None
     participant_id: UUID | None = None
     username: str
     photo_url: str | None = None
-    role: models.ParticipantRole
+    role: models.ParticipantRole | None = None
 
 
 class UserLeftEvent(SessionEvent):
     type: SessionEventType = SessionEventType.LEAVE
-    user_id: UUID
+    user_id: UUID | None = None
     participant_id: UUID
 
 
 class NextQuestionEvent(SessionEvent):
     type: SessionEventType = SessionEventType.NEXT
-    current_question_index: int
+    current_question_index: int = 0
+    question: schemas_questions.Read | None = None
+    is_last_question: bool = False
 
 
 class SessionStartedEvent(NextQuestionEvent):
     type: SessionEventType = SessionEventType.START
-    current_question_index: int = 1
 
 
-class SessionEndedEvent(SessionEvent):
-    type: SessionEventType = SessionEventType.END
-    results: list["schemas_participant_answers.Read"] | None = None  # noqa: UP037
+class SessionFinishedEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.FINISH
+
+
+class SessionCanceledEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.CANCEL
+
+
+class SessionAnsweredEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.ANSWER
 
 
 class ErrorEvent(SessionEvent):
