@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from fastapi import WebSocket, WebSocketDisconnect, status
-from pydantic import ValidationError
 
 from src import core
 from src.app import models, schemas, services
@@ -15,22 +14,11 @@ async def handle_join(
     uow: core.UnitOfWork,
     connection_id: UUID,
     session_id: UUID,
-    data: dict,
+    username: str,
     user: schemas.users.Read,
 ):
     sessions_service = services.Sessions()
     participants_service = services.Participants()
-
-    try:
-        event = schemas.sessions.UserJoinedEvent.model_validate(data)
-    except ValidationError as e:
-        await ws_manager.send_event_to_connection(
-            connection_id,
-            schemas.sessions.ErrorEvent(
-                error_code="invalid_schema", message=str(e), code=status.WS_1003_UNSUPPORTED_DATA
-            ),
-        )
-        raise WebSocketDisconnect from e
 
     try:
         session = await sessions_service.read_by_id(uow, session_id)
@@ -57,27 +45,39 @@ async def handle_join(
         )
         raise WebSocketDisconnect
 
-    try:
-        participant = await participants_service.create(
-            uow,
-            schemas.participants.Create(
-                user_id=user.id, role=event.role, session_nickname=event.username
-            ),
-            additional_data={
-                "session_id": session_id,
-            },
+    participant = await participants_service.read_many(uow, user_id=user.id, session_id=session_id)
+    if not participant:
+        try:
+            participant = await participants_service.create(
+                uow,
+                schemas.participants.Create(user_id=user.id, session_nickname=username),
+                additional_data={
+                    "session_id": session_id,
+                },
+            )
+        except Exception as e:
+            await ws_manager.send_event_to_connection(
+                connection_id,
+                schemas.sessions.ErrorEvent(
+                    error_code="internal_server_error",
+                    message=str(e),
+                    code=status.WS_1011_INTERNAL_ERROR,
+                ),
+            )
+            raise WebSocketDisconnect from e
+    else:
+        participant = participant[0]
+        participants_service.update_by_id(
+            uow, participant.id, schemas.participants.Update(session_nickname=username)
         )
-        event.participant_id = participant.id
-    except Exception as e:
-        await ws_manager.send_event_to_connection(
-            connection_id,
-            schemas.sessions.ErrorEvent(
-                error_code="internal_server_error",
-                message=str(e),
-                code=status.WS_1011_INTERNAL_ERROR,
-            ),
-        )
-        raise WebSocketDisconnect from e
+
+    event = schemas.sessions.UserJoinedEvent(
+        user_id=user.id,
+        participant_id=participant.id,
+        username=username,
+        photo_url=user.photo_url,
+        role=participant.role,
+    )
 
     await ws_manager.subscribe_to_channel(user.id, str(session_id))
     await ws_manager.broadcast_event_to_channel(str(session_id), event)

@@ -73,7 +73,7 @@ class UserJoinedEvent(SessionEvent):
     user_id: UUID
     participant_id: UUID | None = None
     username: str
-    photo_url: str
+    photo_url: str | None = None
     role: models.ParticipantRole
 
 
