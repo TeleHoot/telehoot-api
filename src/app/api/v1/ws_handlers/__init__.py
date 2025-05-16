@@ -1,1 +1,5 @@
-from . import session as session  # noqa: PLC0414
+from . import sessions
+
+__all__ = [
+    "sessions",
+]

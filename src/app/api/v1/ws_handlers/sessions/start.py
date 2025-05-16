@@ -8,7 +8,7 @@ from src.app import models, schemas, services
 ws_manager = core.websockets.get_websocket_manager()
 
 
-@ws_manager.router.on(schemas.sessions.SessionEventType.JOIN)
+@ws_manager.router.on(schemas.sessions.SessionEventType.START)
 async def handle_start(
     websocket: WebSocket,
     uow: core.UnitOfWork,
