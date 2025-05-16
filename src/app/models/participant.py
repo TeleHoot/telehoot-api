@@ -2,7 +2,6 @@ import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import UUID, ForeignKey, String
-from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_v7.base import uuid7
 
@@ -27,9 +26,7 @@ class Participant(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete
     session_id: Mapped[UUID] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"))
 
     session_nickname: Mapped[str] = mapped_column(String(64))
-    role: Mapped[ParticipantRole] = mapped_column(
-        SQLAlchemyEnum(ParticipantRole), default=ParticipantRole.PARTICIPANT
-    )
+    role: Mapped[ParticipantRole] = mapped_column(default=ParticipantRole.PARTICIPANT)
 
     user: Mapped["User"] = relationship(back_populates="participants", lazy="selectin")
     session: Mapped["Session"] = relationship(back_populates="participants", lazy="selectin")

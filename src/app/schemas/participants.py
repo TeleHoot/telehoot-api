@@ -20,8 +20,6 @@ class Base(BaseModel):
     session_nickname: SessionNickname
     role: models.ParticipantRole = models.ParticipantRole.PARTICIPANT
 
-    model_config = ConfigDict(validate_assignment=True, extra="forbid")
-
 
 class Create(Base):
     user_id: UUID

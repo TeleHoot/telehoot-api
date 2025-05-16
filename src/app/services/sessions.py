@@ -1,3 +1,8 @@
+import secrets
+from typing import Any
+
+from sqlalchemy import select
+
 from src import core
 from src.app import models, repositories, schemas
 
@@ -21,3 +26,36 @@ class Sessions(
             update_schema=schemas.sessions.Update,
             filters_schema=schemas.sessions.Filters,
         )
+
+    async def create(
+        self,
+        uow: core.UnitOfWork,
+        create_schema: schemas.sessions.Create,
+        *,
+        additional_data: dict[str, Any] | None = None,
+    ) -> schemas.sessions.Read:
+        max_retries = 10
+        additional_data = additional_data or {}
+
+        for _ in range(max_retries):
+            code = str(secrets.SystemRandom().randrange(0, 10000)).zfill(4)
+
+            exists = await uow.postgres_session.scalar(
+                select(models.Session).filter_by(
+                    join_code=code, status=models.SessionStatus.WAITING
+                )
+            )
+
+            if exists:
+                continue
+
+            return await super().create(
+                uow,
+                create_schema,
+                additional_data={
+                    **additional_data,
+                    "join_code": code,
+                },
+            )
+
+        raise RuntimeError("Failed to generate unique join code after multiple attempts")

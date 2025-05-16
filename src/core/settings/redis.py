@@ -7,7 +7,7 @@ from src.core import settings
 class RedisSettings(BaseSettings):
     HOST: str = "localhost"
     PORT: int = 6379
-    PASSWORD: str = "somepassord"
+    PASSWORD: str = "somepassword"
 
     @computed_field
     @property

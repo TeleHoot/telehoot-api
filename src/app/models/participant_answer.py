@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, ForeignKey, Integer, String
+from sqlalchemy import UUID, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src import core
@@ -20,6 +20,6 @@ class ParticipantAnswer(core.models.sqlalchemy.Base, core.models.sqlalchemy.Soft
 
     text: Mapped[str] = mapped_column(String(1000))
     is_correct: Mapped[bool] = mapped_column(default=False)
-    points: Mapped[int] = mapped_column(Integer(), default=0)
+    points: Mapped[int] = mapped_column(default=0)
 
     participant: Mapped["Participant"] = relationship(back_populates="answers")

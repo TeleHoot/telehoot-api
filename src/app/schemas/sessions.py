@@ -18,8 +18,6 @@ class Base(BaseModel):
     join_code: Annotated[str, Field(min_length=4, max_length=4)]
     status: models.SessionStatus = models.SessionStatus.WAITING
 
-    model_config = ConfigDict(validate_assignment=True, extra="forbid")
-
 
 class Create(BaseModel):
     pass
