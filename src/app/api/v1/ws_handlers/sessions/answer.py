@@ -16,8 +16,8 @@ async def handle_answer(
     data: dict,
     user: schemas.users.Read,
 ):
-    answers: list = data.get("answers", [])
-    if not answers:
+    answers_list: list = data.get("answers", [])
+    if not answers_list:
         await ws_manager.send_event_to_connection(
             connection_id,
             schemas.sessions.ErrorEvent(
@@ -97,20 +97,23 @@ async def handle_answer(
             correct_answers = {
                 answer.text.lower() for answer in question.answers if answer.is_correct
             }
-            participant_answers = {ans.lower() for ans in data["answers"]}
+            participant_answers = {ans.lower() for ans in answers_list}
             is_correct = correct_answers == participant_answers
 
-            answers = await participant_answers_service.read_many(
+            part_answers = await participant_answers_service.read_many(
                 uow,
                 filters=schemas.participant_answers.Filters(question_id=str(question.id)),
             )
 
-            if answers:
+            if part_answers:
                 await participant_answers_service.update_by_id(
                     uow,
-                    answers[0].id,
+                    {
+                        "participant_id": part_answers[0].participant_id,
+                        "question_id": part_answers[0].question_id,
+                    },
                     schemas.participant_answers.Update(
-                        text=data["text"],
+                        text=str(",".join(participant_answers)) or None,
                         is_correct=is_correct,
                         points=question.weight if is_correct else 0,
                     ),
@@ -119,7 +122,7 @@ async def handle_answer(
                 await participant_answers_service.create(
                     uow,
                     schemas.participant_answers.Create(
-                        text=data["text"],
+                        text=str(",".join(participant_answers)),
                         is_correct=is_correct,
                         points=question.weight if is_correct else 0,
                         participant_id=participant.id,

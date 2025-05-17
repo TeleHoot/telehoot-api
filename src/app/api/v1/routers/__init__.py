@@ -7,4 +7,5 @@ from .public import router as public  # noqa: F401
 from .questions import router as questions  # noqa: F401
 from .quizzes import router as quizzes  # noqa: F401
 from .sessions import router as sessions  # noqa: F401
+from .sessions_websockets import router as session_websockets  # noqa: F401
 from .users import router as users  # noqa: F401

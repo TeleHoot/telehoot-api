@@ -22,7 +22,7 @@ class Base(BaseModel):
 
 
 class Create(Base):
-    user_id: UUID
+    pass
 
 
 class Update(BaseModel):
@@ -32,8 +32,6 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
-    user_id: UUID
-    session_id: UUID
     user: schemas_users.Read
     session: schemas_sessions.Read
     created_at: datetime

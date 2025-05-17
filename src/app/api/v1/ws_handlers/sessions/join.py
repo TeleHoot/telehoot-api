@@ -56,12 +56,9 @@ async def handle_join(
                 participant = await participants_service.create(
                     uow,
                     schemas.participants.Create(
-                        user_id=user.id,
                         session_nickname=data["username"] if data["username"] else user.username,
                     ),
-                    additional_data={
-                        "session_id": session_id,
-                    },
+                    additional_data={"session_id": session_id, "user_id": user.id},
                 )
             except Exception as e:
                 await ws_manager.send_event_to_connection(

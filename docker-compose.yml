@@ -87,7 +87,7 @@ services:
     container_name: app-logs
     image: alpine
     volumes:
-      - ./logs/app.log:/var/log/app.log
+      - ./app.log:/var/log/app.log
     command:
       - tail
       - -f

@@ -33,11 +33,10 @@ async def create_participant(
     sessions_service: dependencies.services.Sessions,
     quizzes_service: dependencies.services.Quizzes,
     org_service: dependencies.services.Organizations,
-    users_service: dependencies.services.Users,
+    current_user: dependencies.permissions.ActiveUser,
 ):
     await org_service.read_by_id(uow, organization_id)
     await quizzes_service.read_by_id(uow, quiz_id)
-    await users_service.read_by_id(uow, participant_data.user_id)
 
     session = await sessions_service.read_by_id(uow, session_id)
     if session.status != models.SessionStatus.WAITING:
@@ -49,9 +48,7 @@ async def create_participant(
     return await participants_service.create(
         uow,
         participant_data,
-        additional_data={
-            "session_id": session_id,
-        },
+        additional_data={"session_id": session_id, "user_id": current_user.id},
     )
 
 
