@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import core
@@ -13,12 +14,13 @@ postgres_manager = core.db.get_postgres_manager()
 
 
 @pytest.fixture(scope="session")
-async def setup_db_schema() -> AsyncGenerator[None]:
-    async with core.db.get_postgres_manager().engine.begin() as conn:
+async def setup_db_schema() -> None:
+    async with postgres_manager.engine.begin() as conn:
         await conn.run_sync(core.models.sqlalchemy.Base.metadata.create_all)
-    yield
-    async with core.db.get_postgres_manager().engine.begin() as conn:
-        await conn.run_sync(core.models.sqlalchemy.Base.metadata.drop_all)
+
+        if tables := core.models.sqlalchemy.Base.metadata.tables.values():
+            table_names = ",".join(f'"{table.name}"' for table in tables)
+            await conn.execute(text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE;"))
 
 
 @pytest.fixture
