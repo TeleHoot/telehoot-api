@@ -69,7 +69,7 @@ async def get_session(
     session = await sessions_service.read_by_id(
         uow, session_id, include_deleted=current_user.is_admin
     )
-    if str(session.quiz_id) != str(quiz.id):
+    if str(session.quiz.id) != str(quiz.id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found for this quiz"
         )
@@ -90,7 +90,7 @@ async def update_session(
     sessions_service: dependencies.services.Sessions,
 ):
     session = await sessions_service.read_by_id(uow, session_id)
-    if str(session.quiz_id) != str(quiz.id):
+    if str(session.quiz.id) != str(quiz.id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found for this quiz"
         )
@@ -113,7 +113,7 @@ async def delete_session(
     sessions_service: dependencies.services.Sessions,
 ):
     session = await sessions_service.read_by_id(uow, session_id)
-    if str(session.quiz_id) != str(quiz.id):
+    if str(session.quiz.id) != str(quiz.id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found for this quiz"
         )
@@ -124,6 +124,27 @@ async def delete_session(
             session_id,
         )
     }
+
+
+@router.get(
+    "/{session_id}/results",
+    response_model=list[schemas.sessions.SessionResult],
+    dependencies=[Depends(dependencies.permissions.get_active_user)],
+)
+async def get_session_results(
+    quiz: dependencies.paths.CurrentQuiz,
+    session_id: UUID,
+    uow: dependencies.uow.Full,
+    sessions_service: dependencies.services.Sessions,
+):
+    session = await sessions_service.read_by_id(uow, session_id)
+    if str(session.quiz.id) != str(quiz.id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found for this quiz",
+        )
+
+    return await sessions_service.get_session_results(uow, session_id)
 
 
 @router.websocket("/{session_id}")

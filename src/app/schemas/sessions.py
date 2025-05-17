@@ -8,8 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 from src.app import models
 
-from . import questions as schemas_questions
-from . import quizzes as schemas_quizzes
+from . import questions as question_schemas
+from . import quizzes as quiz_schemas
+from . import users as user_schemas
 
 
 class Base(BaseModel):
@@ -34,7 +35,7 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
-    quiz: schemas_quizzes.Read
+    quiz: quiz_schemas.Read
     created_at: datetime
     updated_at: datetime
 
@@ -91,7 +92,7 @@ class UserLeftEvent(SessionEvent):
 class NextQuestionEvent(SessionEvent):
     type: SessionEventType = SessionEventType.NEXT
     current_question_index: int = 0
-    question: schemas_questions.Read | None = None
+    question: question_schemas.Read | None = None
     is_last_question: bool = False
 
 
@@ -116,3 +117,8 @@ class ErrorEvent(SessionEvent):
     error_code: str
     message: str | None = None
     code: int
+
+
+class SessionResult(BaseModel):
+    user: user_schemas.Read
+    total_points: Annotated[int, Field(ge=0)]

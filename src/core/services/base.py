@@ -130,8 +130,7 @@ class BaseCRUD[
     async def _validate_data(self, entity: TModel) -> TRead:
         return self.read_schema.model_validate(entity)
 
-    @staticmethod
-    async def _dump_data(schema: BaseModel, additional_data: dict | None = None) -> dict:
+    async def _dump_data(self, schema: BaseModel, additional_data: dict | None = None) -> dict:  # noqa: PLR6301
         dumped = schema.model_dump(exclude_unset=True)
         if additional_data:
             dumped.update(additional_data)

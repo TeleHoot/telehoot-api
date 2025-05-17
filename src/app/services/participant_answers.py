@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from src import core
 from src.app import models, repositories, schemas
 
@@ -21,3 +23,11 @@ class ParticipantAnswers(
             update_schema=schemas.participant_answers.Update,
             filters_schema=schemas.participant_answers.Filters,
         )
+
+    async def _dump_data(self, schema: BaseModel, additional_data: dict | None = None) -> dict:
+        dumped = await super()._dump_data(schema, additional_data)
+
+        if question_id := dumped.get("question_id"):
+            dumped["question_id"] = str(question_id)
+
+        return dumped

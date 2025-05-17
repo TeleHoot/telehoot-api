@@ -102,7 +102,7 @@ async def handle_answer(
 
             part_answers = await participant_answers_service.read_many(
                 uow,
-                filters=schemas.participant_answers.Filters(question_id=str(question.id)),
+                filters=schemas.participant_answers.Filters(question_id=question.id),
             )
 
             if part_answers:
@@ -126,7 +126,7 @@ async def handle_answer(
                         is_correct=is_correct,
                         points=question.weight if is_correct else 0,
                         participant_id=participant.id,
-                        question_id=str(question.id),
+                        question_id=question.id,
                     ),
                 )
 
