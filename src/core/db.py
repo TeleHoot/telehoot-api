@@ -33,7 +33,6 @@ class PostgresManager:
     def _create_engine() -> AsyncEngine:
         return create_async_engine(
             settings.POSTGRES.URL,
-            echo=settings.DEBUG,
             poolclass=AsyncAdaptedQueuePool,
             pool_recycle=900,
         )

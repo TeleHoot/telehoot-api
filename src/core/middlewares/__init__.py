@@ -4,10 +4,13 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from src.core.config import get_settings
 
+from . import logging
+
 settings = get_settings()
 
 
 def register_middlewares(app: FastAPI) -> None:
+    app.add_middleware(logging.LoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.ALLOW_ORIGINS,
