@@ -3,6 +3,7 @@ import sys
 from datetime import UTC, datetime
 from logging import Formatter, LogRecord
 from pathlib import Path
+from typing import ClassVar
 
 from src.core import config
 
@@ -10,6 +11,17 @@ settings = config.get_settings()
 
 
 class CustomConsoleFormatter(Formatter):
+    COLORS: ClassVar = {
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[31;1m",  # Bold Red
+        "RESET": "\033[0m",  # Reset
+        "TIMESTAMP": "\033[90m",  # Gray
+        "NAME": "\033[35m",  # Magenta
+    }
+
     standard_attrs = frozenset({
         "args",
         "asctime",
@@ -37,10 +49,21 @@ class CustomConsoleFormatter(Formatter):
     })
 
     def format(self, record: LogRecord) -> str:
-        formatted_message = super().format(record)
+        level_color = self.COLORS.get(record.levelname, self.COLORS["RESET"])
+        timestamp = f"{self.COLORS['TIMESTAMP']}[{self.formatTime(record, self.datefmt)}]{self.COLORS['RESET']}"  # noqa: E501
+        level = f"{level_color}[{record.levelname}]{self.COLORS['RESET']}"
+        name = f"{self.COLORS['NAME']}[{record.name}]{self.COLORS['RESET']}"
+        message = f"{record.getMessage()}"
+
+        formatted_message = f"{timestamp} {level} {name} {message}"
+
         extra_attrs = {k: v for k, v in record.__dict__.items() if k not in self.standard_attrs}
         if extra_attrs:
             formatted_message += f" {json.dumps(extra_attrs, default=str)}"
+
+        if record.exc_info:
+            formatted_message += f"\n{self.formatException(record.exc_info)}"
+
         return formatted_message
 
 
