@@ -25,7 +25,7 @@ class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     repr_cols = ("id", "quiz_id", "join_code", "status")
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
-    current_question_index: Mapped[int] = mapped_column(default=1)
+    current_question_index: Mapped[int] = mapped_column(default=0)
     quiz_id: Mapped[UUID] = mapped_column(ForeignKey("quizzes.id", ondelete="CASCADE"))
     join_code: Mapped[str] = mapped_column(String(4))
     status: Mapped[SessionStatus] = mapped_column(
