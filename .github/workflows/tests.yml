@@ -21,7 +21,7 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-        
+
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
@@ -31,9 +31,6 @@ jobs:
         with:
           mongodb-version: 8.0.6
           mongodb-replica-set: overleaf
-          mongodb-username: mongo
-          mongodb-password: mongo
-          mongodb-db: mongo
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml
