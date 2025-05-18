@@ -36,7 +36,7 @@ async def handle_join(
             )
             raise WebSocketDisconnect from e
 
-        if session.status != models.session.SessionStatus.WAITING:
+        if str(session.status).lower() != str(models.session.SessionStatus.WAITING).lower():
             await ws_manager.send_event_to_connection(
                 connection_id,
                 schemas.sessions.ErrorEvent(

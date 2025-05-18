@@ -34,9 +34,9 @@ async def handle_cancel(
             )
             raise WebSocketDisconnect from e
 
-        if session.status not in {
-            models.session.SessionStatus.ACTIVE,
-            models.session.SessionStatus.WAITING,
+        if str(session.status).lower() not in {
+            str(models.session.SessionStatus.ACTIVE).lower(),
+            str(models.session.SessionStatus.WAITING).lower(),
         }:
             await ws_manager.send_event_to_connection(
                 connection_id,

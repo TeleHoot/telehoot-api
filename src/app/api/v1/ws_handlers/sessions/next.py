@@ -36,7 +36,7 @@ async def handle_next(
             )
             raise WebSocketDisconnect from e
 
-        if session.status != models.session.SessionStatus.ACTIVE:
+        if str(session.status).lower() != str(models.session.SessionStatus.ACTIVE).lower():
             await ws_manager.send_event_to_connection(
                 connection_id,
                 schemas.sessions.ErrorEvent(
@@ -63,7 +63,7 @@ async def handle_next(
 
         participant = participant[0]
 
-        if participant.role != models.ParticipantRole.HOST:
+        if str(participant.role).lower() != str(models.ParticipantRole.HOST).lower():
             await ws_manager.send_event_to_connection(
                 connection_id,
                 schemas.sessions.ErrorEvent(

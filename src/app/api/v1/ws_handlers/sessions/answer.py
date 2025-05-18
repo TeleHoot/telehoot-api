@@ -48,7 +48,7 @@ async def handle_answer(
             )
             raise WebSocketDisconnect from e
 
-        if session.status != models.session.SessionStatus.ACTIVE:
+        if str(session.status).lower() != str(models.session.SessionStatus.ACTIVE).lower():
             await ws_manager.send_event_to_connection(
                 connection_id,
                 schemas.sessions.ErrorEvent(
