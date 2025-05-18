@@ -33,6 +33,7 @@ class Create(Base):
 
 class Read(Base):
     id: UUID
+    telegram_username: TelegramUsername
     telegram_id: int
     is_admin: bool
     created_at: datetime

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class ParticipantRole(enum.StrEnum):
     HOST = "host"
-    PARTICIPANT = "participant"
+    GUEST = "guest"
 
 
 class Participant(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
@@ -34,7 +34,7 @@ class Participant(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete
             name="participantrole_enum",
             values_callable=lambda enum_class: [member.value for member in enum_class],
         ),
-        default=ParticipantRole.PARTICIPANT,
+        default=ParticipantRole.GUEST,
     )
 
     user: Mapped["User"] = relationship(back_populates="participants", lazy="selectin")

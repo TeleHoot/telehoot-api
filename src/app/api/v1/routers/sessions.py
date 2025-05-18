@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, status
 
 from src import core
-from src.app import schemas
+from src.app import models, schemas
 from src.app.api import dependencies
 
 router = APIRouter(
@@ -26,14 +26,26 @@ async def create_session(
     quiz: dependencies.paths.CurrentQuiz,
     uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
+    participants_service: dependencies.services.Participants,
+    host: dependencies.permissions.OrganizationEditor,
 ):
-    return await sessions_service.create(
+    session = await sessions_service.create(
         uow,
         schemas.sessions.Create(),
         additional_data={
             "quiz_id": quiz.id,
         },
     )
+
+    await participants_service.create(
+        uow,
+        schemas.participants.Create(
+            session_nickname=host.telegram_username, role=models.ParticipantRole.HOST
+        ),
+        additional_data={"session_id": session.id, "user_id": host.id},
+    )
+
+    return session
 
 
 @router.get(
@@ -79,6 +91,7 @@ async def get_session(
 @router.patch(
     "/{session_id}",
     response_model=schemas.sessions.Read,
+    dependencies=[Depends(dependencies.permissions.get_org_presenter)],
 )
 async def update_session(
     quiz: dependencies.paths.CurrentQuiz,
@@ -101,7 +114,7 @@ async def update_session(
 
 
 @router.delete(
-    "/{session_id}",
+    "/{session_id}", dependencies=[Depends(dependencies.permissions.get_org_presenter)]
 )
 async def delete_session(
     quiz: dependencies.paths.CurrentQuiz,

@@ -38,7 +38,22 @@ class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     )
 
     quiz: Mapped["Quiz"] = relationship(back_populates="sessions", lazy="selectin")
-    participants: Mapped["Participant"] = relationship(back_populates="session", lazy="selectin")
+    participants: Mapped[list["Participant"]] = relationship(
+        back_populates="session", lazy="selectin"
+    )
+    guests: Mapped[list["Participant"]] = relationship(
+        primaryjoin="and_(Session.id == Participant.session_id, Participant.role == 'guest')",
+        foreign_keys="Participant.session_id",
+        viewonly=True,
+        lazy="selectin",
+    )
+
+    hosts: Mapped[list["Participant"]] = relationship(
+        primaryjoin="and_(Session.id == Participant.session_id, Participant.role == 'host')",
+        foreign_keys="Participant.session_id",
+        viewonly=True,
+        lazy="selectin",
+    )
 
     __table_args__ = (
         Index(

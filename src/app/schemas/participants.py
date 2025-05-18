@@ -18,7 +18,7 @@ SessionNickname = Annotated[str, Field(max_length=64)]
 
 class Base(BaseModel):
     session_nickname: SessionNickname
-    role: models.ParticipantRole = models.ParticipantRole.PARTICIPANT
+    role: models.ParticipantRole = models.ParticipantRole.GUEST
 
 
 class Create(Base):

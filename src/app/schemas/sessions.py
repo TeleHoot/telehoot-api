@@ -35,6 +35,7 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
+    hosts: list[user_schemas.Read]
     quiz: quiz_schemas.Read
     created_at: datetime
     updated_at: datetime

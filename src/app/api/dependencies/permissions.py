@@ -84,5 +84,12 @@ def require_org_role(*allowed_roles: models.UserRoles) -> Callable:
     return dependency
 
 
-get_org_owner = Depends(require_org_role(models.UserRoles.OWNER))
-get_org_editor = Depends(require_org_role(models.UserRoles.OWNER, models.UserRoles.EDITOR))
+get_org_owner = require_org_role(models.UserRoles.OWNER)
+get_org_editor = require_org_role(models.UserRoles.OWNER, models.UserRoles.EDITOR)
+get_org_presenter = require_org_role(
+    models.UserRoles.OWNER, models.UserRoles.EDITOR, models.UserRoles.PRESENTER
+)
+
+OrganizationOwner = Annotated[schemas.users.Read, Depends(get_org_owner)]
+OrganizationEditor = Annotated[schemas.users.Read, Depends(get_org_editor)]
+OrganizationPresenter = Annotated[schemas.users.Read, Depends(get_org_presenter)]
