@@ -81,7 +81,7 @@ async def handle_next(
                 filters=schemas.questions.Filters(quiz_id=session.quiz.id),
                 sorting=schemas.questions.SortParams(sort_by=schemas.questions.SortFields.ORDER),
             )
-            if len(questions) - 1 <= next_index:
+            if next_index >= len(questions):
                 await ws_manager.send_event_to_connection(
                     connection_id,
                     schemas.sessions.ErrorEvent(
@@ -97,7 +97,7 @@ async def handle_next(
                 schemas.sessions.Update(current_question_index=next_index),
             )
             question = questions[next_index]
-            is_last_question = len(questions) - 1 == next_index
+            is_last_question = next_index == len(questions) - 1
 
         except Exception as e:
             await ws_manager.send_event_to_connection(
