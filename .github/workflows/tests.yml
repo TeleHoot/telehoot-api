@@ -45,13 +45,9 @@ jobs:
           done
 
           echo "Initializing replica set..."
-          docker exec mongo mongosh --eval "
-            rs.initiate({_id: 'test', members: [{_id: 0, host: 'localhost:27017'}]});
-          "
+          docker exec mongo mongosh --eval "rs.initiate({_id: 'test', members: [{_id: 0, host: 'localhost:27017'}]});"
 
-          docker exec mongo mongosh -u mongo -p mongo --eval "
-            db.adminCommand({replSetGetStatus: 1});
-          "
+          docker exec mongo mongosh -u mongo -p mongo --eval "db.adminCommand({replSetGetStatus: 1});"
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml
