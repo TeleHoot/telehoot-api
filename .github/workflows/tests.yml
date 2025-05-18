@@ -26,11 +26,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.12.0
-        with:
-          mongodb-version: 8.0.6
-          mongodb-replica-set: overleaf
+      - name: Start mongo with replica set and user
+        run: |
+          docker run --rm -d \
+            -p 27017:27017 \
+            --name mongo \
+            -e MONGO_INITDB_ROOT_USERNAME=mongo \
+            -e MONGO_INITDB_ROOT_PASSWORD=mongo \
+            mongo:8.0.6 --replSet test --bind_ip_all
+
+          sleep 10
+          docker exec mongo mongosh -u mongo -p mongo --eval "rs.initiate()"
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml
