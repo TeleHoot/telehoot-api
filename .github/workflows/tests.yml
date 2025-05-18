@@ -28,24 +28,30 @@ jobs:
 
       - name: Start MongoDB and initialize
         run: |
-          docker run --rm -d \
+          docker run -d \
             -p 27017:27017 \
             --name mongo \
             -e MONGO_INITDB_ROOT_USERNAME=mongo \
             -e MONGO_INITDB_ROOT_PASSWORD=mongo \
-            mongo:8.0.6 --replSet test --bind_ip_all
+            mongo:8.0.6 --replSet test --bind_ip_all --auth
 
-          until docker exec mongo mongosh -u mongo -p mongo --eval "db.adminCommand('ping')" | grep "ok"; do
+          echo "Waiting for MongoDB to start..."
+          for i in {1..30}; do
+            if docker logs mongo 2>&1 | grep -q "Waiting for connections"; then
+              echo "MongoDB is up!"
+              break
+            fi
             sleep 2
           done
 
-          # Инициализируем Replica Set
-          docker exec mongo mongosh -u mongo -p mongo --eval "rs.initiate({_id: 'test', members: [{_id: 0, host: 'localhost:27017'}]})"
+          echo "Initializing replica set..."
+          docker exec mongo mongosh --eval "
+            rs.initiate({_id: 'test', members: [{_id: 0, host: 'localhost:27017'}]});
+          "
+
+          docker exec mongo mongosh -u mongo -p mongo --eval "
+            db.adminCommand({replSetGetStatus: 1});
+          "
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml
-
-    #   - name: Upload Coverage to Codecov
-    #     uses: codecov/codecov-action@v4
-    #     with:
-    #       token: ${{ secrets.CODECOV_TOKEN }}
