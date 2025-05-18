@@ -51,7 +51,6 @@ async def create_organization(
 @router.get(
     "",
     response_model=list[schemas.organizations.Read],
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def read_organizations(
     uow: dependencies.uow.Postgres,
@@ -59,21 +58,30 @@ async def read_organizations(
     filters: FiltersQuery,
     sorting: SortingQuery,
     pagination: dependencies.queries.Pagination,
+    optional_user: dependencies.permissions.OptionalUser,
 ):
-    return await service.read_many(uow, filters, sorting, pagination)
+    return await service.read_many(
+        uow,
+        filters,
+        sorting,
+        pagination,
+        include_deleted=optional_user.is_admin if optional_user else False,
+    )
 
 
 @router.get(
     "/{organization_id}",
     response_model=schemas.organizations.Read,
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def read_organization(
     organization_id: UUID,
     uow: dependencies.uow.Postgres,
     service: dependencies.services.Organizations,
+    optional_user: dependencies.permissions.OptionalUser,
 ):
-    return await service.read_by_id(uow, organization_id)
+    return await service.read_by_id(
+        uow, organization_id, include_deleted=optional_user.is_admin if optional_user else False
+    )
 
 
 @router.patch(

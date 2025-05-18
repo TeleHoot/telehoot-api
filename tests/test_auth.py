@@ -69,7 +69,7 @@ async def test_auth_new_user(
     )
     assert org is not None
 
-    # Check that membership was created in the database with role CREATOR
+    # Check that membership was created in the database with role OWNER
     membership: models.Membership | None = await db_session.scalar(
         select(models.Membership)
         .where(models.Membership.user_id == user.id)

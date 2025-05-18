@@ -17,6 +17,19 @@ cookie = APIKeyCookie(
 )
 
 
+async def get_optional_user(
+    token: Annotated[str | None, Depends(cookie)],
+    uow: uow.Postgres,
+    auth_service: services.Auth,
+) -> schemas.users.Read | None:
+    if token:
+        return await auth_service.read_user_by_token(uow, token)
+    return None
+
+
+OptionalUser = Annotated[schemas.users.Read | None, Depends(get_optional_user)]
+
+
 async def get_current_user(
     token: Annotated[str, Depends(cookie)],
     uow: uow.Postgres,

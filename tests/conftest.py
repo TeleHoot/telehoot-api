@@ -1,4 +1,5 @@
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
+from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -23,7 +24,7 @@ async def setup_db_schema() -> None:
             await conn.execute(text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE;"))
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
     async with postgres_manager.session_factory.begin() as session:
         try:
@@ -32,7 +33,7 @@ async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
             await session.rollback()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def client(
     monkeypatch: pytest.MonkeyPatch, db_session: AsyncSession
 ) -> AsyncGenerator[AsyncClient]:
@@ -70,11 +71,40 @@ async def user(db_session: AsyncSession) -> models.User:
 
 
 @pytest.fixture(scope="function")
-def user_client(client: AsyncClient, user: models.User) -> AsyncClient:
+def user_client(client: AsyncClient, user: models.User) -> Generator[AsyncClient, Any, Any]:
     app.dependency_overrides[dependencies.permissions.get_current_user] = (
         lambda: schemas.users.Read.model_validate(user)
     )
-    return client
+
+    yield client
+
+    app.dependency_overrides = {}
+
+
+@pytest.fixture(scope="function")
+async def admin_user(db_session: AsyncSession) -> models.User:
+    user = models.User(
+        username="Mr. Pudge",
+        is_admin=True,
+        telegram_id=54321,
+        telegram_username="Pudger228",
+        first_name="Pudge",
+    )
+    db_session.add(user)
+    await db_session.flush()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture(scope="function")
+def admin_client(client: AsyncClient, admin_user: models.User) -> Generator[AsyncClient, Any, Any]:
+    app.dependency_overrides[dependencies.permissions.get_current_user] = (
+        lambda: schemas.users.Read.model_validate(admin_user)
+    )
+
+    yield client
+
+    app.dependency_overrides = {}
 
 
 @pytest.fixture(scope="function")

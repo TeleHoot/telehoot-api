@@ -49,10 +49,14 @@ async def get_quizzes(
     filters: FiltersQuery,
     sorting: SortingQuery,
     pagination: dependencies.queries.Pagination,
-    current_user: dependencies.permissions.ActiveUser,
+    optional_user: dependencies.permissions.OptionalUser,
 ):
     return await quizzes_service.read_many(
-        uow, filters, sorting, pagination, include_deleted=current_user.is_admin
+        uow,
+        filters,
+        sorting,
+        pagination,
+        include_deleted=optional_user.is_admin if optional_user else False,
     )
 
 
@@ -66,10 +70,14 @@ async def get_quiz(
     uow: dependencies.uow.Full,
     quizzes_service: dependencies.services.Quizzes,
     org_service: dependencies.services.Organizations,
-    current_user: dependencies.permissions.ActiveUser,
+    optional_user: dependencies.permissions.OptionalUser,
 ):
-    await org_service.read_by_id(uow, organization_id, include_deleted=current_user.is_admin)
-    return await quizzes_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
+    await org_service.read_by_id(
+        uow,
+        organization_id,
+        include_deleted=(is_admin := optional_user.is_admin if optional_user else False),
+    )
+    return await quizzes_service.read_by_id(uow, quiz_id, include_deleted=is_admin)
 
 
 @router.patch(

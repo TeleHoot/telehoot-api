@@ -117,6 +117,40 @@ async def test_delete_organization(
     assert response.json() == {"is_success": True}
     assert response.status_code == status.HTTP_200_OK
 
+    org = await db_session.scalar(select(models.Organization))
+
+    assert org is not None
+    assert hasattr(org, "deleted_at")
+    assert org.deleted_at is not None
+
+    membership = await db_session.scalar(select(models.Membership))
+
+    # check cascade delete
+    assert membership is not None
+    assert hasattr(membership, "deleted_at")
+    assert membership.deleted_at is not None
+
+    assert org.deleted_at == membership.deleted_at
+
+    # deleted organization is not visible
+    response: httpx.Response = await user_client.get("/organizations")
+
+    assert response.json() == []
+
+
+async def test_admin_sees_deleted_organizations(
+    admin_client: httpx.AsyncClient, organization: models.Organization, db_session: AsyncSession
+):
+    await admin_client.delete(f"/organizations/{organization.id}")
+
+    response = await admin_client.get("/organizations")
+    response_data = response.json()
+    assert len(response_data) == 1
+
+    assert "name" in (org := response_data[0])
+    assert org["name"] == organization.name
+    assert org["id"] == str(organization.id)
+
 
 async def test_delete_organization_editor(
     user_client: httpx.AsyncClient, membership_editor: models.Membership, db_session: AsyncSession
