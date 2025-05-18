@@ -21,27 +21,19 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
-      mongo:
-        image: mongo:8.0.6
-        env:
-          MONGO_INITDB_ROOT_USERNAME: mongo
-          MONGO_INITDB_ROOT_PASSWORD: mongo
-          MONGO_INITDB_DATABASE: mongo
-        ports:
-          - 27017:27017
+        
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Initialize MongoDB replica set
-        run: |
-          echo "Waiting for MongoDB to be ready..."
-          until echo 'db.runCommand("ping").ok' | mongosh "mongodb://mongo:mongo@localhost:27017" --quiet; do
-            sleep 1
-          done
-          echo "Initializing replica set..."
-          mongosh "mongodb://mongo:mongo@localhost:27017" --eval 'rs.initiate({_id: "overleaf", members: [{_id: 0, host: "localhost:27017"}]})'
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.12.0
+        with:
+          mongodb-version: 8.0.6
+          mongodb-replica-set: overleaf
+          mongodb-username: mongo
+          mongodb-password: mongo
+          mongodb-db: mongo
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml
