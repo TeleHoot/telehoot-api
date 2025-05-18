@@ -88,6 +88,7 @@ async def handle_start(
                 sorting=schemas.questions.SortParams(sort_by=schemas.questions.SortFields.ORDER),
             )
             question = questions[0]
+            is_last_question = len(questions) - 1 == 0
         except Exception as e:
             await ws_manager.send_event_to_connection(
                 connection_id,
@@ -99,6 +100,8 @@ async def handle_start(
             )
             raise WebSocketDisconnect from e
 
-        event = schemas.sessions.SessionStartedEvent(question=question)
+        event = schemas.sessions.SessionStartedEvent(
+            question=question, is_last_question=is_last_question
+        )
 
         await ws_manager.broadcast_event_to_channel(str(session_id), event)
