@@ -30,14 +30,6 @@ jobs:
           MONGO_INITDB_DATABASE: mongo
         ports:
           - 27017:27017
-        options: >-
-          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          --replSet overleaf
-          --auth
-
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
