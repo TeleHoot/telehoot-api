@@ -22,40 +22,33 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-      mongo:
-        image: mongo:5.0
-        ports:
-          - 27017:27017
-        env:
-          MONGO_INITDB_ROOT_USERNAME: mongo
-          MONGO_INITDB_ROOT_PASSWORD: mongo
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 3
-          --replSet test
-          --bind_ip_all
-
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
 
-      - name: Initialize MongoDB replica set
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.12.0
+        with:
+          mongodb-version: 8.0.6
+          mongodb-replica-set: overleaf
+          mongodb-container-name: mongo
+
+      - name: Create mongo user
         run: |
-          echo "Waiting for MongoDB to be ready..."
-          for i in {1..30}; do
-            if docker exec mongo mongosh -u mongo -p mongo --eval "db.runCommand('ping').ok" --quiet | grep -q 1; then
-              echo "MongoDB is ready!"
-              break
-            fi
-            sleep 2
-          done
-          
-          echo "Initializing replica set..."
-          docker exec mongo mongosh -u mongo -p mongo --eval "rs.initiate({_id: 'test', members: [{_id: 0, host: 'localhost:27017'}]});"
-          sleep 5
-          docker exec mongo mongosh -u mongo -p mongo --eval "db.adminCommand({replSetGetStatus: 1});"
+          docker exec mongo mongosh --eval '
+            db.getSiblingDB("admin").createUser({
+              user: "mongo",
+              pwd: "mongo",
+              roles: [
+                { role: "root", db: "admin" }
+              ]
+            })
+          '
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml
+
+    #   - name: Upload Coverage to Codecov
+    #     uses: codecov/codecov-action@v4
+    #     with:
+    #       token: ${{ secrets.CODECOV_TOKEN }}
