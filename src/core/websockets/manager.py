@@ -60,7 +60,7 @@ class Manager:
                 self.logger.debug("Listener task cancelled")
 
             if self.redis:
-                await self.redis.close()
+                await self.redis.aclose()
                 self.logger.info("Redis connection closed")
         except Exception:
             self.logger.exception("Error during disconnection:")

@@ -147,9 +147,10 @@ async def test_admin_sees_deleted_organizations(
     response_data = response.json()
     assert len(response_data) == 1
 
-    assert "name" in (org := response_data[0])
-    assert org["name"] == organization.name
-    assert org["id"] == str(organization.id)
+    org = response_data[0]
+
+    assert org.get("name") == organization.name
+    assert org.get("id") == str(organization.id)
 
 
 async def test_delete_organization_editor(

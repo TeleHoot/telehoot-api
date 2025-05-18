@@ -2,16 +2,26 @@ from collections.abc import AsyncGenerator, Generator
 from typing import Any
 
 import pytest
+from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
+from motor.motor_asyncio import AsyncIOMotorClientSession
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import src.app
 from src import core
 from src.app import models, schemas
 from src.app.api import dependencies
 from src.main import app
 
 postgres_manager = core.db.get_postgres_manager()
+mongo_manager = core.db.get_mongo_manager()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def create_app_test():
+    with TestClient(src.app.create_app()):
+        yield
 
 
 @pytest.fixture(scope="session")
@@ -34,11 +44,26 @@ async def db_session(setup_db_schema) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest.fixture(scope="function")
+async def mongo_session() -> AsyncGenerator[AsyncIOMotorClientSession]:
+    session = await mongo_manager.get_session()
+    session.start_transaction()
+
+    try:
+        yield session
+    finally:
+        await session.abort_transaction()
+        await session.end_session()
+
+
+@pytest.fixture(scope="function")
 async def client(
-    monkeypatch: pytest.MonkeyPatch, db_session: AsyncSession
+    monkeypatch: pytest.MonkeyPatch,
+    db_session: AsyncSession,
+    mongo_session: AsyncIOMotorClientSession,
 ) -> AsyncGenerator[AsyncClient]:
     async def patched_aenter(self):  # noqa: RUF029
         self._postgres_session = db_session
+        self._mongo_session = mongo_session
         return self
 
     async def patched_aexit(*args, **kwargs):

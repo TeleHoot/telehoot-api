@@ -34,8 +34,7 @@ async def create_test_helper(
     quiz_id: str = response_data["id"]
 
     if session:
-        quiz = await session.get(models.Organization, quiz_id)
-
+        quiz = await session.get(models.Quiz, quiz_id)
         assert quiz is not None
 
         for given_field, given_value in data.items():
@@ -43,7 +42,6 @@ async def create_test_helper(
     return quiz_id
 
 
-@pytest.mark.xfail(reason="needs mongodb")
 async def test_create_quiz_success(
     user_client: httpx.AsyncClient,
     db_session: AsyncSession,
@@ -65,9 +63,11 @@ async def test_create_quiz_success(
 
     assert "detail" not in read_response_data
 
-    assert "author" in read_response_data
-    assert read_response_data["author"]["id"] == user.id
+    quiz = read_response_data[0]
 
-    assert read_response_data.get("organization_id") == organization.id
+    assert "author" in quiz
+    assert quiz["author"]["id"] == str(user.id)
 
-    assert read_response_data.get("questions_count") == 0
+    assert quiz.get("organization_id") == str(organization.id)
+
+    assert quiz.get("questions_count") == 0
