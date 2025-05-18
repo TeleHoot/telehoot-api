@@ -106,3 +106,25 @@ async def test_update_organizations_success(
     assert "detail" not in response_data  # instead of status check
 
     assert response_data.get("name") == update_org_data["name"]
+
+
+async def test_delete_organization(
+    user_client: httpx.AsyncClient, membership_owner: models.Membership, db_session: AsyncSession
+):
+    response: httpx.Response = await user_client.delete(
+        f"/organizations/{membership_owner.organization_id}"
+    )
+    assert response.json() == {"is_success": True}
+    assert response.status_code == status.HTTP_200_OK
+
+
+async def test_delete_organization_editor(
+    user_client: httpx.AsyncClient, membership_editor: models.Membership, db_session: AsyncSession
+):
+    response: httpx.Response = await user_client.delete(
+        f"/organizations/{membership_editor.organization_id}"
+    )
+    response_data = response.json()
+    assert "message" in response_data
+    assert response_data.get("error_code") == "forbidden_access"
+    assert response.status_code == status.HTTP_403_FORBIDDEN

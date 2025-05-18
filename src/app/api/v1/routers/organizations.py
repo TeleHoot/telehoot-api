@@ -71,7 +71,7 @@ async def read_organization(
 @router.patch(
     "/{organization_id}",
     response_model=schemas.organizations.Read,
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
+    dependencies=[dependencies.permissions.get_org_editor],
 )
 async def update_organization(
     organization_id: UUID,
@@ -82,10 +82,7 @@ async def update_organization(
     return await service.update_by_id(uow, organization_id, organization_update)
 
 
-@router.delete(
-    "/{organization_id}",
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
-)
+@router.delete("/{organization_id}", dependencies=[dependencies.permissions.get_org_owner])
 async def delete_organization(
     organization_id: UUID,
     uow: dependencies.uow.Postgres,
@@ -97,7 +94,7 @@ async def delete_organization(
 @router.post(
     "/{organization_id}/image",
     response_model=schemas.organizations.Read,
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
+    dependencies=[dependencies.permissions.get_org_editor],
 )
 async def upload_organization_image(
     organization_id: UUID,
@@ -119,7 +116,7 @@ async def upload_organization_image(
 @router.delete(
     "/{organization_id}/image",
     response_model=schemas.organizations.Read,
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
+    dependencies=[dependencies.permissions.get_org_editor],
 )
 async def delete_organization_image(
     organization_id: UUID,

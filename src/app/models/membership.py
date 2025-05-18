@@ -2,6 +2,7 @@ import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import UUID, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src import core
@@ -35,8 +36,21 @@ class Membership(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete)
         ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
 
-    role: Mapped[UserRoles]
-    status: Mapped[Statuses] = mapped_column(default=Statuses.PENDING)
+    role: Mapped[UserRoles] = mapped_column(
+        SQLAlchemyEnum(
+            UserRoles,
+            name="userroles_enum",
+            values_callable=lambda enum_class: [member.value for member in enum_class],
+        )
+    )
+    status: Mapped[Statuses] = mapped_column(
+        SQLAlchemyEnum(
+            Statuses,
+            name="statuses_enum",
+            values_callable=lambda enum_class: [member.value for member in enum_class],
+        ),
+        default=Statuses.PENDING,
+    )
 
     organization: Mapped["Organization"] = relationship(
         back_populates="memberships", lazy="selectin"

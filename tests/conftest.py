@@ -84,3 +84,35 @@ async def organization(db_session: AsyncSession) -> models.Organization:
     await db_session.flush()
     await db_session.refresh(org)
     return org
+
+
+@pytest.fixture(scope="function")
+async def membership_owner(
+    db_session: AsyncSession, organization: models.Organization, user: models.User
+) -> models.Membership:
+    membership = models.Membership(
+        organization_id=organization.id,
+        user_id=user.id,
+        role=models.membership.UserRoles.OWNER,
+        status=models.membership.Statuses.APPROVED,
+    )
+    db_session.add(membership)
+    await db_session.flush()
+    await db_session.refresh(membership)
+    return membership
+
+
+@pytest.fixture(scope="function")
+async def membership_editor(
+    db_session: AsyncSession, organization: models.Organization, user: models.User
+) -> models.Membership:
+    membership = models.Membership(
+        organization_id=organization.id,
+        user_id=user.id,
+        role=models.membership.UserRoles.EDITOR,
+        status=models.membership.Statuses.APPROVED,
+    )
+    db_session.add(membership)
+    await db_session.flush()
+    await db_session.refresh(membership)
+    return membership

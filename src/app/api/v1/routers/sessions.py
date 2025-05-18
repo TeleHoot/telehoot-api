@@ -21,7 +21,6 @@ SortingQuery = Annotated[schemas.sessions.SortParams, Depends()]
     "",
     response_model=schemas.sessions.Read,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def create_session(
     quiz: dependencies.paths.CurrentQuiz,
@@ -80,7 +79,6 @@ async def get_session(
 @router.patch(
     "/{session_id}",
     response_model=schemas.sessions.Read,
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def update_session(
     quiz: dependencies.paths.CurrentQuiz,
@@ -104,7 +102,6 @@ async def update_session(
 
 @router.delete(
     "/{session_id}",
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def delete_session(
     quiz: dependencies.paths.CurrentQuiz,
@@ -129,7 +126,6 @@ async def delete_session(
 @router.get(
     "/{session_id}/results",
     response_model=list[schemas.sessions.SessionResult],
-    dependencies=[Depends(dependencies.permissions.get_active_user)],
 )
 async def get_session_results(
     quiz: dependencies.paths.CurrentQuiz,

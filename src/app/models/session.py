@@ -2,6 +2,7 @@ import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import UUID, ForeignKey, Index, String
+from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_v7.base import uuid7
 
@@ -20,13 +21,21 @@ class SessionStatus(enum.StrEnum):
 
 class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "sessions"
+    __soft_delete_cascades__ = ("participants",)
     repr_cols = ("id", "quiz_id", "join_code", "status")
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)
     current_question_index: Mapped[int] = mapped_column(default=1)
     quiz_id: Mapped[UUID] = mapped_column(ForeignKey("quizzes.id", ondelete="CASCADE"))
     join_code: Mapped[str] = mapped_column(String(4))
-    status: Mapped[SessionStatus] = mapped_column(default=SessionStatus.WAITING)
+    status: Mapped[SessionStatus] = mapped_column(
+        SQLAlchemyEnum(
+            SessionStatus,
+            name="sessionstatus_enum",
+            values_callable=lambda enum_class: [member.value for member in enum_class],
+        ),
+        default=SessionStatus.WAITING,
+    )
 
     quiz: Mapped["Quiz"] = relationship(back_populates="sessions", lazy="selectin")
     participants: Mapped["Participant"] = relationship(back_populates="session", lazy="selectin")
@@ -36,6 +45,6 @@ class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
             "uq_waiting_session_join_code",
             join_code,
             unique=True,
-            postgresql_where=(status == SessionStatus.WAITING.value.upper()),
+            postgresql_where=(status == SessionStatus.WAITING),
         ),
     )

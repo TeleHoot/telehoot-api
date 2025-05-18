@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 class Quiz(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     __tablename__ = "quizzes"
+    __soft_delete_cascades__ = ("sessions",)
     repr_cols = ("id", "name", "is_public")
 
     id: Mapped[UUID] = mapped_column(UUID(), primary_key=True, default=uuid7)

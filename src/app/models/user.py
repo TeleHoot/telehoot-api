@@ -20,7 +20,7 @@ class User(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     is_admin: Mapped[bool] = mapped_column(default=False)
 
     telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True)
-    telegram_username: Mapped[str] = mapped_column(String(255))
+    telegram_username: Mapped[str] = mapped_column(String(32))
     first_name: Mapped[str] = mapped_column(String(255))
     last_name: Mapped[str | None] = mapped_column(String(255))
     photo_url: Mapped[str | None] = mapped_column(String(255))

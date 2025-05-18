@@ -1,10 +1,12 @@
+from collections.abc import Callable
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, WebSocket, status
 from fastapi.security import APIKeyCookie
 
 from src import core
-from src.app import schemas
+from src.app import models, schemas
 from src.app.api.dependencies import services, uow
 
 settings = core.config.get_settings()
@@ -61,3 +63,26 @@ async def get_ws_user(
 
 
 WsUser = Annotated[schemas.users.Read, Depends(get_ws_user)]
+
+
+def require_org_role(*allowed_roles: models.UserRoles) -> Callable:
+    async def dependency(
+        organization_id: UUID,
+        uow: uow.Postgres,
+        memberships_service: services.Memberships,
+        current_user: ActiveUser,
+    ) -> schemas.users.Read:
+        membership = await memberships_service.read_by_id(
+            uow, entity_id={"organization_id": organization_id, "user_id": current_user.id}
+        )
+        if membership.role not in allowed_roles:
+            raise core.services.exceptions.PermissionDeniedError(
+                f"Roles required: {', '.join(allowed_roles)}. Your role: {membership.role}."
+            )
+        return current_user
+
+    return dependency
+
+
+get_org_owner = Depends(require_org_role(models.UserRoles.OWNER))
+get_org_editor = Depends(require_org_role(models.UserRoles.OWNER, models.UserRoles.EDITOR))
