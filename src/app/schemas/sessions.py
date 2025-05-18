@@ -68,6 +68,7 @@ class SessionEventType(enum.StrEnum):
     FINISH = "finish"
     ERROR = "error"
     CANCEL = "cancel"
+    SHOW_ANSWERS = "show_answers"
 
 
 class SessionEvent(core.schemas.websocket.EventBase):
@@ -110,6 +111,10 @@ class SessionCanceledEvent(SessionEvent):
 
 class SessionAnsweredEvent(SessionEvent):
     type: SessionEventType = SessionEventType.ANSWER
+
+
+class SessionShowedAnswersEvent(SessionEvent):
+    type: SessionEventType = SessionEventType.SHOW_ANSWERS
 
 
 class ErrorEvent(SessionEvent):
