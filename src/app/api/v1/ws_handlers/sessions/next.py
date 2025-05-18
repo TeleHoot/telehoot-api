@@ -81,7 +81,7 @@ async def handle_next(
                 filters=schemas.questions.Filters(quiz_id=session.quiz.id),
                 sorting=schemas.questions.SortParams(sort_by=schemas.questions.SortFields.ORDER),
             )
-            if len(questions) - 1 < next_index:
+            if len(questions) - 1 <= next_index:
                 await ws_manager.send_event_to_connection(
                     connection_id,
                     schemas.sessions.ErrorEvent(
