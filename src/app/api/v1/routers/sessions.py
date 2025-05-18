@@ -113,9 +113,7 @@ async def update_session(
     )
 
 
-@router.delete(
-    "/{session_id}", dependencies=[Depends(dependencies.permissions.get_org_presenter)]
-)
+@router.delete("/{session_id}", dependencies=[Depends(dependencies.permissions.get_org_presenter)])
 async def delete_session(
     quiz: dependencies.paths.CurrentQuiz,
     session_id: UUID,
