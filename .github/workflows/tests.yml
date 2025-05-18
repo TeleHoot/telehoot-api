@@ -44,6 +44,11 @@ jobs:
               ]
             })
           '
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.7.0
+        with:
+          redis-version: 8.0
+          redis-password: 'somepassword'
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml
