@@ -51,8 +51,8 @@ class Read(Base):
 class Filters(core.schemas.BaseFilters):
     organization_id: UUID | None = None
     author_id: UUID | None = None
-    name: str | None = None
     is_public: bool | None = None
+    search: str | None = None
 
 
 class SortFields(enum.StrEnum):
