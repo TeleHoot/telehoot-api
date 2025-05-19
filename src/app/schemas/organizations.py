@@ -5,11 +5,15 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from src import core
 
-Name = Annotated[str, Field(min_length=2, max_length=64)]
+from . import utils
+
+Name = Annotated[
+    str, BeforeValidator(utils.validate_non_empty), Field(min_length=2, max_length=64)
+]
 Description = Annotated[str | None, Field(max_length=500)]
 
 

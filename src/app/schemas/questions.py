@@ -6,15 +6,19 @@ from typing import Annotated, Self
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from src import core
 from src.app.models.question import QuestionType
 
+from . import utils
+
 Order = Annotated[int, Field(ge=0, le=1000)]
 Weight = Annotated[int, Field(ge=0, le=100)]
 
-Title = Annotated[str, Field(min_length=1, max_length=200)]
+Title = Annotated[
+    str, BeforeValidator(utils.validate_non_empty), Field(min_length=1, max_length=200)
+]
 AnswerText = Annotated[str, Field(min_length=1, max_length=500)]
 
 Answers = Annotated[list["AnswerBase"], Field(min_length=1, max_length=4)]

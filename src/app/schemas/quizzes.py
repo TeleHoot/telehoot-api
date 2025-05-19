@@ -5,17 +5,21 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from src import core
 
 from . import users as schemas_users
+from . import utils
 
 Description = Annotated[str | None, Field(max_length=500)]
+Name = Annotated[
+    str, BeforeValidator(utils.validate_non_empty), Field(min_length=1, max_length=64)
+]
 
 
 class Base(BaseModel):
-    name: str
+    name: Name
     description: Description = None
     is_public: bool = False
 
@@ -27,7 +31,7 @@ class Create(Base):
 
 
 class Update(BaseModel):
-    name: str | None = None
+    name: Name | None = None
     description: Description = None
     is_public: bool | None = None
 

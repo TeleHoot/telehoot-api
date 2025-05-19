@@ -18,7 +18,6 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
         self.logger = logging.getLogger(f"repositories.{self.__class__.__name__.lower()}")
         self.context = {
             "model": self.model.__name__,
-            "table": self.model.__tablename__,
         }
 
     @log_operation

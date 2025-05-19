@@ -21,11 +21,10 @@ async def create_test_helper(
     response: httpx.Response = await client.post("/organizations", json=data)
     response_data = response.json()
 
-    if 200 <= status_code < 300:  # noqa: PLR2004
-        assert "detail" not in response_data
-    else:
+    if status_code >= status.HTTP_400_BAD_REQUEST:
         assert "detail" in response_data
         return None
+    assert "detail" not in response_data
 
     assert response.status_code == status_code
 
@@ -58,6 +57,7 @@ async def test_create_organizations_success(
         ("", status.HTTP_422_UNPROCESSABLE_ENTITY),
         ("W", status.HTTP_422_UNPROCESSABLE_ENTITY),
         ("WW", status.HTTP_201_CREATED),
+        ("          ", status.HTTP_422_UNPROCESSABLE_ENTITY),
     ],
 )
 async def test_create_organizations_length(

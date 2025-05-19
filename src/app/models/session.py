@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid_v7.base import uuid7
 
 from src import core
+from src.app.models import ParticipantRole
 
 if TYPE_CHECKING:
     from src.app.models import Participant, Quiz
@@ -41,19 +42,14 @@ class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     participants: Mapped[list["Participant"]] = relationship(
         back_populates="session", lazy="selectin"
     )
-    guests: Mapped[list["Participant"]] = relationship(
-        primaryjoin="and_(Session.id == Participant.session_id, Participant.role == 'guest')",
-        foreign_keys="Participant.session_id",
-        viewonly=True,
-        lazy="selectin",
-    )
 
-    hosts: Mapped[list["Participant"]] = relationship(
-        primaryjoin="and_(Session.id == Participant.session_id, Participant.role == 'host')",
-        foreign_keys="Participant.session_id",
-        viewonly=True,
-        lazy="selectin",
-    )
+    @property
+    def guests(self) -> list["Participant"]:
+        return [p for p in self.participants if p.role == ParticipantRole.GUEST]
+
+    @property
+    def hosts(self) -> list["Participant"]:
+        return [p for p in self.participants if p.role == ParticipantRole.HOST]
 
     __table_args__ = (
         Index(
