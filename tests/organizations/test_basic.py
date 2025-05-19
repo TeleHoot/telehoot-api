@@ -160,6 +160,6 @@ async def test_delete_organization_editor(
         f"/organizations/{membership_editor.organization_id}"
     )
     response_data = response.json()
-    assert "message" in response_data
+    assert "detail" in response_data
     assert response_data.get("error_code") == "forbidden_access"
     assert response.status_code == status.HTTP_403_FORBIDDEN

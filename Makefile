@@ -119,6 +119,8 @@ test: lint format type-check up-tests
 	$(UV) run $(PYTEST) -v --durations=0 .
 	$(MAKE) down-tests
 
+verify: lint format type-check
+
 # Start the app using uvicorn
 start:
 	$(UV) run $(HYPERCORN) src.main:app --bind 0.0.0.0:8000 --reload
@@ -163,4 +165,4 @@ keyfile-windows:
 	$(DOCKER) build -t mongo-keygen -f docker/Dockerfile.keygen docker/
 	$(DOCKER) run --rm -v .:/data mongo-keygen
 
-.PHONY: help up-dev down-dev dev up-prod down-prod up-tests down-tests test migrate install-deps pre-commit pre-commit-install lint format type-check start create-env-unix create-env-windows uinit winit keyfile-windows keyfile-unix
+.PHONY: help up-dev down-dev dev up-prod down-prod up-tests verify down-tests test migrate install-deps pre-commit pre-commit-install lint format type-check start create-env-unix create-env-windows uinit winit keyfile-windows keyfile-unix

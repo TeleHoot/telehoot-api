@@ -118,14 +118,16 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                     continue
 
                 search_terms = value.strip().split()
-                conditions = []
 
-                for term in search_terms:
-                    term_conditions = [
-                        search_column.ilike(f"%{term}%") for search_column in self.search_fields
-                    ]
-                    conditions.append(or_(*term_conditions))
-
+                conditions = [
+                    or_(*[search_field.ilike(f"%{term}%") for search_field in self.search_fields])
+                    for term in search_terms
+                ]
+                # there should be at least one field matching every term. Example:
+                # search_terms = ["brainrot","quiz"], search_fields = [name,description]
+                # ("brainrot" in name OR "brainrot" in description)
+                # AND
+                # ("quiz" in name OR "quiz" in description)
                 query = query.where(and_(*conditions))
             else:
                 column = getattr(self.model, field)

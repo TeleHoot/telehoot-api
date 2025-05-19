@@ -12,7 +12,7 @@ def make_error_response(
     return ORJSONResponse(
         status_code=http_status,
         content={
-            "message": message if settings.DEBUG else user_message,
+            "detail": message if settings.DEBUG else user_message,
             "error_code": error_code,
         },
     )

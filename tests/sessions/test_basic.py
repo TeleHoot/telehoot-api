@@ -1,6 +1,8 @@
 import pytest
 from fastapi import status
 from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app import models
 
@@ -82,14 +84,46 @@ async def test_delete_session(
     organization: models.Organization,
     quiz: models.Quiz,
     session: models.Session,
+    db_session: AsyncSession,
 ):
+    session_in_db = await db_session.scalar(select(models.Session))
+    assert session_in_db is not None
+    assert session_in_db.deleted_at is None
+
     response = await user_client.delete(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}",
     )
     assert "detail" not in response.json()
+
+    session_in_db = await db_session.scalar(select(models.Session))
+    assert session_in_db is not None
+    assert session_in_db.deleted_at is not None
 
     response = await user_client.get(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}"
     )
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.xfail
+async def test_admin_sees_deleted_session(
+    organization: models.Organization,
+    quiz: models.Quiz,
+    session: models.Session,
+    db_session: AsyncSession,
+    admin_client: AsyncClient,
+):
+    response = await admin_client.delete(
+        f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}",
+    )
+    assert "detail" not in response.json()
+
+    response = await admin_client.get(
+        f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}"
+    )
+
+    response_data = response.json()
+    assert "detail" not in response_data
+    assert "id" in response_data
+    assert response_data["id"] == str(session.id)

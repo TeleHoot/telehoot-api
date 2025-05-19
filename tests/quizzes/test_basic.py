@@ -166,3 +166,64 @@ async def test_quiz_update_validation(
     assert response_data.get("is_public") == update_data["is_public"]
 
     assert response_data.get("description") == quiz_data["description"]
+
+
+async def test_search_quizzes_by_name(
+    user_client: httpx.AsyncClient,
+    db_session: AsyncSession,
+    organization: models.Organization,
+    user: models.User,
+):
+    quizzes = [
+        models.Quiz(organization_id=organization.id, author_id=user.id, name=name, is_public=True)
+        for name in [
+            "Brainrot Quiz",
+            "Dota2 Facts",
+            "Quiz about cats",
+            "Cats Test",
+            "Combined cats and quiz",
+            "Dota2 Players",
+            "Cute Cats",
+            "For experts (megaquiz)",
+        ]
+    ]
+    db_session.add_all(quizzes)
+    await db_session.flush()
+
+    response = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "quiz"}
+    )
+
+    response_data = response.json()
+    assert "detail" not in response_data
+    expected = [
+        "Brainrot Quiz",
+        "Quiz about cats",
+        "Combined cats and quiz",
+        "For experts (megaquiz)",
+    ]
+    assert len(response_data) == len(expected)
+    assert [q["name"] for q in response_data] == expected
+
+    response = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "CAT"}
+    )
+    response_data = response.json()
+    expected = ["Quiz about cats", "Cats Test", "Combined cats and quiz", "Cute Cats"]
+
+    assert len(response_data) == len(expected)
+    assert [q["name"] for q in response_data] == expected
+
+    response = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "cat qui"}
+    )
+    response_data = response.json()
+    expected = ["Quiz about cats", "Combined cats and quiz"]
+
+    assert len(response_data) == len(expected)
+    assert [q["name"] for q in response_data] == expected
+
+    response_data = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "nonexistent"}
+    )
+    assert len(response_data.json()) == 0
