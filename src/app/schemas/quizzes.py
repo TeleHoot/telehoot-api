@@ -9,7 +9,8 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from src import core
 
-from . import users as schemas_users
+from . import organizations as organization_schemas
+from . import users as user_schemas
 from . import utils
 
 Description = Annotated[str | None, Field(max_length=500)]
@@ -38,8 +39,8 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
-    organization_id: UUID
-    author: schemas_users.Read
+    organization: organization_schemas.Read
+    author: user_schemas.Read
     created_at: datetime
     updated_at: datetime
     questions_count: int = 0

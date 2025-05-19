@@ -176,20 +176,15 @@ async def membership_editor(
 
 @pytest.fixture(scope="function")
 async def quiz(
-    user_client: AsyncClient, organization: models.Organization, user: models.User
-) -> schemas.quizzes.Read:
-    response = await user_client.post(
-        f"/organizations/{organization.id}/quizzes",
-        json={
-            "name": "Test Quiz",
-            "description": "Sample quiz for testing",
-        },
+    db_session: AsyncSession, organization: models.Organization, user: models.User
+) -> models.Quiz:
+    quiz = models.Quiz(
+        organization_id=organization.id, author_id=user.id, name="Brainrot Quizz", is_public=True
     )
-
-    assert response.status_code == status.HTTP_201_CREATED
-
-    quiz_data = response.json()
-    return schemas.quizzes.Read.model_validate(quiz_data)
+    db_session.add(quiz)
+    await db_session.flush()
+    await db_session.refresh(quiz)
+    return quiz
 
 
 @pytest.fixture(scope="function")

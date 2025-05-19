@@ -82,14 +82,15 @@ async def test_create_quiz_success(
 
     assert "detail" not in read_response_data
 
-    quiz = read_response_data[0]
+    created_quiz = read_response_data[0]
 
-    assert "author" in quiz
-    assert quiz["author"]["id"] == str(user.id)
+    assert "author" in created_quiz
+    assert created_quiz["author"]["id"] == str(user.id)
 
-    assert quiz.get("organization_id") == str(organization.id)
+    assert "organization" in created_quiz
+    assert created_quiz["organization"]["id"] == str(organization.id)
 
-    assert quiz.get("questions_count") == 0
+    assert created_quiz.get("questions_count") == 0
 
 
 async def test_quiz_questions_count(

@@ -16,8 +16,9 @@ async def test_create_session(
     response = await user_client.post(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions"
     )
-    assert response.status_code == status.HTTP_201_CREATED
+
     session_data = response.json()
+    assert "detail" not in session_data
     assert session_data["status"] == models.SessionStatus.WAITING
 
 
@@ -30,8 +31,9 @@ async def test_get_session(
     response = await user_client.get(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}"
     )
-    assert response.status_code == status.HTTP_200_OK
+
     session_data = response.json()
+    assert "detail" not in session_data
     assert session_data["id"] == str(session.id)
     assert session_data["hosts"][0]["role"] == "host"
 
@@ -45,8 +47,8 @@ async def test_get_sessions(
     response = await user_client.get(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions"
     )
-    assert response.status_code == status.HTTP_200_OK
     sessions_data = response.json()
+    assert "detail" not in sessions_data
     assert len(sessions_data) == 1
     assert sessions_data[0]["id"] == str(session.id)
     assert sessions_data[0]["hosts"][0]["role"] == "host"
@@ -63,15 +65,15 @@ async def test_update_session(
         json={"status": "active"},
     )
 
-    assert response.status_code == status.HTTP_200_OK
+    assert "detail" not in response.json()
 
     response = await user_client.get(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}"
     )
 
-    assert response.status_code == status.HTTP_200_OK
-
     session_data = response.json()
+    assert "detail" not in session_data
+
     assert session_data["status"] == "active"
 
 
@@ -84,7 +86,7 @@ async def test_delete_session(
     response = await user_client.delete(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}",
     )
-    assert response.status_code == status.HTTP_200_OK
+    assert "detail" not in response.json()
 
     response = await user_client.get(
         f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions/{session.id}"

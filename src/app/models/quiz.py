@@ -28,4 +28,4 @@ class Quiz(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
 
     organization: Mapped["Organization"] = relationship(back_populates="quizzes", lazy="selectin")
     author: Mapped["User"] = relationship(back_populates="quizzes", lazy="selectin")
-    sessions: Mapped[list["Session"]] = relationship(back_populates="quiz", lazy="selectin")
+    sessions: Mapped[list["Session"]] = relationship(back_populates="quiz")
