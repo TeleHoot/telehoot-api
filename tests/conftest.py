@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator, Generator
 from typing import Any
 
 import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from motor.motor_asyncio import AsyncIOMotorClientSession
@@ -171,3 +172,36 @@ async def membership_editor(
     await db_session.flush()
     await db_session.refresh(membership)
     return membership
+
+
+@pytest.fixture(scope="function")
+async def quiz(
+    user_client: AsyncClient, organization: models.Organization, user: models.User
+) -> schemas.quizzes.Read:
+    response = await user_client.post(
+        f"/organizations/{organization.id}/quizzes",
+        json={
+            "name": "Test Quiz",
+            "description": "Sample quiz for testing",
+        },
+    )
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    quiz_data = response.json()
+    return schemas.quizzes.Read.model_validate(quiz_data)
+
+
+@pytest.fixture(scope="function")
+async def session(
+    user_client: AsyncClient,
+    organization: models.Organization,
+    quiz: models.Quiz,
+    membership_editor: models.Membership,
+):
+    response = await user_client.post(
+        f"/organizations/{organization.id}/quizzes/{quiz.id}/sessions"
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    session_data = response.json()
+    return schemas.sessions.Read.model_validate(session_data)
