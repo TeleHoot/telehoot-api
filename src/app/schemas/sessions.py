@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 from src.app import models
 
+from . import participants as participant_schemas
 from . import questions as question_schemas
 from . import quizzes as quiz_schemas
 from . import users as user_schemas
@@ -35,7 +36,7 @@ class Update(BaseModel):
 
 class Read(Base):
     id: UUID
-    hosts: list[user_schemas.Read]
+    hosts: list[participant_schemas.Read]
     quiz: quiz_schemas.Read
     created_at: datetime
     updated_at: datetime

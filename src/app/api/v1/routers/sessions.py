@@ -45,7 +45,7 @@ async def create_session(
         additional_data={"session_id": session.id, "user_id": host.id},
     )
 
-    return session
+    return await sessions_service.read_by_id(uow, session.id)
 
 
 @router.get(
