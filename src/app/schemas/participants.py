@@ -32,6 +32,7 @@ class Update(BaseModel):
 class Read(Base):
     id: UUID
     user: schemas_users.Read
+    session_id: UUID
     created_at: datetime
     updated_at: datetime
 

@@ -69,6 +69,27 @@ async def get_my_memberships(
 
 
 @router.get(
+    "/me/sessions",
+    response_model=list[schemas.sessions.Read] | None,
+)
+async def get_my_sessions(
+    uow: dependencies.uow.Postgres,
+    sessions_service: dependencies.services.Sessions,
+    participants_service: dependencies.services.Participants,
+    current_user: dependencies.permissions.ActiveUser,
+    pagination: dependencies.queries.Pagination,
+):
+    user_participants = await participants_service.read_many(
+        uow, schemas.participants.Filters(user_id=current_user.id), pagination=pagination
+    )
+
+    return [
+        await sessions_service.read_by_id(uow, participant.session_id)
+        for participant in user_participants
+    ]
+
+
+@router.get(
     "/{user_id}",
     dependencies=[Depends(dependencies.permissions.get_active_user)],
     response_model=schemas.users.Read,
