@@ -66,7 +66,9 @@ async def handle_finish(
             )
             raise WebSocketDisconnect from e
 
-        event = schemas.sessions.SessionFinishedEvent()
+        results = await sessions_service.get_session_results(uow, session)
+
+        event = schemas.sessions.SessionFinishedEvent(results=results)
 
         await ws_manager.broadcast_event_to_channel(str(session_id), event)
         await ws_manager.unsubscribe_from_channel(user.id, str(session_id))

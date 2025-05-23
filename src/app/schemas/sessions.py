@@ -105,6 +105,7 @@ class SessionStartedEvent(NextQuestionEvent):
 
 class SessionFinishedEvent(SessionEvent):
     type: SessionEventType = SessionEventType.FINISH
+    results: list
 
 
 class SessionCanceledEvent(SessionEvent):
