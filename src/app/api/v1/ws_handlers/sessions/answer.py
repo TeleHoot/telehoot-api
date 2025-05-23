@@ -125,9 +125,9 @@ async def handle_answer(
                         text=str(",".join(participant_answers)),
                         is_correct=is_correct,
                         points=question.weight if is_correct else 0,
-                        participant_id=participant.id,
                         question_id=question.id,
                     ),
+                    additional_data={"participant_id": participant.id},
                 )
 
         except Exception as e:

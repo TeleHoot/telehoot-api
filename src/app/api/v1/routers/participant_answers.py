@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from src import core
 from src.app import schemas
@@ -14,9 +14,6 @@ router = APIRouter(
     tags=["participants_answers"],
 )
 settings = core.config.get_settings()
-
-FiltersQuery = Annotated[schemas.participant_answers.Filters, Depends()]
-SortingQuery = Annotated[schemas.participant_answers.SortParams, Depends()]
 
 
 @router.post(
@@ -68,9 +65,7 @@ async def get_answers(
     sessions_service: dependencies.services.Sessions,
     quizzes_service: dependencies.services.Quizzes,
     org_service: dependencies.services.Organizations,
-    filters: FiltersQuery,
-    sorting: SortingQuery,
-    pagination: dependencies.queries.Pagination,
+    query: Annotated[schemas.participant_answers.Query, Query()],
     current_user: dependencies.permissions.ActiveUser,
 ):
     await org_service.read_by_id(uow, organization_id)
@@ -80,9 +75,9 @@ async def get_answers(
 
     return await answers_service.read_many(
         uow,
-        filters,
-        sorting,
-        pagination,
+        schemas.participant_answers.Filters(**(query_data := query.model_dump())),
+        schemas.participant_answers.SortParams(**query_data),
+        core.schemas.PaginationParams(**query_data),
         include_deleted=current_user.is_admin,
     )
 

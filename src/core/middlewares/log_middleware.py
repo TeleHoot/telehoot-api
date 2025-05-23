@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):  # noqa: PLR6301
-        start_time = time.time()
+        start_time = time.perf_counter()
         client_host = request.client.host if request.client else "unknown"
         method = request.method
         path = request.url.path
@@ -30,7 +30,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             )
             raise
 
-        process_time = (time.time() - start_time) * 1000
+        process_time = (time.perf_counter() - start_time) * 1000
         status_code = response.status_code
 
         log_level = "warning" if status_code >= status.HTTP_400_BAD_REQUEST else "info"

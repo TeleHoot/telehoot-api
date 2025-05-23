@@ -39,6 +39,4 @@ class Participant(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete
 
     user: Mapped["User"] = relationship(back_populates="participants", lazy="selectin")
     session: Mapped["Session"] = relationship(back_populates="participants")
-    answers: Mapped["ParticipantAnswer"] = relationship(
-        back_populates="participant", lazy="selectin"
-    )
+    answers: Mapped["ParticipantAnswer"] = relationship(back_populates="participant")

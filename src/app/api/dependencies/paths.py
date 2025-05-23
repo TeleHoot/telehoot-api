@@ -17,7 +17,7 @@ async def get_validated_quiz(
 ) -> schemas.quizzes.Read:
     await org_service.read_by_id(uow, organization_id)
     quiz = await quiz_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
-    if str(quiz.organization.id) != str(organization_id):
+    if quiz.organization.id != organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Quiz does not belong to this organization",
@@ -35,7 +35,7 @@ async def get_validated_quiz_ws(
 ) -> schemas.quizzes.Read:
     await org_service.read_by_id(uow, organization_id)
     quiz = await quiz_service.read_by_id(uow, quiz_id, include_deleted=current_user.is_admin)
-    if str(quiz.organization.id) != str(organization_id):
+    if quiz.organization.id != organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Quiz does not belong to this organization",

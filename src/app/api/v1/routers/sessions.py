@@ -2,6 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, status
+from fastapi.responses import StreamingResponse
 
 from src import core
 from src.app import models, schemas
@@ -80,7 +81,7 @@ async def get_session(
     session = await sessions_service.read_by_id(
         uow, session_id, include_deleted=current_user.is_admin
     )
-    if str(session.quiz.id) != str(quiz.id):
+    if session.quiz.id != quiz.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found for this quiz"
         )
@@ -101,7 +102,7 @@ async def update_session(
     sessions_service: dependencies.services.Sessions,
 ):
     session = await sessions_service.read_by_id(uow, session_id)
-    if str(session.quiz.id) != str(quiz.id):
+    if session.quiz.id != quiz.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found for this quiz"
         )
@@ -121,7 +122,7 @@ async def delete_session(
     sessions_service: dependencies.services.Sessions,
 ):
     session = await sessions_service.read_by_id(uow, session_id)
-    if str(session.quiz.id) != str(quiz.id):
+    if session.quiz.id != quiz.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found for this quiz"
         )
@@ -145,13 +146,39 @@ async def get_session_results(
     sessions_service: dependencies.services.Sessions,
 ):
     session = await sessions_service.read_by_id(uow, session_id)
-    if str(session.quiz.id) != str(quiz.id):
+    if session.quiz.id != quiz.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Session not found for this quiz",
         )
 
-    return await sessions_service.get_session_results(uow, session_id)
+    return await sessions_service.get_session_results(uow, session)
+
+
+@router.get(
+    "/{session_id}/export", dependencies=[Depends(dependencies.permissions.get_org_presenter)]
+)
+async def export_session_results(
+    quiz: dependencies.paths.CurrentQuiz,
+    session_id: UUID,
+    uow: dependencies.uow.Full,
+    sessions_service: dependencies.services.Sessions,
+    questions_service: dependencies.services.Questions,
+):
+    session = await sessions_service.read_by_id(uow, session_id)
+    if session.quiz.id != quiz.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found for this quiz",
+        )
+
+    excel_file = await sessions_service.export_session_results(uow, session, questions_service)
+
+    return StreamingResponse(
+        excel_file,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=results_{session_id}.xlsx"},
+    )
 
 
 @router.websocket("/{session_id}")

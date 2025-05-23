@@ -183,7 +183,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
         self,
         uow: UnitOfWork,
         entity_id: custom_types.EntityID,
-        data: dict,
+        data: dict[str, Any],
     ) -> SQLModelType | None:
         try:
             session = uow.postgres_session

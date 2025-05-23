@@ -8,10 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from src import core
 from src.app import models
 
+from . import participant_answers as answer_schemas
 from . import participants as participant_schemas
 from . import questions as question_schemas
 from . import quizzes as quiz_schemas
-from . import users as user_schemas
 
 
 class Base(BaseModel):
@@ -127,5 +127,6 @@ class ErrorEvent(SessionEvent):
 
 
 class SessionResult(BaseModel):
-    user: user_schemas.Read
+    participant: participant_schemas.Read
     total_points: Annotated[int, Field(ge=0)]
+    answers: list[answer_schemas.Read] = []

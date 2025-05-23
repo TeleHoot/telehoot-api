@@ -6,21 +6,26 @@ from typing import Annotated
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PlainSerializer
 
 from src import core
+from src.core.schemas import PaginationParams
+
+from . import utils
 
 AnswerText = Annotated[str, Field(max_length=1000)]
 PointsFilter = Annotated[int | None, Field(ge=0)]
 AnswerPoints = Annotated[int, Field(ge=0)]
+QuestionId = Annotated[
+    PydanticObjectId, PlainSerializer(utils.convert_str), Field(AfterValidator(utils.convert_str))
+]
 
 
 class Base(BaseModel):
     text: AnswerText
     is_correct: bool = False
     points: AnswerPoints = 0
-    participant_id: UUID
-    question_id: PydanticObjectId
+    question_id: QuestionId
 
     model_config = ConfigDict(validate_assignment=True, extra="forbid")
 
@@ -42,14 +47,6 @@ class Read(Base):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Filters(core.schemas.BaseFilters):
-    participant_id: UUID | None = None
-    question_id: PydanticObjectId | None = None
-    is_correct: bool | None = None
-    points_from: PointsFilter = None
-    points_to: PointsFilter = None
-
-
 class SortFields(enum.StrEnum):
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
@@ -59,3 +56,15 @@ class SortFields(enum.StrEnum):
 
 class SortParams(core.schemas.SortParams):
     sort_by: SortFields | None = None
+
+
+class Filters(core.schemas.BaseFilters):
+    participant_id: list[UUID] | UUID | None = None
+    question_id: QuestionId | None = None
+    is_correct: bool | None = None
+    points_from: PointsFilter = None
+    points_to: PointsFilter = None
+
+
+class Query(Filters, SortParams, PaginationParams):
+    pass

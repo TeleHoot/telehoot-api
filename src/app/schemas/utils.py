@@ -9,3 +9,10 @@ def validate_non_empty(value: Any) -> str:
         raise ValueError("Empty input")
 
     return stripped
+
+
+def convert_str(value: Any) -> str:
+    try:
+        return str(value)
+    except Exception as e:
+        raise ValueError(f"Cannot convert value to string: {value}") from e
