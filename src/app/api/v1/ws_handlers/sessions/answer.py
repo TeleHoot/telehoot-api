@@ -110,7 +110,7 @@ async def handle_answer(
                     uow,
                     {
                         "participant_id": part_answers[0].participant_id,
-                        "question_id": part_answers[0].question_id,
+                        "question_id": str(part_answers[0].question_id),
                     },
                     schemas.participant_answers.Update(
                         text=str(",".join(participant_answers)) or None,
