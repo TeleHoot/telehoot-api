@@ -25,6 +25,7 @@ class Base(BaseModel):
     text: AnswerText
     is_correct: bool = False
     points: AnswerPoints = 0
+    participant_id: UUID
     question_id: QuestionId
 
     model_config = ConfigDict(validate_assignment=True, extra="forbid")
