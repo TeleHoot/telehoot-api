@@ -20,7 +20,7 @@ class Sessions(core.repositories.sqlalchemy.BaseCRUD[models.Session]):
         total_points_subq = (
             select(
                 models.ParticipantAnswer.participant_id,
-                func.coalesce(func.sum(models.ParticipantAnswer.points), 0).label("total_points"),
+                func.sum(models.ParticipantAnswer.points).label("total_points"),
             )
             .group_by(models.ParticipantAnswer.participant_id)
             .subquery()
@@ -29,7 +29,7 @@ class Sessions(core.repositories.sqlalchemy.BaseCRUD[models.Session]):
         query = (
             select(
                 models.Participant,
-                total_points_subq.c.total_points,
+                func.coalesce(total_points_subq.c.total_points, 0).label("total_points"),
             )
             .outerjoin(
                 total_points_subq, models.Participant.id == total_points_subq.c.participant_id
@@ -42,6 +42,6 @@ class Sessions(core.repositories.sqlalchemy.BaseCRUD[models.Session]):
                 models.Participant.answers
             )
 
-        query = query.order_by(desc(total_points_subq.c.total_points))
+        query = query.order_by(desc(func.coalesce(total_points_subq.c.total_points, 0)))
 
         return await uow.postgres_session.execute(query)
