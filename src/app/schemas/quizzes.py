@@ -1,18 +1,26 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from src import core
-from src.app import schemas
+
+from . import organizations as organization_schemas
+from . import users as user_schemas
+from . import utils
 
 Description = Annotated[str | None, Field(max_length=500)]
+Name = Annotated[
+    str, BeforeValidator(utils.validate_non_empty), Field(min_length=1, max_length=64)
+]
 
 
 class Base(BaseModel):
-    name: str
+    name: Name
     description: Description = None
     is_public: bool = False
 
@@ -24,15 +32,15 @@ class Create(Base):
 
 
 class Update(BaseModel):
-    name: str | None = None
+    name: Name | None = None
     description: Description = None
     is_public: bool | None = None
 
 
 class Read(Base):
     id: UUID
-    organization_id: UUID
-    author: schemas.users.Read
+    organization: organization_schemas.Read
+    author: user_schemas.Read
     created_at: datetime
     updated_at: datetime
     questions_count: int = 0
@@ -43,8 +51,8 @@ class Read(Base):
 class Filters(core.schemas.BaseFilters):
     organization_id: UUID | None = None
     author_id: UUID | None = None
-    name: str | None = None
     is_public: bool | None = None
+    search: str | None = None
 
 
 class SortFields(enum.StrEnum):

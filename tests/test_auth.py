@@ -47,7 +47,7 @@ def fake_telegram_data(
 async def test_auth_new_user(
     client: AsyncClient, fake_telegram_data: dict, db_session: AsyncSession
 ):
-    response: httpx.Response = await client.post("/auth/login/", json=fake_telegram_data)
+    response: httpx.Response = await client.post("/auth/login/widget", json=fake_telegram_data)
 
     assert "detail" not in response.json()
     assert response.status_code == status.HTTP_200_OK
@@ -69,7 +69,7 @@ async def test_auth_new_user(
     )
     assert org is not None
 
-    # Check that membership was created in the database with role CREATOR
+    # Check that membership was created in the database with role OWNER
     membership: models.Membership | None = await db_session.scalar(
         select(models.Membership)
         .where(models.Membership.user_id == user.id)

@@ -54,12 +54,15 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
 
     @log_operation
     async def read_by_id(
-        self,
-        uow: UnitOfWork,
-        entity_id: custom_types.EntityID,
+        self, uow: UnitOfWork, entity_id: custom_types.EntityID, *, include_deleted: bool = False
     ) -> MongoModelType | None:
         try:
-            entity = await self.model.get(entity_id, session=uow.mongo_session)
+            query = self.model.find({"_id": entity_id}, session=uow.mongo_session)
+
+            if not include_deleted and hasattr(self.model, "deleted_at"):
+                query = query.find({"deleted_at": None})
+
+            entity = await query.first_or_none()
             if not entity:
                 self.logger.info("Entity not found", extra={"exists": False})
             return entity
@@ -70,7 +73,9 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
             ) from e
 
     @staticmethod
-    def _process_filters(filters: dict[str, Any]) -> dict[str, Any]:
+    def _process_filters(
+        filters: dict[str, Any], *, include_deleted: bool = False
+    ) -> dict[str, Any]:
         """
         Returns:
             example output:
@@ -93,6 +98,10 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
             if field not in processed:
                 processed[field] = {}
             processed[field][operator] = value
+
+        if not include_deleted and "deleted_at" not in processed:
+            processed["deleted_at"] = None
+
         return processed
 
     @staticmethod
@@ -122,9 +131,13 @@ class BaseCRUD(repositories.abstract.BaseCRUD[MongoModelType]):
         sorting: dict | None = None,
         page: int = 1,
         limit: int = 10,
+        *,
+        include_deleted: bool = False,
     ) -> Sequence[MongoModelType]:
         try:
-            processed_filters = self._process_filters(filters or {})
+            processed_filters = self._process_filters(
+                filters or {}, include_deleted=include_deleted
+            )
             processed_sort_param = self._process_sort_param(sorting)
 
             skip = (page - 1) * limit

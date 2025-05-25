@@ -1,8 +1,3 @@
-from . import permissions, queries, services, uow
+from . import paths, permissions, queries, services, uow, websockets
 
-__all__ = [
-    "permissions",
-    "queries",
-    "services",
-    "uow",
-]
+__all__ = ["paths", "permissions", "queries", "services", "uow", "websockets"]

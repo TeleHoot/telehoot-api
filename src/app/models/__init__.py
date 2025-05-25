@@ -7,16 +7,24 @@ from beanie import Document
 from .membership import Membership, UserRoles
 from .membership import Statuses as MembershipStatuses
 from .organization import Organization
+from .participant import Participant, ParticipantRole
+from .participant_answer import ParticipantAnswer
 from .question import Question
 from .quiz import Quiz
+from .session import Session, SessionStatus
 from .user import User
 
 __all__ = [
     "Membership",
     "MembershipStatuses",
     "Organization",
+    "Participant",
+    "ParticipantAnswer",
+    "ParticipantRole",
     "Question",
     "Quiz",
+    "Session",
+    "SessionStatus",
     "User",
     "UserRoles",
     "gather_documents",

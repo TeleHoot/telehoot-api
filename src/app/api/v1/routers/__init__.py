@@ -1,7 +1,11 @@
 from .auth import router as auth  # noqa: F401
 from .memberships import router as memberships  # noqa: F401
 from .organizations import router as organizations  # noqa: F401
+from .participant_answers import router as participant_answers  # noqa: F401
+from .participants import router as participants  # noqa: F401
 from .public import router as public  # noqa: F401
 from .questions import router as questions  # noqa: F401
 from .quizzes import router as quizzes  # noqa: F401
+from .sessions import router as sessions  # noqa: F401
+from .sessions_websockets import router as session_websockets  # noqa: F401
 from .users import router as users  # noqa: F401

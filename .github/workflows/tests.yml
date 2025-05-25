@@ -8,6 +8,9 @@ on:
     branches:
       - main
       - dev
+
+  workflow_call:
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -22,17 +25,33 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-      mongo:
-        image: mongo:8.0.6
-        env:
-          MONGO_INITDB_ROOT_USERNAME: mongo
-          MONGO_INITDB_ROOT_PASSWORD: mongo
-          MONGO_INITDB_DATABASE: mongo
-        ports:
-          - 27017:27017
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.12.0
+        with:
+          mongodb-version: 8.0.6
+          mongodb-replica-set: overleaf
+          mongodb-container-name: mongo
+
+      - name: Create mongo user
+        run: |
+          docker exec mongo mongosh --eval '
+            db.getSiblingDB("admin").createUser({
+              user: "mongo",
+              pwd: "mongo",
+              roles: [
+                { role: "root", db: "admin" }
+              ]
+            })
+          '
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.7.0
+        with:
+          redis-version: 8.0
+          redis-password: 'somepassword'
 
       - name: Run tests
         run: uv run pytest -v --durations=0 --cov --cov-report=xml

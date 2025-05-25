@@ -24,13 +24,18 @@ help:
 	@echo "Available commands:"
 	@echo ""
 	@echo "== Development Environment =="
-	@echo "  up                 - Start development containers (Docker)"
-	@echo "  down               - Stop and remove development containers"
+	@echo "  up-dev             - Start development containers (Docker)"
+	@echo "  down-dev           - Stop and remove development containers"
 	@echo "  dev                - Full dev setup: start containers, run migrations, and launch app"
 	@echo ""
 	@echo "== Production Environment =="
-	@echo "  prod               - Deploy production containers"
+	@echo "  up-prod            - Deploy production containers"
 	@echo "  down-prod          - Stop and remove production containers"
+	@echo ""
+	@echo "== Testing =="
+	@echo "  up-tests           - Deploy tests containers"
+	@echo "  down-tests         - Stop and remove tests containers"
+	@echo "  test               - Local test suite (lint + format + type-check + pytest)"
 	@echo ""
 	@echo "== Database Management =="
 	@echo "  migrate            - Apply database migrations and seed data"
@@ -44,9 +49,6 @@ help:
 	@echo "  lint               - Check code style with Ruff (with auto-fix)"
 	@echo "  format             - Format code with Ruff formatter"
 	@echo "  type-check         - Static type checking with Pyright"
-	@echo "  pytest             - Run tests in Docker containers"
-	@echo "  test               - Local test suite (lint + format + type-check + pytest)"
-	@echo "  test-docker        - Docker-based test suite"
 	@echo ""
 	@echo "== Application Control =="
 	@echo "  start              - Run FastAPI server with hot reload"
@@ -63,20 +65,26 @@ help:
 	@echo "  help               - Show this help message"
 
 # Start the development environment
-up:
+up-dev:
 	$(DOCKER_COMPOSE) up -d --build
 
 # Stop the development environment
-down:
+down-dev:
 	$(DOCKER_COMPOSE) down
 
 # Start the production environment
-prod:
+up-prod:
 	$(DOCKER_COMPOSE_PROD) up -d --build
 
 # Stop the production environment
 down-prod:
 	$(DOCKER_COMPOSE_PROD) down
+
+up-tests:
+	$(DOCKER_COMPOSE_TEST) up -d --build
+
+down-tests:
+	$(DOCKER_COMPOSE_TEST) down
 
 # Run database migrations
 migrate:
@@ -106,16 +114,12 @@ format:
 type-check:
 	$(UV) run $(PYRIGHT)
 
-# Run tests using pytest
-pytest:
-	$(DOCKER_COMPOSE_TEST) up --build --abort-on-container-exit
-	$(DOCKER_COMPOSE_TEST) down
-
 # Test the app (runs lint, format, and type-check first)
-test: lint format type-check
+test: lint format type-check up-tests
 	$(UV) run $(PYTEST) -v --durations=0 .
+	$(MAKE) down-tests
 
-test-docker: lint format type-check pytest
+verify: lint format type-check
 
 # Start the app using uvicorn
 start:
@@ -148,7 +152,7 @@ winit: install-deps create-env-windows keyfile-windows
 	@echo "Project initialized for Windows systems."
 
 # Start the development environment and the app
-dev: up migrate start
+dev: up-dev migrate start
 
 # Create keyfile for mongodb
 keyfile-unix:
@@ -161,4 +165,4 @@ keyfile-windows:
 	$(DOCKER) build -t mongo-keygen -f docker/Dockerfile.keygen docker/
 	$(DOCKER) run --rm -v .:/data mongo-keygen
 
-.PHONY: help up down up-prod down-prod migrate install-deps pre-commit pre-commit-install lint format type-check pytest test test-docker start create-env-unix create-env-windows uinit winit dev keyfile-windows keyfile-unix
+.PHONY: help up-dev down-dev dev up-prod down-prod up-tests verify down-tests test migrate install-deps pre-commit pre-commit-install lint format type-check start create-env-unix create-env-windows uinit winit keyfile-windows keyfile-unix

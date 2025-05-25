@@ -7,9 +7,11 @@ from fastapi.responses import ORJSONResponse
 
 from src import core
 from src.app import api
+from src.app.api.v1 import ws_handlers as ws_handlers  # noqa: PLC0414
 from src.app.models import gather_documents
 
 settings = core.config.get_settings()
+ws_manager = core.websockets.get_websocket_manager()
 
 
 def create_app() -> FastAPI:
@@ -17,7 +19,9 @@ def create_app() -> FastAPI:
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         core.db.init_replica_set()
         await core.db.init_mongo(gather_documents)
+        await ws_manager.connect_to_redis()
         yield
+        await ws_manager.disconnect_from_redis()
         if mongo_client := core.db.get_mongo_manager().client:
             mongo_client.close()
 
@@ -33,8 +37,6 @@ def create_app() -> FastAPI:
     )
 
     logging.config.dictConfig(core.logger.setup_logger())
-    logging.getLogger("pymongo").setLevel(logging.WARNING)
-    logging.getLogger("botocore").setLevel(logging.WARNING)
 
     core.middlewares.register_middlewares(app)
 

@@ -4,13 +4,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.tests
-    environment:
-      DEBUG: "True"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: "postgres"
-      POSTGRES_PORT: "5432"
-      POSTGRES_HOST: "tests_db"
+    env_file: tests.env
     depends_on:
       tests_db:
         condition: service_healthy
@@ -18,12 +12,11 @@ services:
   tests_db:
     container_name: db_for_tests
     image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_DB: "postgres"
+    env_file: tests.env
     ports:
       - "5432:5432"
+    volumes:
+      - ./tests_data/pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-d", "$POSTGRES_DB", "-U", "$POSTGRES_USER"]
       interval: 5s
@@ -31,27 +24,54 @@ services:
       retries: 5
 
   mongo:
-    image: mongo
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+    image: mongo:8.0.6
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./tests_data/mongodata:/data/db
+      - ./mongodb.key:/data/mongodb.key:ro
+    env_file: tests.env
+    command:
+      - "--replSet"
+      - "overleaf"
+      - "--keyFile"
+      - "/data/mongodb.key"
+      - "--auth"
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
       timeout: 5s
       retries: 5
+
   minio:
     container_name: minio
     image: minio/minio
     ports:
       - "9000:9000"
       - "9001:9001"
-    env_file:
-      - ./.env
+    env_file: tests.env
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
     command: server --console-address ":9001" /data/
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
+
+  redis:
+    image: valkey/valkey:8.1.1-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./tests_data/redisdata:/data
+    command: redis-server --save 60 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file: tests.env

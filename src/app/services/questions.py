@@ -91,7 +91,11 @@ class Questions(
             await self.s3.delete_file(s3_path)
 
     async def read_by_id(
-        self, uow: core.UnitOfWork, question_id: PydanticObjectId, *, include_deleted: bool = False
+        self,
+        uow: core.UnitOfWork,
+        question_id: core.custom_types.EntityID,
+        *,
+        include_deleted: bool = False,
     ) -> schemas.questions.Read:
         question = await super().read_by_id(uow, question_id, include_deleted=include_deleted)
         return await self._inject_media_url(question)

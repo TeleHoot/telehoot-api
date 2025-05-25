@@ -13,7 +13,7 @@ SortingQuery = Annotated[schemas.users.SortParams, Depends()]
 
 
 @router.get(
-    "/",
+    "",
     dependencies=[Depends(dependencies.permissions.get_active_user)],
     response_model=list[schemas.users.Read],
 )
@@ -27,13 +27,13 @@ async def get_users(
     return await users_service.read_many(uow, filters, sorting, pagination)
 
 
-@router.get("/me/")
+@router.get("/me")
 async def get_me(current_user: dependencies.permissions.ActiveUser):
     return current_user
 
 
 @router.get(
-    "/me/organizations/",
+    "/me/organizations",
     response_model=list[schemas.organizations.Read],
 )
 async def get_my_organizations(
@@ -54,7 +54,7 @@ async def get_my_organizations(
 
 
 @router.get(
-    "/me/memberships/",
+    "/me/memberships",
     response_model=list[schemas.memberships.Read],
 )
 async def get_my_memberships(
@@ -69,7 +69,28 @@ async def get_my_memberships(
 
 
 @router.get(
-    "/{user_id}/",
+    "/me/sessions",
+    response_model=list[schemas.sessions.Read] | None,
+)
+async def get_my_sessions(
+    uow: dependencies.uow.Postgres,
+    sessions_service: dependencies.services.Sessions,
+    participants_service: dependencies.services.Participants,
+    current_user: dependencies.permissions.ActiveUser,
+    pagination: dependencies.queries.Pagination,
+):
+    user_participants = await participants_service.read_many(
+        uow, schemas.participants.Filters(user_id=current_user.id), pagination=pagination
+    )
+
+    return [
+        await sessions_service.read_by_id(uow, participant.session_id)
+        for participant in user_participants
+    ]
+
+
+@router.get(
+    "/{user_id}",
     dependencies=[Depends(dependencies.permissions.get_active_user)],
     response_model=schemas.users.Read,
 )

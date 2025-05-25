@@ -19,7 +19,7 @@ async def test_create_membership_success(
         "role": models.UserRoles.OWNER,
         "status": models.MembershipStatuses.APPROVED,
     }
-    response: httpx.Response = await user_client.post("/memberships/", json=membership_data)
+    response: httpx.Response = await user_client.post("/memberships", json=membership_data)
 
     response_data = response.json()
     assert "detail" not in response_data

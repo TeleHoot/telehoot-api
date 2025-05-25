@@ -1,9 +1,10 @@
 import logging
 from collections.abc import Sequence
-from typing import TypeVar
+from typing import Any, ClassVar, TypeVar
 
-from sqlalchemy import func, inspect, select, update
+from sqlalchemy import Select, and_, func, inspect, or_, select, update
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import InstrumentedAttribute
 
 from src.core import custom_types, models, repositories, schemas
 from src.core.uow import UnitOfWork
@@ -18,8 +19,9 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
         self.logger = logging.getLogger(f"repositories.{self.__class__.__name__.lower()}")
         self.context = {
             "model": self.model.__name__,
-            "table": self.model.__tablename__,
         }
+
+    search_fields: ClassVar[list[InstrumentedAttribute]] = []
 
     @log_operation
     async def create(self, uow: UnitOfWork, data: dict) -> SQLModelType:
@@ -96,6 +98,45 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                 str(e),
             ) from e
 
+    def _process_filters(self, query: Select, filters: dict[str, Any]) -> Select:
+        for field, value in filters.items():
+            if value is None:
+                continue
+            if field.endswith("_from"):
+                field_name = field[:-5]
+                column = getattr(self.model, field_name)
+                query = query.where(column >= value)
+            elif field.endswith("_to"):
+                field_name = field[:-3]
+                column = getattr(self.model, field_name)
+                query = query.where(column <= value)
+            elif field == "search":
+                if not self.search_fields:
+                    self.logger.error(
+                        "Search query given but no search fields defined for the model"
+                    )
+                    continue
+
+                search_terms = value.strip().split()
+
+                conditions = [
+                    or_(*[search_field.ilike(f"%{term}%") for search_field in self.search_fields])
+                    for term in search_terms
+                ]
+                # there should be at least one field matching every term. Example:
+                # search_terms = ["brainrot","quiz"], search_fields = [name,description]
+                # ("brainrot" in name OR "brainrot" in description)
+                # AND
+                # ("quiz" in name OR "quiz" in description)
+                query = query.where(and_(*conditions))
+            else:
+                column = getattr(self.model, field)
+                if isinstance(value, list):
+                    query = query.where(column.in_(value))
+                else:
+                    query = query.where(column == value)
+        return query
+
     @log_operation
     async def read_many(
         self,
@@ -116,23 +157,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
                 query = query.where(self.model.deleted_at.is_(None))
 
             if filters:
-                for field, value in filters.items():
-                    if value is None:
-                        continue
-                    if field.endswith("_from"):
-                        field_name = field[:-5]
-                        column = getattr(self.model, field_name)
-                        query = query.where(column >= value)
-                    elif field.endswith("_to"):
-                        field_name = field[:-3]
-                        column = getattr(self.model, field_name)
-                        query = query.where(column <= value)
-                    else:
-                        column = getattr(self.model, field)
-                        if isinstance(value, list):
-                            query = query.where(column.in_(value))
-                        else:
-                            query = query.where(column == value)
+                query = self._process_filters(query, filters)
 
             if sorting and (sort_by := sorting.get("sort_by")) is not None:
                 order_by = sorting.get("order_by", "asc")
@@ -158,7 +183,7 @@ class BaseCRUD(repositories.abstract.BaseCRUD[SQLModelType]):
         self,
         uow: UnitOfWork,
         entity_id: custom_types.EntityID,
-        data: dict,
+        data: dict[str, Any],
     ) -> SQLModelType | None:
         try:
             session = uow.postgres_session

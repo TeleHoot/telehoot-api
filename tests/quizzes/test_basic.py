@@ -21,11 +21,10 @@ async def create_test_helper(
     response: httpx.Response = await client.post(path, json=data)
     response_data = response.json()
 
-    if 200 <= status_code < 300:  # noqa: PLR2004
-        assert "detail" not in response_data
-    else:
+    if status_code >= status.HTTP_400_BAD_REQUEST:
         assert "detail" in response_data
         return None
+    assert "detail" not in response_data
 
     for given_field, given_value in data.items():
         assert response_data.get(given_field) == given_value
@@ -34,8 +33,7 @@ async def create_test_helper(
     quiz_id: str = response_data["id"]
 
     if session:
-        quiz = await session.get(models.Organization, quiz_id)
-
+        quiz = await session.get(models.Quiz, quiz_id)
         assert quiz is not None
 
         for given_field, given_value in data.items():
@@ -43,7 +41,26 @@ async def create_test_helper(
     return quiz_id
 
 
-@pytest.mark.xfail(reason="needs mongodb")
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"name": True, "is_public": True},
+        {"name": "      ", "is_public": True},
+        {"name": "TestQuiz", "description": "x" * 501, "is_public": True},
+        {"description": "Test", "is_public": False},
+    ],
+)
+async def test_create_quiz_fail_validation(
+    data: dict[str, Any],
+    user_client: httpx.AsyncClient,
+    organization: models.Organization,
+):
+    path = f"/organizations/{organization.id}/quizzes"
+    await create_test_helper(
+        path=path, data=data, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, client=user_client
+    )
+
+
 async def test_create_quiz_success(
     user_client: httpx.AsyncClient,
     db_session: AsyncSession,
@@ -51,7 +68,7 @@ async def test_create_quiz_success(
     user: models.User,
 ):
     data = schemas.quizzes.Create(name="Brainrot Quiz")
-    path = f"/organizations/{organization.id}/quizzes/"
+    path = f"/organizations/{organization.id}/quizzes"
     await create_test_helper(
         path=path,
         data=data.model_dump(),
@@ -65,9 +82,148 @@ async def test_create_quiz_success(
 
     assert "detail" not in read_response_data
 
-    assert "author" in read_response_data
-    assert read_response_data["author"]["id"] == user.id
+    created_quiz = read_response_data[0]
 
-    assert read_response_data.get("organization_id") == organization.id
+    assert "author" in created_quiz
+    assert created_quiz["author"]["id"] == str(user.id)
 
-    assert read_response_data.get("questions_count") == 0
+    assert "organization" in created_quiz
+    assert created_quiz["organization"]["id"] == str(organization.id)
+
+    assert created_quiz.get("questions_count") == 0
+
+
+async def test_quiz_questions_count(
+    user_client: httpx.AsyncClient,
+    db_session: AsyncSession,
+    organization: models.Organization,
+    user: models.User,
+):
+    data = schemas.quizzes.Create(name="Brainrot Quiz 2", is_public=True)
+    path = f"/organizations/{organization.id}/quizzes"
+    quiz_id = await create_test_helper(
+        path=path,
+        data=data.model_dump(),
+        status_code=status.HTTP_201_CREATED,
+        client=user_client,
+        session=db_session,
+    )
+
+    questions_num = 3
+
+    for i in range(questions_num):
+        question_data = {
+            "order": i,
+            "title": f"Question {i}",
+            "type": "multiple_choice",
+            "answers": [
+                {"text": "Option 1", "is_correct": True, "order": 0},
+                {"text": "Option 2", "is_correct": False, "order": 1},
+            ],
+        }
+        response = await user_client.post(
+            f"/quizzes/{quiz_id}/questions",
+            json=question_data,
+        )
+
+        assert "detail" not in response.json()
+
+    response = await user_client.get(path + f"/{quiz_id}")
+
+    assert response.json().get("questions_count") == questions_num
+
+
+async def test_quiz_update_validation(
+    user_client: httpx.AsyncClient,
+    db_session: AsyncSession,
+    user: models.User,
+    organization: models.Organization,
+):
+    path = f"/organizations/{organization.id}/quizzes"
+    quiz_data = {
+        "name": "Dota2 Quiz",
+        "description": "Pudge",
+        "is_public": True,
+    }
+    quiz_id = await create_test_helper(
+        path=path, data=quiz_data, status_code=status.HTTP_201_CREATED, client=user_client
+    )
+
+    response = await user_client.patch(path + f"/{quiz_id}", json={"name": ""})
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    update_data = {
+        "name": "Updated Quiz Name",
+        "is_public": False,
+    }
+    response = await user_client.patch(path + f"/{quiz_id}", json=update_data)
+
+    response_data = response.json()
+
+    assert "detail" not in response_data
+
+    assert response_data.get("name") == update_data["name"]
+    assert response_data.get("is_public") == update_data["is_public"]
+
+    assert response_data.get("description") == quiz_data["description"]
+
+
+async def test_search_quizzes_by_name(
+    user_client: httpx.AsyncClient,
+    db_session: AsyncSession,
+    organization: models.Organization,
+    user: models.User,
+):
+    quizzes = [
+        models.Quiz(organization_id=organization.id, author_id=user.id, name=name, is_public=True)
+        for name in [
+            "Brainrot Quiz",
+            "Dota2 Facts",
+            "Quiz about cats",
+            "Cats Test",
+            "Combined cats and quiz",
+            "Dota2 Players",
+            "Cute Cats",
+            "For experts (megaquiz)",
+        ]
+    ]
+    db_session.add_all(quizzes)
+    await db_session.flush()
+
+    response = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "quiz"}
+    )
+
+    response_data = response.json()
+    assert "detail" not in response_data
+    expected = [
+        "Brainrot Quiz",
+        "Quiz about cats",
+        "Combined cats and quiz",
+        "For experts (megaquiz)",
+    ]
+    assert len(response_data) == len(expected)
+    assert [q["name"] for q in response_data] == expected
+
+    response = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "CAT"}
+    )
+    response_data = response.json()
+    expected = ["Quiz about cats", "Cats Test", "Combined cats and quiz", "Cute Cats"]
+
+    assert len(response_data) == len(expected)
+    assert [q["name"] for q in response_data] == expected
+
+    response = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "cat qui"}
+    )
+    response_data = response.json()
+    expected = ["Quiz about cats", "Combined cats and quiz"]
+
+    assert len(response_data) == len(expected)
+    assert [q["name"] for q in response_data] == expected
+
+    response_data = await user_client.get(
+        f"/organizations/{organization.id}/quizzes", params={"search": "nonexistent"}
+    )
+    assert len(response_data.json()) == 0

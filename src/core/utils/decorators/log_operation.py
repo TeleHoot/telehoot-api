@@ -40,7 +40,7 @@ def log_operation(func: Callable) -> Callable:
         bound_args = sig.bind(self, *args, **kwargs)
         bound_args.apply_defaults()
 
-        excluded_params = {"self", "session"}
+        excluded_params = {"self", "session", "uow"}
 
         additional_context = {}
         for arg_name, arg_value in bound_args.arguments.items():

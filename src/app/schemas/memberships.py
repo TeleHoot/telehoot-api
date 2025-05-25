@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime
 from uuid import UUID
@@ -6,7 +8,9 @@ from pydantic import BaseModel, ConfigDict
 
 from src import core
 from src.app import models
-from src.app.schemas import organizations, users
+
+from . import organizations as schemas_organizations
+from . import users as schemas_users
 
 
 class Base(BaseModel):
@@ -27,8 +31,8 @@ class Update(BaseModel):
 
 
 class Read(Base):
-    organization: organizations.Read
-    user: users.Read
+    organization: schemas_organizations.Read
+    user: schemas_users.Read
     created_at: datetime
     updated_at: datetime
 

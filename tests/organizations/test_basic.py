@@ -18,14 +18,13 @@ async def create_test_helper(
     client: httpx.AsyncClient,
     session: AsyncSession | None = None,
 ) -> str | None:
-    response: httpx.Response = await client.post("/organizations/", json=data)
+    response: httpx.Response = await client.post("/organizations", json=data)
     response_data = response.json()
 
-    if 200 <= status_code < 300:  # noqa: PLR2004
-        assert "detail" not in response_data
-    else:
+    if status_code >= status.HTTP_400_BAD_REQUEST:
         assert "detail" in response_data
         return None
+    assert "detail" not in response_data
 
     assert response.status_code == status_code
 
@@ -58,6 +57,7 @@ async def test_create_organizations_success(
         ("", status.HTTP_422_UNPROCESSABLE_ENTITY),
         ("W", status.HTTP_422_UNPROCESSABLE_ENTITY),
         ("WW", status.HTTP_201_CREATED),
+        ("          ", status.HTTP_422_UNPROCESSABLE_ENTITY),
     ],
 )
 async def test_create_organizations_length(
@@ -68,7 +68,7 @@ async def test_create_organizations_length(
 
 
 async def test_read_organizations_empty_db(client: httpx.AsyncClient):
-    response: httpx.Response = await client.get("/organizations/")
+    response: httpx.Response = await client.get("/organizations")
 
     assert response.json() == []
 
@@ -76,9 +76,9 @@ async def test_read_organizations_empty_db(client: httpx.AsyncClient):
 async def test_read_many_organizations(user_client: httpx.AsyncClient, db_session: AsyncSession):
     num_created, org_data = 3, {"name": "TestName"}
     for _ in range(num_created):
-        await user_client.post("/organizations/", json=org_data)
+        await user_client.post("/organizations", json=org_data)
 
-    response: httpx.Response = await user_client.get("/organizations/")
+    response: httpx.Response = await user_client.get("/organizations")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -98,7 +98,7 @@ async def test_update_organizations_success(
 
     update_org_data = {"name": "Trippi Troppa"}
     response: httpx.Response = await user_client.patch(
-        f"/organizations/{org_id}/", json=update_org_data
+        f"/organizations/{org_id}", json=update_org_data
     )
 
     response_data = response.json()
@@ -106,3 +106,60 @@ async def test_update_organizations_success(
     assert "detail" not in response_data  # instead of status check
 
     assert response_data.get("name") == update_org_data["name"]
+
+
+async def test_delete_organization(
+    user_client: httpx.AsyncClient, membership_owner: models.Membership, db_session: AsyncSession
+):
+    response: httpx.Response = await user_client.delete(
+        f"/organizations/{membership_owner.organization_id}"
+    )
+    assert response.json() == {"is_success": True}
+    assert response.status_code == status.HTTP_200_OK
+
+    org = await db_session.scalar(select(models.Organization))
+
+    assert org is not None
+    assert hasattr(org, "deleted_at")
+    assert org.deleted_at is not None
+
+    membership = await db_session.scalar(select(models.Membership))
+
+    # check cascade delete
+    assert membership is not None
+    assert hasattr(membership, "deleted_at")
+    assert membership.deleted_at is not None
+
+    assert org.deleted_at == membership.deleted_at
+
+    # deleted organization is not visible
+    response: httpx.Response = await user_client.get("/organizations")
+
+    assert response.json() == []
+
+
+async def test_admin_sees_deleted_organizations(
+    admin_client: httpx.AsyncClient, organization: models.Organization, db_session: AsyncSession
+):
+    await admin_client.delete(f"/organizations/{organization.id}")
+
+    response = await admin_client.get("/organizations")
+    response_data = response.json()
+    assert len(response_data) == 1
+
+    org = response_data[0]
+
+    assert org.get("name") == organization.name
+    assert org.get("id") == str(organization.id)
+
+
+async def test_delete_organization_editor(
+    user_client: httpx.AsyncClient, membership_editor: models.Membership, db_session: AsyncSession
+):
+    response: httpx.Response = await user_client.delete(
+        f"/organizations/{membership_editor.organization_id}"
+    )
+    response_data = response.json()
+    assert "detail" in response_data
+    assert response_data.get("error_code") == "forbidden_access"
+    assert response.status_code == status.HTTP_403_FORBIDDEN
