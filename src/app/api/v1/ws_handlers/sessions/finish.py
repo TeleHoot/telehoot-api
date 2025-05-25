@@ -68,7 +68,7 @@ async def handle_finish(
 
         results = await sessions_service.get_session_results(uow, session)
 
-        event = schemas.sessions.SessionFinishedEvent(results=results)
+        event = schemas.sessions.SessionFinishedEvent(results=results, quiz_name=session.quiz.name)
 
         await ws_manager.broadcast_event_to_channel(str(session_id), event)
         await ws_manager.unsubscribe_from_channel(user.id, str(session_id))

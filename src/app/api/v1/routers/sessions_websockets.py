@@ -29,7 +29,6 @@ async def handle_session_by_id(
 async def handle_session_by_join_code(
     websocket: WebSocket,
     join_code: str,
-    uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
     ws_controller: dependencies.websockets.Controller,
     current_user: dependencies.permissions.WsUser,
@@ -37,25 +36,29 @@ async def handle_session_by_join_code(
     await websocket.accept()
     connection_id = await ws_controller.manager.accept_connection(websocket, current_user.id)
 
-    sessions = await sessions_service.read_many(
-        uow,
-        filters=schemas.sessions.Filters(
-            join_code=join_code, status=models.session.SessionStatus.WAITING
-        ),
-    )
-    if not sessions:
-        await ws_controller.manager.send_event_to_connection(
-            connection_id,
-            schemas.sessions.ErrorEvent(
-                error_code="entity_not_found",
-                message="Session not found by join code",
-                code=status.WS_1003_UNSUPPORTED_DATA,
+    uow_factory = dependencies.uow.get_uow_factory(use_postgres=True, use_mongodb=True)
+
+    sessions = None
+    async for uow in uow_factory():
+        sessions = await sessions_service.read_many(
+            uow,
+            filters=schemas.sessions.Filters(
+                join_code=join_code, status=models.session.SessionStatus.WAITING
             ),
         )
-        raise WebSocketDisconnect
-    
-    uow.postgres_session.close()
 
-    await ws_controller.manager.handle_client(
-        websocket, connection_id, sessions[0].id, current_user
-    )
+        if not sessions:
+            await ws_controller.manager.send_event_to_connection(
+                connection_id,
+                schemas.sessions.ErrorEvent(
+                    error_code="entity_not_found",
+                    message="Session not found by join code",
+                    code=status.WS_1003_UNSUPPORTED_DATA,
+                ),
+            )
+            raise WebSocketDisconnect
+
+    if sessions:
+        await ws_controller.manager.handle_client(
+            websocket, connection_id, sessions[0].id, current_user
+        )

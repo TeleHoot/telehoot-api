@@ -102,7 +102,9 @@ async def handle_answer(
 
             part_answers = await participant_answers_service.read_many(
                 uow,
-                filters=schemas.participant_answers.Filters(question_id=question.id),
+                filters=schemas.participant_answers.Filters(
+                    question_id=question.id, participant_id=participant.id
+                ),
             )
 
             if part_answers:

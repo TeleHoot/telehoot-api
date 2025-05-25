@@ -106,6 +106,7 @@ class SessionStartedEvent(NextQuestionEvent):
 class SessionFinishedEvent(SessionEvent):
     type: SessionEventType = SessionEventType.FINISH
     results: list
+    quiz_name: str
 
 
 class SessionCanceledEvent(SessionEvent):

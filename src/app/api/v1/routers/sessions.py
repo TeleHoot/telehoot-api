@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from src import core
@@ -179,24 +179,3 @@ async def export_session_results(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename=results_{session_id}.xlsx"},
     )
-
-
-@router.websocket("/{session_id}")
-async def handle_session(
-    websocket: WebSocket,
-    quiz: dependencies.paths.CurrentQuizWs,
-    session_id: UUID,
-    uow: dependencies.uow.Full,
-    sessions_service: dependencies.services.Sessions,
-    ws_controller: dependencies.websockets.Controller,
-    current_user: dependencies.permissions.WsUser,
-):
-    await websocket.accept()
-
-    session = await sessions_service.read_by_id(uow, session_id)
-    if str(session.quiz.id) != str(quiz.id):
-        await websocket.send_json({"error": "Session not found for this quiz"})
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-
-    connection_id = await ws_controller.manager.accept_connection(websocket, current_user.id)
-    await ws_controller.manager.handle_client(websocket, connection_id, session_id, current_user)
