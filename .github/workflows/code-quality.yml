@@ -9,6 +9,8 @@ on:
       - main
       - dev
 
+  workflow_call:
+
 jobs:
   linting:
     runs-on: ubuntu-latest

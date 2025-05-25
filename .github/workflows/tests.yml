@@ -8,6 +8,9 @@ on:
     branches:
       - main
       - dev
+
+  workflow_call:
+
 jobs:
   tests:
     runs-on: ubuntu-latest
