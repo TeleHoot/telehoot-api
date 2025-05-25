@@ -53,6 +53,8 @@ async def handle_session_by_join_code(
             ),
         )
         raise WebSocketDisconnect
+    
+    uow.postgres_session.close()
 
     await ws_controller.manager.handle_client(
         websocket, connection_id, sessions[0].id, current_user
