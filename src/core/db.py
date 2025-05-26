@@ -5,7 +5,7 @@ from typing import TypeVar
 from beanie import Document, init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorClientSession
 from pymongo import MongoClient
-from pymongo.errors import PyMongoError
+from pymongo.errors import OperationFailure, PyMongoError
 from sqlalchemy import AsyncAdaptedQueuePool
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -102,9 +102,11 @@ def init_replica_set():
             status = client.admin.command("replSetGetStatus")
             logger.info("Replica Set are already initialized: %s", status["set"])
             return
-        except PyMongoError as e:
+        except (PyMongoError, OperationFailure) as e:
             if "NotYetInitialized" not in str(e):
                 raise
+            if "replSetGetStatus is not supported through mongos" in str(e):
+                return
 
         cfg = {
             "_id": "overleaf",
