@@ -16,7 +16,7 @@ class QuestionType(enum.StrEnum):
 
 
 class QuestionAnswer(BaseModel):
-    text: Annotated[str, Field(min_length=1, max_length=500)]
+    text: Annotated[str, Field(max_length=500)]
     order: Annotated[int, Field(ge=0, le=100)]
     is_correct: bool
 
