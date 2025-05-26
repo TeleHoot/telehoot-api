@@ -70,12 +70,13 @@ async def get_my_memberships(
 
 @router.get(
     "/me/sessions",
-    response_model=list[schemas.sessions.Read] | None,
+    response_model=list[schemas.sessions.Read],
 )
 async def get_my_sessions(
-    uow: dependencies.uow.Postgres,
+    uow: dependencies.uow.Full,
     sessions_service: dependencies.services.Sessions,
     participants_service: dependencies.services.Participants,
+    questions_service: dependencies.services.Questions,
     current_user: dependencies.permissions.ActiveUser,
     pagination: dependencies.queries.Pagination,
 ):
@@ -83,10 +84,15 @@ async def get_my_sessions(
         uow, schemas.participants.Filters(user_id=current_user.id), pagination=pagination
     )
 
-    return [
-        await sessions_service.read_by_id(uow, participant.session_id)
-        for participant in user_participants
-    ]
+    sessions = []
+    for participant in user_participants:
+        session = await sessions_service.read_by_id(uow, participant.session_id)
+        session.quiz.questions_count = await questions_service.get_count_by_quiz_id(
+            uow, session.quiz.id
+        )
+        sessions.append(session)
+
+    return sessions
 
 
 @router.get(

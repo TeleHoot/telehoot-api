@@ -1,4 +1,5 @@
 from io import BytesIO
+from uuid import UUID
 
 from beanie import PydanticObjectId
 from fastapi import BackgroundTasks, UploadFile
@@ -27,6 +28,9 @@ class Questions(
             update_schema=schemas.questions.Update,
             filters_schema=schemas.questions.Filters,
         )
+
+    async def get_count_by_quiz_id(self, uow: core.UnitOfWork, quiz_id: UUID) -> int:
+        return await self.repo.get_count_by_quiz_id(uow, quiz_id)
 
     async def upload_question_media(
         self,
