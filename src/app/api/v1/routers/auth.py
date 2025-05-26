@@ -21,8 +21,8 @@ async def get_token_widget(
         key=settings.SESSION_COOKIE_NAME,
         value=auth_data.access_token,
         httponly=True,
-        secure=not settings.DEBUG,
-        samesite="none" if not settings.DEBUG else "lax",
+        secure=True,
+        samesite="none",
         max_age=settings.SESSION_EXPIRE_TIME,
     )
 
@@ -47,8 +47,8 @@ async def get_token_tma(
         key=settings.SESSION_COOKIE_NAME,
         value=auth_data.access_token,
         httponly=True,
-        secure=not settings.DEBUG,
-        samesite="none" if not settings.DEBUG else "lax",
+        secure=True,
+        samesite="none",
         max_age=settings.SESSION_EXPIRE_TIME,
     )
 

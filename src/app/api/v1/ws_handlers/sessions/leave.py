@@ -62,4 +62,4 @@ async def handle_leave(
 
         await ws_manager.broadcast_event_to_channel(str(session_id), event)
         await ws_manager.unsubscribe_from_channel(user.id, str(session_id))
-        raise WebSocketDisconnect
+    raise WebSocketDisconnect

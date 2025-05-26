@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 
 from fastapi import WebSocket, WebSocketDisconnect, status
@@ -71,5 +72,6 @@ async def handle_finish(
         event = schemas.sessions.SessionFinishedEvent(results=results, quiz_name=session.quiz.name)
 
         await ws_manager.broadcast_event_to_channel(str(session_id), event)
+        await asyncio.sleep(3)
         await ws_manager.unsubscribe_from_channel(user.id, str(session_id))
-        raise WebSocketDisconnect
+    raise WebSocketDisconnect
