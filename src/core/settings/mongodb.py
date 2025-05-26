@@ -10,6 +10,7 @@ class MongoDBSettings(BaseSettings):
     PORT: int = 27017
     INITDB_ROOT_PASSWORD: str = "mongo"
     INITDB_DATABASE: str = "mongo"
+    IS_NEED_INIT_REPLICASET: bool = True
 
     model_config = SettingsConfigDict(
         env_file=settings.env_config.ENV_FILE_PATH, extra="ignore", env_prefix="MONGO_"

@@ -17,7 +17,8 @@ ws_manager = core.websockets.get_websocket_manager()
 def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-        core.db.init_replica_set()
+        if settings.MONGO.IS_NEED_INIT_REPLICASET:
+            core.db.init_replica_set()
         await core.db.init_mongo(gather_documents)
         await ws_manager.connect_to_redis()
         yield
