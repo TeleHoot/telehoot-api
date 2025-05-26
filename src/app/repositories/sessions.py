@@ -34,8 +34,10 @@ class Sessions(core.repositories.sqlalchemy.BaseCRUD[models.Session]):
             .outerjoin(
                 total_points_subq, models.Participant.id == total_points_subq.c.participant_id
             )
-            .where(models.Participant.session_id == session_id,
-                   models.Participant.role != models.ParticipantRole.HOST)
+            .where(
+                models.Participant.session_id == session_id,
+                models.Participant.role != models.ParticipantRole.HOST,
+            )
         )
 
         if include_answers:
