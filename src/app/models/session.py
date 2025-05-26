@@ -44,10 +44,6 @@ class Session(core.models.sqlalchemy.Base, core.models.sqlalchemy.SoftDelete):
     )
 
     @property
-    def guests(self) -> list["Participant"]:
-        return [p for p in self.participants if p.role == ParticipantRole.GUEST]
-
-    @property
     def hosts(self) -> list["Participant"]:
         return [p for p in self.participants if p.role == ParticipantRole.HOST]
 

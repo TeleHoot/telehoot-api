@@ -34,14 +34,17 @@ class Update(BaseModel):
     current_question_index: int | None = None
 
 
-class Read(Base):
+class ReadMany(Base):
     id: UUID
     hosts: list[participant_schemas.Read]
-    quiz: quiz_schemas.Read
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class Read(ReadMany):
+    quiz: quiz_schemas.Read
 
 
 class Filters(core.schemas.BaseFilters):

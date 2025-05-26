@@ -51,7 +51,7 @@ async def create_session(
 
 @router.get(
     "",
-    response_model=list[schemas.sessions.Read],
+    response_model=list[schemas.sessions.ReadMany],
     dependencies=[Depends(dependencies.paths.get_validated_quiz)],
 )
 async def get_sessions(
