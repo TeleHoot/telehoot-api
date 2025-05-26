@@ -11,6 +11,7 @@ dependencies = [
     "beanie>=1.29.0",
     "fastapi[standard]>=0.115.11",
     "greenlet>=3.2.1",
+    "gunicorn>=23.0.0",
     "hypercorn>=0.17.3",
     "openpyxl>=3.1.5",
     "orjson>=3.10.16",
