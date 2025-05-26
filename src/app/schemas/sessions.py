@@ -118,6 +118,7 @@ class SessionCanceledEvent(SessionEvent):
 
 class SessionAnsweredEvent(SessionEvent):
     type: SessionEventType = SessionEventType.ANSWER
+    participant_id: UUID
 
 
 class SessionShowedAnswersEvent(SessionEvent):

@@ -143,6 +143,6 @@ async def handle_answer(
             )
             raise WebSocketDisconnect from e
 
-        event = schemas.sessions.SessionAnsweredEvent()
+        event = schemas.sessions.SessionAnsweredEvent(participant_id=participant.id)
 
         await ws_manager.broadcast_event_to_channel(str(session_id), event)
