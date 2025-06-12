@@ -3,9 +3,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from src.app import schemas, models
-from src.app.api import dependencies
 from src import core
+from src.app import models, schemas
+from src.app.api import dependencies
 
 router = APIRouter(prefix="/users", tags=["users"])
 
