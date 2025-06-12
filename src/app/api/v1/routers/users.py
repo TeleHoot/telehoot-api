@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from src.app import schemas
+from src.app import schemas, models
 from src.app.api import dependencies
 from src import core
 
@@ -83,7 +83,7 @@ async def get_my_sessions(
 ):
     user_participants = await participants_service.read_many(
         uow,
-        schemas.participants.Filters(user_id=current_user.id),
+        schemas.participants.Filters(user_id=current_user.id, role=models.ParticipantRole.GUEST),
         schemas.participants.SortParams(
             sort_by=schemas.participants.SortFields.CREATED_AT,
             order_by=core.schemas.SortOrderField.DESCENDING,
