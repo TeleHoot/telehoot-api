@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 
 from src.app import schemas
 from src.app.api import dependencies
+from src import core
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -81,7 +82,13 @@ async def get_my_sessions(
     pagination: dependencies.queries.Pagination,
 ):
     user_participants = await participants_service.read_many(
-        uow, schemas.participants.Filters(user_id=current_user.id), pagination=pagination
+        uow,
+        schemas.participants.Filters(user_id=current_user.id),
+        schemas.participants.SortParams(
+            sort_by=schemas.participants.SortFields.CREATED_AT,
+            order_by=core.schemas.SortOrderField.DESCENDING,
+        ),
+        pagination=pagination,
     )
 
     sessions = []
