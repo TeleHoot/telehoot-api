@@ -167,8 +167,21 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# Ruff stuff:
-.ruff_cache/
-
 # PyPI configuration file
 .pypirc
+
+pgdata/
+mongodata/
+minio/
+redisdata/
+
+.ruff_cache/
+.DS_store
+
+mongodb.key
+
+.vscode
+*.code-workspace
+
+tests_data/
+tests.env

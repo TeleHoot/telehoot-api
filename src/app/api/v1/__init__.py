@@ -1,0 +1,16 @@
+from fastapi import APIRouter
+
+from . import routers
+
+router = APIRouter(prefix="/v1")
+router.include_router(routers.public)
+router.include_router(routers.auth)
+router.include_router(routers.users)
+router.include_router(routers.organizations)
+router.include_router(routers.memberships)
+router.include_router(routers.quizzes)
+router.include_router(routers.questions)
+router.include_router(routers.sessions)
+router.include_router(routers.participants)
+router.include_router(routers.participant_answers)
+router.include_router(routers.session_websockets)

@@ -8,18 +8,30 @@ on:
     branches:
       - main
       - dev
+
+  workflow_call:
+
 jobs:
-  quality:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-
       - name: Linting
         run: uv run ruff check .
 
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
       - name: Formatting
         run: uv run ruff format --check .
 
+  type_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
       - name: Type Consistency
         run: uv run pyright .

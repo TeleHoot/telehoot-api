@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: deploy/Dockerfile.prod
+      dockerfile: docker/Dockerfile.prod
     ports:
       - target: 8000
         published: 8000
@@ -78,5 +78,37 @@ services:
         max_attempts: 3
         window: 120s
 
+  mongo:
+    image: mongo:8.0.6
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      placement:
+        constraints:
+          - "node.labels.TAG==prod"
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: start-first
+        failure_action: rollback
+        delay: 15s
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
 volumes:
-    pgdata-volume:
+  pgdata-volume:
+  mongo-data:
